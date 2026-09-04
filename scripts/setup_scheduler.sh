@@ -54,6 +54,13 @@ else
 fi
 echo "  runs at '$SCHEDULE' ($TZ_NAME) -> POST $WORKER_URL/jobs/reconcile"
 
+# Created paused. An unattended job that fires every night is a standing
+# liability on a project nobody is watching, and every check it performs can be
+# run on demand with `gcloud scheduler jobs run`. Unpause deliberately:
+#   gcloud scheduler jobs resume curator-reconcile --location=$REGION
+gcloud scheduler jobs pause "$JOB" --location="$REGION" --quiet >/dev/null 2>&1 || true
+echo "  paused (will not fire on its own)"
+
 say "Done"
 echo "Run it now without waiting for 2am:"
 echo "  gcloud scheduler jobs run $JOB --location=$REGION"

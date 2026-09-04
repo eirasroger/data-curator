@@ -64,6 +64,7 @@ create_sa curator-api       "API: publishes change requests to Pub/Sub"
 create_sa curator-worker    "Worker: reads secrets, writes BigQuery"
 create_sa curator-pubsub    "Pub/Sub push identity: invokes the worker"
 create_sa curator-scheduler "Cloud Scheduler identity: runs reconciliation"
+create_sa curator-webhook   "Public webhook receiver: verifies and publishes"
 
 say "IAM"
 # The API may publish to the changes topic, and nothing else. It cannot read or
@@ -111,6 +112,12 @@ echo "  pubsub agent -> pubsub.publisher on $DLQ_TOPIC"
 # The API key never appears in the image, the repo, or an environment variable
 # we set by hand. Cloud Run reads it from Secret Manager at start-up using the
 # worker's own identity, and only the worker is granted access.
+# The webhook receiver is the only publicly reachable component, so it holds the
+# least authority of anything here: publish to one topic, read its own signing
+# secrets, nothing else. It cannot touch BigQuery.
+gcloud pubsub topics add-iam-policy-binding "$TOPIC" --member="serviceAccount:$(sa_email curator-webhook)" --role="roles/pubsub.publisher" --quiet >/dev/null
+echo "  webhook   -> pubsub.publisher on $TOPIC"
+
 say "Secrets"
 gcloud secrets create openai-api-key --replication-policy=automatic 2>/dev/null \
   && echo "  created openai-api-key (empty - add a version before deploying)" \
@@ -119,6 +126,21 @@ gcloud secrets add-iam-policy-binding openai-api-key \
   --member="serviceAccount:$(sa_email curator-worker)" \
   --role="roles/secretmanager.secretAccessor" --quiet >/dev/null
 echo "  worker may read openai-api-key; nothing else may"
+
+# One signing secret per webhook source. Separate secrets mean a leaked key
+# compromises one sender, and revoking a sender is one secret version.
+for src in manufacturer; do
+  name="webhook-secret-$src"
+  if gcloud secrets describe "$name" >/dev/null 2>&1; then
+    echo "  exists  $name"
+  else
+    gcloud secrets create "$name" --replication-policy=automatic --quiet >/dev/null
+    python -c "import secrets; print(secrets.token_hex(32), end='')" | gcloud secrets versions add "$name" --data-file=- >/dev/null
+    echo "  created $name with a generated 256-bit key"
+  fi
+  gcloud secrets add-iam-policy-binding "$name" --member="serviceAccount:$(sa_email curator-webhook)" --role="roles/secretmanager.secretAccessor" --quiet >/dev/null
+done
+echo "  webhook may read its signing secrets"
 
 say "Done"
 echo "Next:"

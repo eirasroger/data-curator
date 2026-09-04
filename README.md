@@ -8,6 +8,7 @@ Corrections, supersession and expiry, with a full audit trail, on Google Cloud.
 | Concern | Technology |
 | --- | --- |
 | API | FastAPI on Cloud Run, private, IAM-authenticated |
+| Webhooks | FastAPI on Cloud Run, public, HMAC-SHA256 verified |
 | Queue | Pub/Sub, push subscription, dead-letter topic |
 | Processing | FastAPI on Cloud Run, push subscriber |
 | Storage | BigQuery, partitioned and clustered |
@@ -34,18 +35,19 @@ code path.
 ## Architecture
 
 ```
-  reviewer ─────┐
-                ├──> API ──> Pub/Sub ──> worker ──> BigQuery
-  manufacturer ─┘           (+ DLQ)        │
-                                           │  screen()    deterministic rules
-  Cloud Scheduler ─────────────────────────┤  triage()    model, conditionally
-        │                                  │  finalise()  deterministic rules
-        └── raises expiry requests ────────┘
+  reviewer ──────> API ─────┐
+  manufacturer ──> webhook ─┼──> Pub/Sub ──> worker ──> BigQuery
+  scheduled job ────────────┘    (+ DLQ)       │
+                                               │  screen()    deterministic rules
+                                               │  triage()    model, conditionally
+                                               │  finalise()  deterministic rules
 ```
 
-The API validates request shape, publishes, and returns 202. It holds no write
-permission on the datastore. The worker is the only component that writes to
-BigQuery.
+Three ingress paths, one queue, one consumer. The API and the webhook receiver
+validate shape, publish, and return 202. Neither holds write permission on the
+datastore. The scheduled job runs inside the worker and publishes expiry
+requests back onto the same topic. The worker is the only component that writes
+to BigQuery.
 
 ## Decision pipeline
 
@@ -87,6 +89,34 @@ the prompt.
 Checks return `Issue` objects with a field, a severity and a message. `screen()`
 compares the issue set before and after a proposed change, so a change is judged
 on whether it makes a record worse.
+
+## Webhooks
+
+`services/webhook` receives republication events from manufacturer systems at
+`POST /webhooks/{source}`.
+
+Verification is HMAC-SHA256 over `timestamp + "." + raw body`, compared with
+`hmac.compare_digest`. Timestamps outside a five minute window are rejected in
+both directions, which bounds replay of a captured request and rejects a forged
+future timestamp buying an unlimited window. Nothing is parsed or acted on
+before verification, and a failed request receives a bare 401 with no
+explanation.
+
+One signing secret per source, held in Secret Manager and mounted as
+`WEBHOOK_SECRET_<SOURCE>`. A leaked key compromises one sender, and revoking a
+sender is one secret version.
+
+A verified payload becomes a `ChangeRequest` with `kind=record_replacement` and
+enters the same queue as everything else, so it is schema-validated and routed
+to human review by existing code.
+
+`scripts/simulate_manufacturer.py` sends genuine signed requests, with
+`--bad-signature`, `--stale` and `--tamper` for the rejection paths.
+
+The receiver is the only component reachable without a Google identity, and
+Google Cloud has no hard spending cap, so it is not left deployed.
+`scripts/webhook_demo.sh` deploys it at `--max-instances=1`, runs all four
+cases, and deletes it on exit. `--keep` leaves it running.
 
 ## Data model
 
@@ -157,9 +187,11 @@ domain/
   providers/      openai_provider.py, stub.py
   pipeline.py     screen -> triage -> finalise
   store.py        all BigQuery access
+  webhooks.py     HMAC signing and verification
   reconcile.py    scheduled checks
 services/
   api/            change submission, review submission, read endpoints
+  webhook/        public receiver, signature verification
   worker/         Pub/Sub push handler, reconciliation endpoint
 docker/           one Dockerfile per service, repo-root build context
 sql/              DDL for tables and views
@@ -186,9 +218,17 @@ bash scripts/setup_gcp.sh          # topics, dataset, service accounts, IAM, sec
 gcloud secrets versions add openai-api-key --data-file=-
 python scripts/seed_bigquery.py    # load the corpus
 bash scripts/deploy.sh             # build, deploy, wire the subscription
-bash scripts/setup_scheduler.sh    # nightly job
+bash scripts/setup_scheduler.sh    # reconciliation job, created paused
 bash scripts/smoke_test.sh         # end-to-end verification
+bash scripts/webhook_demo.sh       # deploy the receiver, exercise it, delete it
 ```
+
+The reconciliation job is created paused and runs on demand with
+`gcloud scheduler jobs run curator-reconcile --location=europe-west1`. Unpause
+it only where something is watching it.
+
+`bash scripts/teardown.sh` deletes the services, the scheduler job and the push
+subscription, keeping data and secrets. `--images` and `--data` extend it.
 
 `. scripts/gcp_env.sh` exports shared configuration and resolves the Cloud SDK's
 bundled Python for `bq`, which does not locate an interpreter under Git Bash on
@@ -203,6 +243,13 @@ discarding version history.
 scaling of millisecond validation from multi-second inference, and enables
 replay from the dead-letter topic. The API blocks on publish confirmation before
 returning 202, so a Pub/Sub outage surfaces as a 503 instead of silent loss.
+
+**Public surface isolated and ephemeral.** Cloud Run authentication applies per
+service and not per path, so a webhook endpoint on `curator-api` would expose
+`/changes`, `/reviews` and `/epd` to the internet. The receiver is its own
+service holding publish rights on one topic and read access to its own signing
+secrets, and nothing else. It is deployed for a demonstration and deleted
+afterwards, since an endpoint that does not exist cannot be attacked.
 
 **Single writer.** The worker holds `dataEditor` on the dataset, the API holds
 `dataViewer`. One place where the append-only invariant can be violated.

@@ -49,7 +49,7 @@ gcloud artifacts repositories set-cleanup-policies "$REPO" \
 
 # --- Build -------------------------------------------------------------------
 say "Building images"
-for svc in api worker; do
+for svc in api worker webhook; do
   echo "  building $svc ..."
   gcloud builds submit --config=cloudbuild.yaml \
     --substitutions="_SERVICE=$svc,_IMAGE=$REGISTRY/$svc:latest" \
@@ -75,6 +75,18 @@ gcloud run deploy curator-api \
   --quiet >/dev/null
 API_URL="$(gcloud run services describe curator-api --region="$REGION" --format='value(status.url)')"
 echo "  $API_URL"
+
+say "Deploying webhook receiver"
+# --allow-unauthenticated, and it is the only service with that flag.
+#
+# A webhook sender is an external system with no Google identity, so IAM cannot
+# gate this endpoint. The HMAC signature is the access control, which is why
+# this service is separate: Cloud Run authentication applies per service and not
+# per path, so hosting the webhook on curator-api would expose /changes,
+# /reviews and /epd to the internet as well.
+gcloud run deploy curator-webhook --image="$REGISTRY/webhook:latest" --region="$REGION" --service-account="$(sa_email curator-webhook)" --set-env-vars="GCP_PROJECT=$PROJECT,PUBSUB_TOPIC=$TOPIC" --set-secrets="WEBHOOK_SECRET_MANUFACTURER=webhook-secret-manufacturer:latest" --allow-unauthenticated --max-instances=3 --memory=512Mi --timeout=30s --quiet >/dev/null
+WEBHOOK_URL="$(gcloud run services describe curator-webhook --region="$REGION" --format='value(status.url)')"
+echo "  $WEBHOOK_URL  (public)"
 
 say "Deploying worker"
 # The key is mounted from Secret Manager at start-up, using the worker's own
@@ -153,8 +165,9 @@ gcloud pubsub subscriptions add-iam-policy-binding "$SUBSCRIPTION" \
 echo "  pubsub agent -> pubsub.subscriber on $SUBSCRIPTION"
 
 say "Deployed"
-echo "  API    $API_URL"
-echo "  worker $WORKER_URL"
+echo "  API     $API_URL"
+echo "  worker  $WORKER_URL"
+echo "  webhook $WEBHOOK_URL  (public, signature-verified)"
 echo
 echo "Try it:"
 echo "  TOKEN=\$(gcloud auth print-identity-token)"
