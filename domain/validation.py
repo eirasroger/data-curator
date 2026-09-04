@@ -206,9 +206,62 @@ def check_lifespan(p: dict) -> list[Issue]:
     return []
 
 
+# ---------------------------------------------------------------------------
+# ADDED IN data-curator (not in the extractor). Worth porting back.
+#
+# The eval caught this the hard way. Deciding whether a proposed density is a
+# decimal slip or a mistake was left to the model, and on three of four records
+# it reasoned correctly - then on product 86 it called a wrong value a
+# decimal_slip at 0.90 confidence and the change was auto-applied.
+#
+# But this was never a judgement call. Density x thickness is the weight per
+# declared unit, and the EPD states that weight outright. It is arithmetic, so
+# it belongs here where it is exact and free, not in a prompt where it is
+# probabilistic and billed.
+# ---------------------------------------------------------------------------
+
+DENSITY_TOLERANCE = 0.05    # 5% relative, same spirit as GWP_TOLERANCE
+
+
+def _declared_kg_per_unit(p: dict) -> float | None:
+    """The kg-per-declared-unit figure the EPD states outright, if it does."""
+    unit = p.get("reference_unit")
+    for r in p.get("conversion_ratios") or []:
+        if r.get("measured_unit") == "kg" and r.get("per_unit") == unit:
+            v = r.get("measured_units_per_one_per_unit")
+            if isinstance(v, (int, float)):
+                return float(v)
+    return None
+
+
+def check_density_thickness(p: dict) -> list[Issue]:
+    """density (kg/m3) x thickness (m) should equal the declared kg per unit.
+
+    Only fires when all three are present and the declared unit is an area, so
+    the relationship actually holds. Silent otherwise - a missing figure is not
+    a contradiction.
+    """
+    density, thickness = p.get("density"), p.get("thickness")
+    declared = _declared_kg_per_unit(p)
+    if density is None or thickness is None or declared is None or not thickness:
+        return []
+
+    computed = float(density) * float(thickness)
+    if _close(computed, declared, DENSITY_TOLERANCE):
+        return []
+
+    return [Issue(
+        "density", "error",
+        f"density {density} kg/m3 x thickness {thickness} m = {computed:.4g} kg per "
+        f"{p.get('reference_unit')}, but the EPD declares {declared:g}. One of the "
+        f"three is wrong; the declared conversion ratio is the one copied straight "
+        f"from the document, so prefer it.",
+    )]
+
+
 CHECKS = [
-    check_gwp, check_composition, check_no_packaging, check_circularity,
-    check_variant_names, check_flag, check_c2c, check_lifespan,
+    check_gwp, check_density_thickness, check_composition, check_no_packaging,
+    check_circularity, check_variant_names, check_flag, check_c2c, check_lifespan,
 ]
 
 

@@ -18,6 +18,7 @@ from typing import Any, Optional
 from pydantic import BaseModel, Field
 
 from . import validation
+from .schema import EPDProduct
 
 
 class ChangeKind(str, Enum):
@@ -253,8 +254,22 @@ def screen(record: dict, request: ChangeRequest) -> Optional[Decision]:
                 action=Action.REJECTED,
                 reason="Replacement requested but no replacement record supplied.",
             )
-        # A whole new document always gets human eyes. It is not a correction to
-        # an existing number, it is a different document superseding it.
+        # A replacement is a whole document, so it has to BE a whole document.
+        # EPDProduct is the same model the extractor produces, so validating
+        # here means a malformed replacement is refused at the door rather than
+        # discovered later by something that tried to read a missing field.
+        try:
+            EPDProduct.model_validate(request.replacement)
+        except Exception as exc:  # noqa: BLE001 - pydantic ValidationError
+            return Decision(
+                request_id=request.request_id,
+                action=Action.REJECTED,
+                reason="The replacement record does not match the EPD schema.",
+                blocking_issues=[str(exc).splitlines()[0][:300]],
+            )
+
+        # A valid new document still always gets human eyes. It is not a
+        # correction to a number, it is a different document superseding one.
         return Decision(
             request_id=request.request_id,
             action=Action.PENDING_REVIEW,
@@ -349,19 +364,29 @@ def finalise(
         old_value=old_value,
     )
 
-    if triage is TriageClass.IMPLAUSIBLE:
-        return Decision(
-            action=Action.REJECTED, reason="Classified as implausible.", **base
-        )
-
+    # ORDER MATTERS, and getting it wrong here was caught by the eval.
+    #
+    # The material-field rule has to come FIRST. If the implausible check runs
+    # first, an "implausible" verdict lets the model reject a published figure
+    # on its own - which is the same authority we just said it must not have.
+    # A wrongly rejected correction is not harmless: the error it was trying to
+    # fix stays in the data, and the person who reported it is told nothing.
+    #
+    # So for these fields the model's opinion is advice attached to a review,
+    # never a verdict.
     if is_material(request.field_path or ""):
         return Decision(
             action=Action.PENDING_REVIEW,
             reason=(
                 f"{request.field_path} is a published figure; these are never "
-                f"applied without a person, whatever the confidence."
+                f"decided without a person, whatever the model concluded."
             ),
             **base,
+        )
+
+    if triage is TriageClass.IMPLAUSIBLE:
+        return Decision(
+            action=Action.REJECTED, reason="Classified as implausible.", **base
         )
 
     if confidence < confidence_floor:
@@ -394,3 +419,24 @@ def is_expired(record: dict, on: Optional[date] = None) -> bool:
         return date.fromisoformat(str(raw)) < (on or date.today())
     except ValueError:
         return False
+
+
+class ReviewDecision(BaseModel):
+    """A person's verdict on a request the pipeline parked.
+
+    This does not overwrite what the pipeline concluded - it is appended to the
+    same request's history as a second event. Both answers stay on the record:
+    what the machine decided, and what the human decided afterwards.
+    """
+
+    request_id: str
+    reviewer: str = Field(description="who made this call; a person, not a service")
+    approve: bool
+    note: str = Field(default="", description="why, for whoever reads this later")
+
+
+class MessageType(str, Enum):
+    """What a Pub/Sub message carries. The worker branches on this."""
+
+    CHANGE_REQUEST = "change_request"
+    REVIEW = "review"

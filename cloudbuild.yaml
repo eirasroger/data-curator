@@ -1,0 +1,11 @@
+# Builds one service image. Which one is chosen by the _SERVICE substitution,
+# so both services share this file instead of having a copy each.
+#
+#   gcloud builds submit --config cloudbuild.yaml \
+#     --substitutions=_SERVICE=api,_IMAGE=europe-west1-docker.pkg.dev/.../api:latest
+steps:
+  - name: gcr.io/cloud-builders/docker
+    args: ['build', '-f', 'docker/${_SERVICE}.Dockerfile', '-t', '${_IMAGE}', '.']
+images: ['${_IMAGE}']
+options:
+  logging: CLOUD_LOGGING_ONLY

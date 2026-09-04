@@ -1,0 +1,1024 @@
+[
+  {
+    "case_id": "A_gwp_break_6",
+    "category": "rejected_by_rules",
+    "product_id": 6,
+    "corrupt": null,
+    "request": {
+      "kind": "field_update",
+      "field_path": "impacts.gwp_fossil",
+      "new_value": 121.0,
+      "reason": "I think the fossil figure was under-reported by a factor of ten.",
+      "source": "human",
+      "submitted_by": "reviewer",
+      "replacement": null
+    },
+    "expected_action": "rejected",
+    "expected_triage": null,
+    "note": "Ten-times the fossil GWP no longer sums to the declared total; check_gwp catches it."
+  },
+  {
+    "case_id": "A_gwp_break_20",
+    "category": "rejected_by_rules",
+    "product_id": 20,
+    "corrupt": null,
+    "request": {
+      "kind": "field_update",
+      "field_path": "impacts.gwp_fossil",
+      "new_value": 2090.0,
+      "reason": "I think the fossil figure was under-reported by a factor of ten.",
+      "source": "human",
+      "submitted_by": "reviewer",
+      "replacement": null
+    },
+    "expected_action": "rejected",
+    "expected_triage": null,
+    "note": "Ten-times the fossil GWP no longer sums to the declared total; check_gwp catches it."
+  },
+  {
+    "case_id": "A_gwp_break_22",
+    "category": "rejected_by_rules",
+    "product_id": 22,
+    "corrupt": null,
+    "request": {
+      "kind": "field_update",
+      "field_path": "impacts.gwp_fossil",
+      "new_value": 2450.0,
+      "reason": "I think the fossil figure was under-reported by a factor of ten.",
+      "source": "human",
+      "submitted_by": "reviewer",
+      "replacement": null
+    },
+    "expected_action": "rejected",
+    "expected_triage": null,
+    "note": "Ten-times the fossil GWP no longer sums to the declared total; check_gwp catches it."
+  },
+  {
+    "case_id": "A_gwp_break_30",
+    "category": "rejected_by_rules",
+    "product_id": 30,
+    "corrupt": null,
+    "request": {
+      "kind": "field_update",
+      "field_path": "impacts.gwp_fossil",
+      "new_value": 7300.0,
+      "reason": "I think the fossil figure was under-reported by a factor of ten.",
+      "source": "human",
+      "submitted_by": "reviewer",
+      "replacement": null
+    },
+    "expected_action": "rejected",
+    "expected_triage": null,
+    "note": "Ten-times the fossil GWP no longer sums to the declared total; check_gwp catches it."
+  },
+  {
+    "case_id": "A_gwp_break_1",
+    "category": "rejected_by_rules",
+    "product_id": 1,
+    "corrupt": null,
+    "request": {
+      "kind": "field_update",
+      "field_path": "impacts.gwp_fossil",
+      "new_value": 23.6,
+      "reason": "I think the fossil figure was under-reported by a factor of ten.",
+      "source": "human",
+      "submitted_by": "reviewer",
+      "replacement": null
+    },
+    "expected_action": "rejected",
+    "expected_triage": null,
+    "note": "Ten-times the fossil GWP no longer sums to the declared total; check_gwp catches it."
+  },
+  {
+    "case_id": "A_gwp_break_2",
+    "category": "rejected_by_rules",
+    "product_id": 2,
+    "corrupt": null,
+    "request": {
+      "kind": "field_update",
+      "field_path": "impacts.gwp_fossil",
+      "new_value": 33.6,
+      "reason": "I think the fossil figure was under-reported by a factor of ten.",
+      "source": "human",
+      "submitted_by": "reviewer",
+      "replacement": null
+    },
+    "expected_action": "rejected",
+    "expected_triage": null,
+    "note": "Ten-times the fossil GWP no longer sums to the declared total; check_gwp catches it."
+  },
+  {
+    "case_id": "A_type_6",
+    "category": "rejected_by_rules",
+    "product_id": 6,
+    "corrupt": null,
+    "request": {
+      "kind": "field_update",
+      "field_path": "density",
+      "new_value": "95,0",
+      "reason": "Copied straight from the datasheet.",
+      "source": "human",
+      "submitted_by": "reviewer",
+      "replacement": null
+    },
+    "expected_action": "rejected",
+    "expected_triage": null,
+    "note": "Comma decimal arriving as text. A number must stay a number."
+  },
+  {
+    "case_id": "A_type_20",
+    "category": "rejected_by_rules",
+    "product_id": 20,
+    "corrupt": null,
+    "request": {
+      "kind": "field_update",
+      "field_path": "density",
+      "new_value": "2360,0",
+      "reason": "Copied straight from the datasheet.",
+      "source": "human",
+      "submitted_by": "reviewer",
+      "replacement": null
+    },
+    "expected_action": "rejected",
+    "expected_triage": null,
+    "note": "Comma decimal arriving as text. A number must stay a number."
+  },
+  {
+    "case_id": "A_type_22",
+    "category": "rejected_by_rules",
+    "product_id": 22,
+    "corrupt": null,
+    "request": {
+      "kind": "field_update",
+      "field_path": "density",
+      "new_value": "2300,0",
+      "reason": "Copied straight from the datasheet.",
+      "source": "human",
+      "submitted_by": "reviewer",
+      "replacement": null
+    },
+    "expected_action": "rejected",
+    "expected_triage": null,
+    "note": "Comma decimal arriving as text. A number must stay a number."
+  },
+  {
+    "case_id": "A_noop_6",
+    "category": "rejected_by_rules",
+    "product_id": 6,
+    "corrupt": null,
+    "request": {
+      "kind": "field_update",
+      "field_path": "lifespan",
+      "new_value": 50.0,
+      "reason": "Confirming this is right.",
+      "source": "human",
+      "submitted_by": "reviewer",
+      "replacement": null
+    },
+    "expected_action": "rejected",
+    "expected_triage": null,
+    "note": "Proposed value equals the stored value."
+  },
+  {
+    "case_id": "A_noop_20",
+    "category": "rejected_by_rules",
+    "product_id": 20,
+    "corrupt": null,
+    "request": {
+      "kind": "field_update",
+      "field_path": "lifespan",
+      "new_value": 50.0,
+      "reason": "Confirming this is right.",
+      "source": "human",
+      "submitted_by": "reviewer",
+      "replacement": null
+    },
+    "expected_action": "rejected",
+    "expected_triage": null,
+    "note": "Proposed value equals the stored value."
+  },
+  {
+    "case_id": "A_noop_22",
+    "category": "rejected_by_rules",
+    "product_id": 22,
+    "corrupt": null,
+    "request": {
+      "kind": "field_update",
+      "field_path": "lifespan",
+      "new_value": null,
+      "reason": "Confirming this is right.",
+      "source": "human",
+      "submitted_by": "reviewer",
+      "replacement": null
+    },
+    "expected_action": "rejected",
+    "expected_triage": null,
+    "note": "Proposed value equals the stored value."
+  },
+  {
+    "case_id": "A_badpath_6",
+    "category": "rejected_by_rules",
+    "product_id": 6,
+    "corrupt": null,
+    "request": {
+      "kind": "field_update",
+      "field_path": "carbon_footprint",
+      "new_value": 12.0,
+      "reason": "Adding the carbon footprint field.",
+      "source": "human",
+      "submitted_by": "reviewer",
+      "replacement": null
+    },
+    "expected_action": "rejected",
+    "expected_triage": null,
+    "note": "Field does not exist in the schema."
+  },
+  {
+    "case_id": "A_badpath_20",
+    "category": "rejected_by_rules",
+    "product_id": 20,
+    "corrupt": null,
+    "request": {
+      "kind": "field_update",
+      "field_path": "carbon_footprint",
+      "new_value": 12.0,
+      "reason": "Adding the carbon footprint field.",
+      "source": "human",
+      "submitted_by": "reviewer",
+      "replacement": null
+    },
+    "expected_action": "rejected",
+    "expected_triage": null,
+    "note": "Field does not exist in the schema."
+  },
+  {
+    "case_id": "A_badpath_22",
+    "category": "rejected_by_rules",
+    "product_id": 22,
+    "corrupt": null,
+    "request": {
+      "kind": "field_update",
+      "field_path": "carbon_footprint",
+      "new_value": 12.0,
+      "reason": "Adding the carbon footprint field.",
+      "source": "human",
+      "submitted_by": "reviewer",
+      "replacement": null
+    },
+    "expected_action": "rejected",
+    "expected_triage": null,
+    "note": "Field does not exist in the schema."
+  },
+  {
+    "case_id": "A_badmaterial_6",
+    "category": "rejected_by_rules",
+    "product_id": 6,
+    "corrupt": null,
+    "request": {
+      "kind": "field_update",
+      "field_path": "product_integrity.comp[Unobtainium].percentage",
+      "new_value": 5.0,
+      "reason": "Adding the missing material.",
+      "source": "human",
+      "submitted_by": "reviewer",
+      "replacement": null
+    },
+    "expected_action": "rejected",
+    "expected_triage": null,
+    "note": "Names a material that is not in this product's composition."
+  },
+  {
+    "case_id": "A_badmaterial_20",
+    "category": "rejected_by_rules",
+    "product_id": 20,
+    "corrupt": null,
+    "request": {
+      "kind": "field_update",
+      "field_path": "product_integrity.comp[Unobtainium].percentage",
+      "new_value": 5.0,
+      "reason": "Adding the missing material.",
+      "source": "human",
+      "submitted_by": "reviewer",
+      "replacement": null
+    },
+    "expected_action": "rejected",
+    "expected_triage": null,
+    "note": "Names a material that is not in this product's composition."
+  },
+  {
+    "case_id": "A_over100_6",
+    "category": "rejected_by_rules",
+    "product_id": 6,
+    "corrupt": null,
+    "request": {
+      "kind": "field_update",
+      "field_path": "product_integrity.comp[Basalt].percentage",
+      "new_value": 104.0,
+      "reason": "This material is the bulk of the product.",
+      "source": "human",
+      "submitted_by": "reviewer",
+      "replacement": null
+    },
+    "expected_action": "rejected",
+    "expected_triage": null,
+    "note": "Pushes the composition above 100%, which check_composition treats as an arithmetic error."
+  },
+  {
+    "case_id": "A_over100_20",
+    "category": "rejected_by_rules",
+    "product_id": 20,
+    "corrupt": null,
+    "request": {
+      "kind": "field_update",
+      "field_path": "product_integrity.comp[Cement].percentage",
+      "new_value": 114.63,
+      "reason": "This material is the bulk of the product.",
+      "source": "human",
+      "submitted_by": "reviewer",
+      "replacement": null
+    },
+    "expected_action": "rejected",
+    "expected_triage": null,
+    "note": "Pushes the composition above 100%, which check_composition treats as an arithmetic error."
+  },
+  {
+    "case_id": "B_expiry_6",
+    "category": "applied_by_rules",
+    "product_id": 6,
+    "corrupt": null,
+    "request": {
+      "kind": "expiry",
+      "field_path": null,
+      "new_value": null,
+      "reason": "Validity date has passed.",
+      "source": "scheduler",
+      "submitted_by": "reconcile-job",
+      "replacement": null
+    },
+    "expected_action": "applied",
+    "expected_triage": null,
+    "note": "Expiry is produced by the nightly job reading a date. Not a proposal."
+  },
+  {
+    "case_id": "B_expiry_20",
+    "category": "applied_by_rules",
+    "product_id": 20,
+    "corrupt": null,
+    "request": {
+      "kind": "expiry",
+      "field_path": null,
+      "new_value": null,
+      "reason": "Validity date has passed.",
+      "source": "scheduler",
+      "submitted_by": "reconcile-job",
+      "replacement": null
+    },
+    "expected_action": "applied",
+    "expected_triage": null,
+    "note": "Expiry is produced by the nightly job reading a date. Not a proposal."
+  },
+  {
+    "case_id": "B_expiry_22",
+    "category": "applied_by_rules",
+    "product_id": 22,
+    "corrupt": null,
+    "request": {
+      "kind": "expiry",
+      "field_path": null,
+      "new_value": null,
+      "reason": "Validity date has passed.",
+      "source": "scheduler",
+      "submitted_by": "reconcile-job",
+      "replacement": null
+    },
+    "expected_action": "applied",
+    "expected_triage": null,
+    "note": "Expiry is produced by the nightly job reading a date. Not a proposal."
+  },
+  {
+    "case_id": "B_repair_6",
+    "category": "applied_by_rules",
+    "product_id": 6,
+    "corrupt": {
+      "product_integrity.comp[Basalt].percentage": 88.5
+    },
+    "request": {
+      "kind": "field_update",
+      "field_path": "product_integrity.comp[Basalt].percentage",
+      "new_value": 57.5,
+      "reason": "The percentages currently add up to more than the whole product.",
+      "source": "human",
+      "submitted_by": "reviewer",
+      "replacement": null
+    },
+    "expected_action": "applied",
+    "expected_triage": null,
+    "note": "The stored record contradicts itself; this change resolves it and breaks nothing. No judgement required."
+  },
+  {
+    "case_id": "B_repair_20",
+    "category": "applied_by_rules",
+    "product_id": 20,
+    "corrupt": {
+      "product_integrity.comp[Cement].percentage": 32.37
+    },
+    "request": {
+      "kind": "field_update",
+      "field_path": "product_integrity.comp[Cement].percentage",
+      "new_value": 12.0,
+      "reason": "The percentages currently add up to more than the whole product.",
+      "source": "human",
+      "submitted_by": "reviewer",
+      "replacement": null
+    },
+    "expected_action": "applied",
+    "expected_triage": null,
+    "note": "The stored record contradicts itself; this change resolves it and breaks nothing. No judgement required."
+  },
+  {
+    "case_id": "B_repair_22",
+    "category": "applied_by_rules",
+    "product_id": 22,
+    "corrupt": {
+      "product_integrity.comp[Hydraulic binders].percentage": 37.3113
+    },
+    "request": {
+      "kind": "field_update",
+      "field_path": "product_integrity.comp[Hydraulic binders].percentage",
+      "new_value": 17.3113,
+      "reason": "The percentages currently add up to more than the whole product.",
+      "source": "human",
+      "submitted_by": "reviewer",
+      "replacement": null
+    },
+    "expected_action": "applied",
+    "expected_triage": null,
+    "note": "The stored record contradicts itself; this change resolves it and breaks nothing. No judgement required."
+  },
+  {
+    "case_id": "B_repair_30",
+    "category": "applied_by_rules",
+    "product_id": 30,
+    "corrupt": {
+      "product_integrity.comp[Clinker].percentage": 92.0
+    },
+    "request": {
+      "kind": "field_update",
+      "field_path": "product_integrity.comp[Clinker].percentage",
+      "new_value": 72.0,
+      "reason": "The percentages currently add up to more than the whole product.",
+      "source": "human",
+      "submitted_by": "reviewer",
+      "replacement": null
+    },
+    "expected_action": "applied",
+    "expected_triage": null,
+    "note": "The stored record contradicts itself; this change resolves it and breaks nothing. No judgement required."
+  },
+  {
+    "case_id": "C_material_gwp_6",
+    "category": "always_reviewed",
+    "product_id": 6,
+    "corrupt": null,
+    "request": {
+      "kind": "field_update",
+      "field_path": "impacts.gwp_total",
+      "new_value": 11.22,
+      "reason": "The published table rounds differently.",
+      "source": "human",
+      "submitted_by": "reviewer",
+      "replacement": null
+    },
+    "expected_action": "pending_review",
+    "expected_triage": null,
+    "note": "A published headline figure. Never auto-applied."
+  },
+  {
+    "case_id": "C_material_gwp_20",
+    "category": "always_reviewed",
+    "product_id": 20,
+    "corrupt": null,
+    "request": {
+      "kind": "field_update",
+      "field_path": "impacts.gwp_total",
+      "new_value": 213.18,
+      "reason": "The published table rounds differently.",
+      "source": "human",
+      "submitted_by": "reviewer",
+      "replacement": null
+    },
+    "expected_action": "pending_review",
+    "expected_triage": null,
+    "note": "A published headline figure. Never auto-applied."
+  },
+  {
+    "case_id": "C_material_gwp_22",
+    "category": "always_reviewed",
+    "product_id": 22,
+    "corrupt": null,
+    "request": {
+      "kind": "field_update",
+      "field_path": "impacts.gwp_total",
+      "new_value": 250.92,
+      "reason": "The published table rounds differently.",
+      "source": "human",
+      "submitted_by": "reviewer",
+      "replacement": null
+    },
+    "expected_action": "pending_review",
+    "expected_triage": null,
+    "note": "A published headline figure. Never auto-applied."
+  },
+  {
+    "case_id": "C_material_unit_6",
+    "category": "always_reviewed",
+    "product_id": 6,
+    "corrupt": null,
+    "request": {
+      "kind": "field_update",
+      "field_path": "reference_unit",
+      "new_value": "kg",
+      "reason": "I believe this EPD is declared per kilogram.",
+      "source": "human",
+      "submitted_by": "reviewer",
+      "replacement": null
+    },
+    "expected_action": "pending_review",
+    "expected_triage": null,
+    "note": "Changing the declared unit reinterprets every number attached to it."
+  },
+  {
+    "case_id": "C_material_unit_20",
+    "category": "always_reviewed",
+    "product_id": 20,
+    "corrupt": null,
+    "request": {
+      "kind": "field_update",
+      "field_path": "reference_unit",
+      "new_value": "kg",
+      "reason": "I believe this EPD is declared per kilogram.",
+      "source": "human",
+      "submitted_by": "reviewer",
+      "replacement": null
+    },
+    "expected_action": "pending_review",
+    "expected_triage": null,
+    "note": "Changing the declared unit reinterprets every number attached to it."
+  },
+  {
+    "case_id": "C_material_date_6",
+    "category": "always_reviewed",
+    "product_id": 6,
+    "corrupt": null,
+    "request": {
+      "kind": "field_update",
+      "field_path": "date",
+      "new_value": "2030-01-01",
+      "reason": "The manufacturer told me it was extended.",
+      "source": "human",
+      "submitted_by": "reviewer",
+      "replacement": null
+    },
+    "expected_action": "pending_review",
+    "expected_triage": null,
+    "note": "The expiry date governs whether the EPD may be cited at all."
+  },
+  {
+    "case_id": "C_material_date_20",
+    "category": "always_reviewed",
+    "product_id": 20,
+    "corrupt": null,
+    "request": {
+      "kind": "field_update",
+      "field_path": "date",
+      "new_value": "2030-01-01",
+      "reason": "The manufacturer told me it was extended.",
+      "source": "human",
+      "submitted_by": "reviewer",
+      "replacement": null
+    },
+    "expected_action": "pending_review",
+    "expected_triage": null,
+    "note": "The expiry date governs whether the EPD may be cited at all."
+  },
+  {
+    "case_id": "C_replacement_6",
+    "category": "always_reviewed",
+    "product_id": 6,
+    "corrupt": null,
+    "request": {
+      "kind": "record_replacement",
+      "field_path": null,
+      "new_value": null,
+      "reason": "Manufacturer published a new version.",
+      "source": "manufacturer_feed",
+      "submitted_by": "feed-watcher",
+      "replacement": {
+        "product_id": 6,
+        "flag": 0,
+        "prod_name": "SmartRoof Base",
+        "epd_code": "S-P-05317"
+      }
+    },
+    "expected_action": "pending_review",
+    "expected_triage": null,
+    "note": "A new document supersedes the old one; that is never automatic."
+  },
+  {
+    "case_id": "C_replacement_20",
+    "category": "always_reviewed",
+    "product_id": 20,
+    "corrupt": null,
+    "request": {
+      "kind": "record_replacement",
+      "field_path": null,
+      "new_value": null,
+      "reason": "Manufacturer published a new version.",
+      "source": "manufacturer_feed",
+      "submitted_by": "feed-watcher",
+      "replacement": {
+        "product_id": 20,
+        "flag": 0,
+        "prod_name": "Ready Mixed Concrete C20/25 XC1, S2",
+        "epd_code": "S-P-04767"
+      }
+    },
+    "expected_action": "pending_review",
+    "expected_triage": null,
+    "note": "A new document supersedes the old one; that is never automatic."
+  },
+  {
+    "case_id": "D_bad_density_6",
+    "category": "rejected_by_rules",
+    "product_id": 6,
+    "corrupt": null,
+    "request": {
+      "kind": "field_update",
+      "field_path": "density",
+      "new_value": 9.5,
+      "reason": "The datasheet says this is the weight per square metre.",
+      "source": "human",
+      "submitted_by": "reviewer",
+      "replacement": null
+    },
+    "expected_action": "rejected",
+    "expected_triage": null,
+    "note": "Stored density 95.0 x thickness 0.1 = 9.5 kg, matching the declared 9.5 kg/m2. The proposal breaks that."
+  },
+  {
+    "case_id": "D_bad_density_5",
+    "category": "rejected_by_rules",
+    "product_id": 5,
+    "corrupt": null,
+    "request": {
+      "kind": "field_update",
+      "field_path": "density",
+      "new_value": 10.0,
+      "reason": "The datasheet says this is the weight per square metre.",
+      "source": "human",
+      "submitted_by": "reviewer",
+      "replacement": null
+    },
+    "expected_action": "rejected",
+    "expected_triage": null,
+    "note": "Stored density 100.0 x thickness 0.1 = 10 kg, matching the declared 10.0 kg/m2. The proposal breaks that."
+  },
+  {
+    "case_id": "D_bad_density_7",
+    "category": "rejected_by_rules",
+    "product_id": 7,
+    "corrupt": null,
+    "request": {
+      "kind": "field_update",
+      "field_path": "density",
+      "new_value": 14.0,
+      "reason": "The datasheet says this is the weight per square metre.",
+      "source": "human",
+      "submitted_by": "reviewer",
+      "replacement": null
+    },
+    "expected_action": "rejected",
+    "expected_triage": null,
+    "note": "Stored density 140.0 x thickness 0.022 = 3.08 kg, matching the declared 3.08 kg/m2. The proposal breaks that."
+  },
+  {
+    "case_id": "D_bad_density_86",
+    "category": "rejected_by_rules",
+    "product_id": 86,
+    "corrupt": null,
+    "request": {
+      "kind": "field_update",
+      "field_path": "density",
+      "new_value": 228.75,
+      "reason": "The datasheet says this is the weight per square metre.",
+      "source": "human",
+      "submitted_by": "reviewer",
+      "replacement": null
+    },
+    "expected_action": "rejected",
+    "expected_triage": null,
+    "note": "Stored density 2287.5 x thickness 0.08 = 183 kg, matching the declared 183.0 kg/m2. The proposal breaks that."
+  },
+  {
+    "case_id": "E_fix_density_6",
+    "category": "applied_by_rules",
+    "product_id": 6,
+    "corrupt": {
+      "density": 950.0
+    },
+    "request": {
+      "kind": "field_update",
+      "field_path": "density",
+      "new_value": 95.0,
+      "reason": "Density is out by a factor of ten against the stated weight per unit.",
+      "source": "human",
+      "submitted_by": "reviewer",
+      "replacement": null
+    },
+    "expected_action": "applied",
+    "expected_triage": null,
+    "note": "The record has been corrupted to 950; the proposal restores the value consistent with the stated 9.5 kg/m2."
+  },
+  {
+    "case_id": "E_fix_density_5",
+    "category": "applied_by_rules",
+    "product_id": 5,
+    "corrupt": {
+      "density": 1000.0
+    },
+    "request": {
+      "kind": "field_update",
+      "field_path": "density",
+      "new_value": 100.0,
+      "reason": "Density is out by a factor of ten against the stated weight per unit.",
+      "source": "human",
+      "submitted_by": "reviewer",
+      "replacement": null
+    },
+    "expected_action": "applied",
+    "expected_triage": null,
+    "note": "The record has been corrupted to 1000; the proposal restores the value consistent with the stated 10.0 kg/m2."
+  },
+  {
+    "case_id": "E_fix_density_7",
+    "category": "applied_by_rules",
+    "product_id": 7,
+    "corrupt": {
+      "density": 1400.0
+    },
+    "request": {
+      "kind": "field_update",
+      "field_path": "density",
+      "new_value": 140.0,
+      "reason": "Density is out by a factor of ten against the stated weight per unit.",
+      "source": "human",
+      "submitted_by": "reviewer",
+      "replacement": null
+    },
+    "expected_action": "applied",
+    "expected_triage": null,
+    "note": "The record has been corrupted to 1400; the proposal restores the value consistent with the stated 3.08 kg/m2."
+  },
+  {
+    "case_id": "E_fix_density_86",
+    "category": "applied_by_rules",
+    "product_id": 86,
+    "corrupt": {
+      "density": 22875.0
+    },
+    "request": {
+      "kind": "field_update",
+      "field_path": "density",
+      "new_value": 2287.5,
+      "reason": "Density is out by a factor of ten against the stated weight per unit.",
+      "source": "human",
+      "submitted_by": "reviewer",
+      "replacement": null
+    },
+    "expected_action": "applied",
+    "expected_triage": null,
+    "note": "The record has been corrupted to 22875; the proposal restores the value consistent with the stated 183.0 kg/m2."
+  },
+  {
+    "case_id": "E_fix_lifespan_6",
+    "category": "model_should_apply",
+    "product_id": 6,
+    "corrupt": {
+      "lifespan": 500.0
+    },
+    "request": {
+      "kind": "field_update",
+      "field_path": "lifespan",
+      "new_value": 50.0,
+      "reason": "A reference service life of 500 years is not plausible for this product; the EPD states 50.",
+      "source": "human",
+      "submitted_by": "reviewer",
+      "replacement": null
+    },
+    "expected_action": "applied",
+    "expected_triage": [
+      "decimal_slip",
+      "transcription",
+      "genuine_correction"
+    ],
+    "note": "Service life corrupted by a factor of ten; the proposal restores it."
+  },
+  {
+    "case_id": "E_fix_lifespan_20",
+    "category": "model_should_apply",
+    "product_id": 20,
+    "corrupt": {
+      "lifespan": 500.0
+    },
+    "request": {
+      "kind": "field_update",
+      "field_path": "lifespan",
+      "new_value": 50.0,
+      "reason": "A reference service life of 500 years is not plausible for this product; the EPD states 50.",
+      "source": "human",
+      "submitted_by": "reviewer",
+      "replacement": null
+    },
+    "expected_action": "applied",
+    "expected_triage": [
+      "decimal_slip",
+      "transcription",
+      "genuine_correction"
+    ],
+    "note": "Service life corrupted by a factor of ten; the proposal restores it."
+  },
+  {
+    "case_id": "E_fix_lifespan_5",
+    "category": "model_should_apply",
+    "product_id": 5,
+    "corrupt": {
+      "lifespan": 500.0
+    },
+    "request": {
+      "kind": "field_update",
+      "field_path": "lifespan",
+      "new_value": 50.0,
+      "reason": "A reference service life of 500 years is not plausible for this product; the EPD states 50.",
+      "source": "human",
+      "submitted_by": "reviewer",
+      "replacement": null
+    },
+    "expected_action": "applied",
+    "expected_triage": [
+      "decimal_slip",
+      "transcription",
+      "genuine_correction"
+    ],
+    "note": "Service life corrupted by a factor of ten; the proposal restores it."
+  },
+  {
+    "case_id": "E_fix_lifespan_7",
+    "category": "model_should_apply",
+    "product_id": 7,
+    "corrupt": {
+      "lifespan": 500.0
+    },
+    "request": {
+      "kind": "field_update",
+      "field_path": "lifespan",
+      "new_value": 50.0,
+      "reason": "A reference service life of 500 years is not plausible for this product; the EPD states 50.",
+      "source": "human",
+      "submitted_by": "reviewer",
+      "replacement": null
+    },
+    "expected_action": "applied",
+    "expected_triage": [
+      "decimal_slip",
+      "transcription",
+      "genuine_correction"
+    ],
+    "note": "Service life corrupted by a factor of ten; the proposal restores it."
+  },
+  {
+    "case_id": "F_ambiguous_8",
+    "category": "model_should_defer",
+    "product_id": 8,
+    "corrupt": null,
+    "request": {
+      "kind": "field_update",
+      "field_path": "lifespan",
+      "new_value": 45.0,
+      "reason": "I recall the declared service life being shorter.",
+      "source": "human",
+      "submitted_by": "reviewer",
+      "replacement": null
+    },
+    "expected_action": "pending_review",
+    "expected_triage": null,
+    "note": "Nothing in the record cross-checks service life. Neither value can be confirmed, so a person should look."
+  },
+  {
+    "case_id": "F_ambiguous_12",
+    "category": "model_should_defer",
+    "product_id": 12,
+    "corrupt": null,
+    "request": {
+      "kind": "field_update",
+      "field_path": "lifespan",
+      "new_value": 10.0,
+      "reason": "I recall the declared service life being shorter.",
+      "source": "human",
+      "submitted_by": "reviewer",
+      "replacement": null
+    },
+    "expected_action": "pending_review",
+    "expected_triage": null,
+    "note": "Nothing in the record cross-checks service life. Neither value can be confirmed, so a person should look."
+  },
+  {
+    "case_id": "F_ambiguous_13",
+    "category": "model_should_defer",
+    "product_id": 13,
+    "corrupt": null,
+    "request": {
+      "kind": "field_update",
+      "field_path": "lifespan",
+      "new_value": 10.0,
+      "reason": "I recall the declared service life being shorter.",
+      "source": "human",
+      "submitted_by": "reviewer",
+      "replacement": null
+    },
+    "expected_action": "pending_review",
+    "expected_triage": null,
+    "note": "Nothing in the record cross-checks service life. Neither value can be confirmed, so a person should look."
+  },
+  {
+    "case_id": "F_ambiguous_14",
+    "category": "model_should_defer",
+    "product_id": 14,
+    "corrupt": null,
+    "request": {
+      "kind": "field_update",
+      "field_path": "lifespan",
+      "new_value": 95.0,
+      "reason": "I recall the declared service life being shorter.",
+      "source": "human",
+      "submitted_by": "reviewer",
+      "replacement": null
+    },
+    "expected_action": "pending_review",
+    "expected_triage": null,
+    "note": "Nothing in the record cross-checks service life. Neither value can be confirmed, so a person should look."
+  },
+  {
+    "case_id": "D_bad_thickness_6",
+    "category": "rejected_by_rules",
+    "product_id": 6,
+    "corrupt": null,
+    "request": {
+      "kind": "field_update",
+      "field_path": "thickness",
+      "new_value": 0.11,
+      "reason": "Measured slightly thicker on the sample we received.",
+      "source": "human",
+      "submitted_by": "reviewer",
+      "replacement": null
+    },
+    "expected_action": "rejected",
+    "expected_triage": null,
+    "note": "Thickness 0.1 m x density 95.0 kg/m3 = 9.5 kg, matching the declared 9.5 kg/m2. A 10% thicker value breaks that."
+  },
+  {
+    "case_id": "D_bad_thickness_5",
+    "category": "rejected_by_rules",
+    "product_id": 5,
+    "corrupt": null,
+    "request": {
+      "kind": "field_update",
+      "field_path": "thickness",
+      "new_value": 0.11,
+      "reason": "Measured slightly thicker on the sample we received.",
+      "source": "human",
+      "submitted_by": "reviewer",
+      "replacement": null
+    },
+    "expected_action": "rejected",
+    "expected_triage": null,
+    "note": "Thickness 0.1 m x density 100.0 kg/m3 = 10 kg, matching the declared 10.0 kg/m2. A 10% thicker value breaks that."
+  },
+  {
+    "case_id": "D_bad_thickness_7",
+    "category": "rejected_by_rules",
+    "product_id": 7,
+    "corrupt": null,
+    "request": {
+      "kind": "field_update",
+      "field_path": "thickness",
+      "new_value": 0.0242,
+      "reason": "Measured slightly thicker on the sample we received.",
+      "source": "human",
+      "submitted_by": "reviewer",
+      "replacement": null
+    },
+    "expected_action": "rejected",
+    "expected_triage": null,
+    "note": "Thickness 0.022 m x density 140.0 kg/m3 = 3.08 kg, matching the declared 3.08 kg/m2. A 10% thicker value breaks that."
+  }
+]

@@ -127,14 +127,33 @@ def test_expiry_is_applied_without_question(record):
     assert "calendar" in d.reason
 
 
-def test_replacement_always_goes_to_a_person(record):
+def test_valid_replacement_goes_to_a_person(record):
     d = changes.screen(
         record,
         request_for(record, kind=ChangeKind.RECORD_REPLACEMENT,
                     source=Source.MANUFACTURER_FEED,
-                    replacement={"product_id": 6, "prod_name": "SmartRoof Base v2"}),
+                    replacement={"product_id": 6, "flag": 0,
+                                 "prod_name": "SmartRoof Base v2",
+                                 "epd_code": "S-P-05317-v2"}),
     )
     assert d.action is Action.PENDING_REVIEW
+
+
+def test_replacement_that_is_not_a_valid_epd_is_rejected(record):
+    """A replacement is a whole document, so it has to be a whole document.
+
+    EPDProduct requires product_id and flag. Accepting a partial one would put
+    a record in the store that later code reads fields off and finds missing.
+    """
+    d = changes.screen(
+        record,
+        request_for(record, kind=ChangeKind.RECORD_REPLACEMENT,
+                    source=Source.MANUFACTURER_FEED,
+                    replacement={"prod_name": "SmartRoof Base v2"}),
+    )
+    assert d.action is Action.REJECTED
+    assert "EPD schema" in d.reason
+    assert d.blocking_issues
 
 
 def test_change_that_repairs_an_inconsistency_is_applied(records_by_id):
@@ -165,12 +184,18 @@ def test_change_that_repairs_an_inconsistency_is_applied(records_by_id):
 # ---------------------------------------------------------------------------
 
 def test_plausible_looking_change_needs_judgement(record):
-    """density 95.0 -> 9.5 breaks no arithmetic and fixes nothing.
+    """lifespan 50 -> 45 breaks no arithmetic and fixes nothing.
 
-    Code cannot tell whether that is a decimal slip being corrected or being
-    introduced. This is exactly the case the model exists for.
+    Nothing else in the record refers to service life, so no check can confirm
+    or refute it. This is the shape of question the model exists for.
+
+    This test used to use density. It no longer can: check_density_thickness
+    now settles density against the declared conversion ratio, so it stopped
+    being a judgement call. The set of things the model is asked shrinks every
+    time a relationship turns out to be expressible as arithmetic, and that is
+    the direction it should move.
     """
-    assert changes.screen(record, request_for(record, "density", 9.5)) is None
+    assert changes.screen(record, request_for(record, "lifespan", 45.0)) is None
 
 
 def test_headline_impact_change_needs_judgement(record):
@@ -253,3 +278,47 @@ def test_every_seed_record_has_a_usable_expiry_date(all_records):
         except ValueError:
             unparseable.append(r["product_id"])
     assert unparseable == []
+
+
+def test_implausible_on_a_material_field_still_goes_to_a_person(record):
+    """Regression: the eval caught this ordering the wrong way round.
+
+    If the implausible check runs before the material-field check, the model
+    gets to reject a published figure by itself - the same authority the
+    material rule exists to deny it. The correction the submitter reported is
+    then discarded and the underlying error stays in the data.
+    """
+    d = changes.finalise(
+        request_for(record, "impacts.gwp_total", 11.22),
+        old_value=11.0,
+        triage=TriageClass.IMPLAUSIBLE,
+        confidence=0.95,
+        rationale="does not match the sum of the parts",
+    )
+    assert d.action is Action.PENDING_REVIEW
+    assert d.triage is TriageClass.IMPLAUSIBLE, "the model's view is kept as advice"
+
+
+def test_density_cross_check_rejects_a_bad_density(records_by_id):
+    """Product 86: 2287.5 kg/m3 x 0.08 m = 183 kg/m2, exactly as declared.
+
+    Regression for the one unsafe apply the eval found. The model called this
+    same proposal a decimal_slip at 0.90 confidence; arithmetic does not need a
+    model's opinion, so this must now never reach one.
+    """
+    r = records_by_id[86]
+    d = changes.screen(r, request_for(r, "density", r["density"] / 10))
+    assert d is not None, "must be settled by the rules, not sent to the model"
+    assert d.action is Action.REJECTED
+    assert "183" in d.blocking_issues[0]
+
+
+def test_density_cross_check_is_silent_without_all_three_values(all_records):
+    """A missing thickness is not a contradiction. No false positives."""
+    from domain import validation
+
+    flagged = [
+        r["product_id"] for r in all_records
+        if any(i.field == "density" for i in validation.validate(r))
+    ]
+    assert flagged == []

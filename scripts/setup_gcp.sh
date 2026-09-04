@@ -1,93 +1,105 @@
 #!/usr/bin/env bash
-# One-time project setup. Idempotent: safe to re-run.
+# One-time project setup. Idempotent - safe to re-run.
 #
 # Creates everything that does NOT depend on a deployed service URL. The push
-# subscription and the Scheduler job need the worker's URL, so they live in
-# scripts/deploy.sh instead.
+# subscription and the Scheduler job need the worker's address, so they live in
+# scripts/deploy.sh.
 #
-# Cost: every resource here is free at rest. Pub/Sub topics, BigQuery tables,
-# service accounts and secrets bill on use (messages, bytes scanned, secret
-# accesses), and this project's volume is orders of magnitude inside free tier.
+# COST: everything here is free at rest. Topics, tables, service accounts and
+# secrets bill on use - messages published, bytes scanned, secret versions
+# accessed - and this project's volume is far inside the free tier.
 set -euo pipefail
 
-PROJECT="${PROJECT:-data-curator-507614}"
-REGION="${REGION:-europe-west1}"
-BQ_LOCATION="${BQ_LOCATION:-EU}"
-DATASET="${DATASET:-curator}"
-TOPIC="${TOPIC:-hubspot-events}"
-DLQ_TOPIC="${DLQ_TOPIC:-hubspot-events-dlq}"
+cd "$(dirname "$0")/.."
+. scripts/gcp_env.sh
 
-ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 say() { printf '\n\033[1m==> %s\033[0m\n' "$*"; }
+sa_email() { echo "$1@$PROJECT.iam.gserviceaccount.com"; }
 
 gcloud config set project "$PROJECT" >/dev/null 2>&1
 
-# --- Pub/Sub topics ---------------------------------------------------------
-# Two topics, not one. The DLQ is where messages go after the worker has failed
-# them max_delivery_attempts times. Without it, a message the worker can never
-# process (bad schema, a bug) redelivers forever, burning LLM tokens on every
-# attempt and hiding real failures behind endless retries.
+# --- Pub/Sub -----------------------------------------------------------------
+# Two topics, not one.
+#
+# epd-changes carries change requests. epd-changes-dlq is where a message goes
+# after the worker has failed it several times. Without a dead-letter topic, a
+# message the worker can NEVER process - a bug, a shape it does not understand -
+# redelivers forever: it burns a model call on every attempt, and it hides real
+# failures inside an endless retry loop that looks like normal traffic.
 say "Pub/Sub topics"
 for t in "$TOPIC" "$DLQ_TOPIC"; do
-  gcloud pubsub topics create "$t" 2>/dev/null && echo "created $t" || echo "exists  $t"
+  gcloud pubsub topics create "$t" 2>/dev/null && echo "  created $t" || echo "  exists  $t"
 done
 
-# --- BigQuery ---------------------------------------------------------------
-say "BigQuery dataset ($BQ_LOCATION)"
+# A topic with no subscription silently discards everything published to it.
+# Without this, the DLQ would be decorative and dead messages would vanish.
+say "DLQ inspection subscription"
+gcloud pubsub subscriptions create "${DLQ_TOPIC}-sub" \
+  --topic="$DLQ_TOPIC" --message-retention-duration=7d 2>/dev/null \
+  && echo "  created ${DLQ_TOPIC}-sub" || echo "  exists  ${DLQ_TOPIC}-sub"
+
+# --- BigQuery ----------------------------------------------------------------
+say "BigQuery dataset and schema"
 bq --location="$BQ_LOCATION" mk --dataset \
-   --description="Curated HubSpot golden record + agent registry" \
-   "$PROJECT:$DATASET" 2>/dev/null && echo "created $DATASET" || echo "exists  $DATASET"
-
-say "BigQuery tables and views"
-for f in "$ROOT"/sql/0[123]_*.sql; do
-  echo "  applying $(basename "$f")"
+   --description="EPD golden record, change log and agent registry" \
+   "$PROJECT:$DATASET" 2>/dev/null && echo "  created $DATASET" || echo "  exists  $DATASET"
+for f in sql/0*.sql; do
+  printf "  applying %-26s " "$(basename "$f")"
   bq --location="$BQ_LOCATION" query --project_id="$PROJECT" \
-     --use_legacy_sql=false --quiet < "$f" >/dev/null
+     --use_legacy_sql=false --quiet < "$f" >/dev/null && echo "OK"
 done
 
-# --- Service accounts -------------------------------------------------------
-# One identity per service, each with only the permissions that service needs.
-# A single shared account would mean the public webhook endpoint also holds
-# BigQuery write access - a compromise of the least-trusted component would
-# hand over the datastore.
+# --- Service accounts --------------------------------------------------------
+# One identity per service, each holding only what that service needs.
+#
+# A single shared account would mean the public API - the least trusted thing
+# here, since anyone can send it a request - also holds BigQuery write access.
+# Splitting them means compromising the front door does not hand over the store.
 say "Service accounts"
-declare -A SAS=(
-  [curator-ingest]="Ingest service: publishes to Pub/Sub, nothing else"
-  [curator-worker]="Enrichment worker: reads secrets, writes BigQuery"
-  [curator-pubsub]="Pub/Sub push identity: invokes the worker"
-  [curator-scheduler]="Cloud Scheduler identity: runs reconciliation"
-)
-for sa in "${!SAS[@]}"; do
-  gcloud iam service-accounts create "$sa" --display-name="${SAS[$sa]}" 2>/dev/null \
-    && echo "created $sa" || echo "exists  $sa"
-done
+create_sa() {
+  gcloud iam service-accounts create "$1" --display-name="$2" 2>/dev/null \
+    && echo "  created $1" || echo "  exists  $1"
+}
+create_sa curator-api       "API: publishes change requests to Pub/Sub"
+create_sa curator-worker    "Worker: reads secrets, writes BigQuery"
+create_sa curator-pubsub    "Pub/Sub push identity: invokes the worker"
+create_sa curator-scheduler "Cloud Scheduler identity: runs reconciliation"
 
-sa_email() { echo "$1@$PROJECT.iam.gserviceaccount.com"; }
-
-say "IAM bindings"
-# ingest may publish to the events topic - and only that topic.
+say "IAM"
+# The API may publish to the changes topic, and nothing else. It cannot read or
+# write BigQuery at all - it never touches the store.
 gcloud pubsub topics add-iam-policy-binding "$TOPIC" \
-  --member="serviceAccount:$(sa_email curator-ingest)" \
+  --member="serviceAccount:$(sa_email curator-api)" \
   --role="roles/pubsub.publisher" --quiet >/dev/null
-echo "  ingest    -> pubsub.publisher on $TOPIC"
+echo "  api       -> pubsub.publisher on $TOPIC"
 
-# worker writes curated rows.
-bq add-iam-policy-binding --project_id="$PROJECT" \
-  --member="serviceAccount:$(sa_email curator-worker)" \
-  --role="roles/bigquery.dataEditor" "$PROJECT:$DATASET" >/dev/null 2>&1 || true
+# The worker publishes too - the nightly job raises expiry requests onto the
+# same topic rather than editing records directly, which is what gives an
+# expiry the same audit trail as any other change. Easy to forget, because the
+# worker is otherwise a consumer; it shows up as a 403 the first time a record
+# actually expires.
+gcloud pubsub topics add-iam-policy-binding "$TOPIC"   --member="serviceAccount:$(sa_email curator-worker)"   --role="roles/pubsub.publisher" --quiet >/dev/null
+echo "  worker    -> pubsub.publisher on $TOPIC (for expiry requests)"
+
+# The worker is the ONLY writer to BigQuery. One writer means one place where
+# the append-only rule can be broken, and one place to look when it is.
+# Dataset-level access goes through the dataset's own access list. The
+# obvious `bq add-iam-policy-binding` returns "This feature requires
+# allowlisting" on an ordinary project, and tolerating that failure means the
+# grant silently does not happen - you find out from a 403 in the logs later.
+python scripts/grant_dataset_access.py
 gcloud projects add-iam-policy-binding "$PROJECT" \
   --member="serviceAccount:$(sa_email curator-worker)" \
   --role="roles/bigquery.jobUser" --condition=None --quiet >/dev/null
-echo "  worker    -> bigquery.dataEditor on $DATASET, bigquery.jobUser on project"
+echo "  worker    -> dataset WRITER + jobUser on project"
 
-# scheduler runs the reconciliation query and records the result.
 gcloud projects add-iam-policy-binding "$PROJECT" \
   --member="serviceAccount:$(sa_email curator-scheduler)" \
   --role="roles/bigquery.jobUser" --condition=None --quiet >/dev/null
 echo "  scheduler -> bigquery.jobUser"
 
-# Dead-lettering is performed by Google's own Pub/Sub service agent, not by us,
-# so that agent needs rights to publish into the DLQ and to ack the original.
+# Dead-lettering is carried out by Google's own Pub/Sub service agent, not by
+# our code, so that agent needs rights to publish into the DLQ.
 PROJECT_NUMBER="$(gcloud projects describe "$PROJECT" --format='value(projectNumber)')"
 PUBSUB_AGENT="service-$PROJECT_NUMBER@gcp-sa-pubsub.iam.gserviceaccount.com"
 gcloud pubsub topics add-iam-policy-binding "$DLQ_TOPIC" \
@@ -95,26 +107,21 @@ gcloud pubsub topics add-iam-policy-binding "$DLQ_TOPIC" \
   --role="roles/pubsub.publisher" --quiet >/dev/null
 echo "  pubsub agent -> pubsub.publisher on $DLQ_TOPIC"
 
-# --- DLQ inspection subscription -------------------------------------------
-# A topic with no subscription silently discards. Without this, dead-lettered
-# messages would be dropped and the DLQ would be decorative.
-say "DLQ inspection subscription"
-gcloud pubsub subscriptions create "${DLQ_TOPIC}-sub" \
-  --topic="$DLQ_TOPIC" --message-retention-duration=7d 2>/dev/null \
-  && echo "created ${DLQ_TOPIC}-sub" || echo "exists  ${DLQ_TOPIC}-sub"
-
-# --- Secrets ----------------------------------------------------------------
+# --- Secrets -----------------------------------------------------------------
+# The API key never appears in the image, the repo, or an environment variable
+# we set by hand. Cloud Run reads it from Secret Manager at start-up using the
+# worker's own identity, and only the worker is granted access.
 say "Secrets"
-for s in openai-api-key hubspot-app-secret; do
-  gcloud secrets create "$s" --replication-policy=automatic 2>/dev/null \
-    && echo "created $s (empty - add a version before deploying)" || echo "exists  $s"
-done
+gcloud secrets create openai-api-key --replication-policy=automatic 2>/dev/null \
+  && echo "  created openai-api-key (empty - add a version before deploying)" \
+  || echo "  exists  openai-api-key"
 gcloud secrets add-iam-policy-binding openai-api-key \
   --member="serviceAccount:$(sa_email curator-worker)" \
   --role="roles/secretmanager.secretAccessor" --quiet >/dev/null
-gcloud secrets add-iam-policy-binding hubspot-app-secret \
-  --member="serviceAccount:$(sa_email curator-ingest)" \
-  --role="roles/secretmanager.secretAccessor" --quiet >/dev/null
-echo "  secret access granted to the one service that needs each"
+echo "  worker may read openai-api-key; nothing else may"
 
-say "Done. Next: add secret versions, then scripts/deploy.sh"
+say "Done"
+echo "Next:"
+echo "  1. add the key:   gcloud secrets versions add openai-api-key --data-file=- <<< \"\$OPENAI_API_KEY\""
+echo "  2. seed the data: python scripts/seed_bigquery.py"
+echo "  3. deploy:        bash scripts/deploy.sh"
