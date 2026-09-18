@@ -23,6 +23,30 @@ Changes arrive from three places. A reviewer spots an error, a manufacturer
 publishes a new version, or a document reaches its expiry date. All three
 become the same kind of request and take the same path.
 
+## Built with
+
+Runtime, in the order a request meets it.
+
+| | |
+| --- | --- |
+| **FastAPI** | The four services. Small and quick to start, which matters on a platform that scales to zero |
+| **Pydantic** | Every record, message and LLM answer has a declared shape. The LLM is held to a schema, so a malformed answer fails at the door instead of downstream |
+| **Pub/Sub** | The queue between the front door and the worker. The front door answers in milliseconds, the slow work happens behind it, and a message that keeps failing lands in a dead-letter queue instead of looping |
+| **OpenAI `gpt-5-mini`** | The judgement call. Behind a five-line interface, so swapping it is one class |
+| **BigQuery** | The datastore in the cloud. Append-only history with SQL over it, no server to run |
+| **DuckDB** | The same datastore on a laptop. One file, no account. This is what lets anyone run the project |
+| **Jinja and HTMX** | The dashboard. Server-rendered, no build step, no JavaScript bundle |
+
+Around it.
+
+| | |
+| --- | --- |
+| **Cloud Run** | Hosting. Scales to zero, so an idle deployment costs nothing |
+| **Secret Manager** | The API key and the webhook signing keys. Never in the image or the repo |
+| **Cloud Scheduler** | Triggers the nightly job |
+| **Terraform** | Every cloud resource above, described in one place and removable with one command |
+| **Docker** | One image per service, all built from the repository root so they share the rules |
+
 ## How it works
 
 ![The decision pipeline](docs/img/pipeline.svg)
@@ -57,8 +81,9 @@ tested. The prompt contains none of them.
 
 ## Running it locally
 
-Runs the whole pipeline on your machine. A local database file stands in for
-BigQuery, and a hardcoded fake stands in for the LLM.
+Runs the whole pipeline on your machine, in offline mode. A local database
+file takes the place of BigQuery, and a small rule-based scorer takes the place
+of the LLM.
 
 ```bash
 git clone https://github.com/eirasroger/data-curator.git
@@ -210,15 +235,15 @@ incoming proposals is deliberately worsened, it climbs to 0.60–0.85 and the
 nightly job raises a flag.
 
 A second alarm watches mean confidence and fires below 0.60. It was going off
-on normal traffic, but only while the offline fake was in use. That fake
-averages 0.53. The LLM averages 0.77, well clear of the alarm. Left as it is.
+on normal traffic, but only in offline mode, which averages 0.53. The LLM
+averages 0.77, well clear of the alarm. Left as it is.
 
-## What the offline fake is good for
+## Offline mode has limits
 
-The fake knows a handful of arithmetic patterns. Run the pipeline with it and
-the results describe the fake. They say nothing about an LLM.
+Offline mode scores a proposal with a few arithmetic patterns. Run the pipeline
+that way and the results describe those patterns. They say nothing about an LLM.
 
-| Same 2000 proposals | fake | gpt-5-mini |
+| Same 2000 proposals | offline | gpt-5-mini |
 | --- | --- | --- |
 | Applied | 349 | 565 |
 | Rejected | 637 | 873 |
@@ -226,9 +251,9 @@ the results describe the fake. They say nothing about an LLM.
 | Mean confidence | 0.53 | 0.77 |
 | Applied at a safe threshold | 0 | 134 |
 
-It never rejects on judgement and never clears the threshold, so everything it
-sees turns into review work. It exists so the pipeline can be run and tested
-for free, and for nothing else.
+Offline mode never rejects on judgement and never clears the threshold, so
+everything it sees turns into review work. It exists so the pipeline can be run
+and tested for free.
 
 ## One score got worse when the system got safer
 
