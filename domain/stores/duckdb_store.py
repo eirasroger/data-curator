@@ -170,10 +170,12 @@ class DuckDBStore:
         event_type: str = "decided",
         actor: str = "pipeline",
         triage_outcome: Any = None,
+        occurred_at: str = "",
     ) -> str:
         event_id = str(uuid.uuid4())
         row = event_row(
-            decision, product_id, event_id, event_type, actor, triage_outcome
+            decision, product_id, event_id, event_type, actor, triage_outcome,
+            occurred_at,
         )
         # The BigQuery table has the model columns whether or not they are sent;
         # an INSERT has to name every column it is not supplying.

@@ -23,11 +23,12 @@ import json
 from pathlib import Path
 from typing import Any
 
+from sim import corpus
+
 ROOT = Path(__file__).resolve().parents[1]
-SEED = ROOT / "seed" / "epds.json"
 OUT = ROOT / "eval" / "cases.json"
 
-records = {r["product_id"]: r for r in json.loads(SEED.read_text(encoding="utf-8"))}
+records = corpus.load_records()
 cases: list[dict] = []
 
 
@@ -69,28 +70,11 @@ def case(
     )
 
 
-def kg_per_unit(rec: dict) -> float | None:
-    unit = rec.get("reference_unit")
-    for r in rec.get("conversion_ratios") or []:
-        if r.get("measured_unit") == "kg" and r.get("per_unit") == unit:
-            return r.get("measured_units_per_one_per_unit")
-    return None
+kg_per_unit = corpus.kg_per_unit
 
-
-CROSS_CHECKABLE = [
-    pid for pid, r in records.items()
-    if r.get("thickness") and r.get("density") and kg_per_unit(r)
-]
-WITH_GWP = [
-    pid for pid, r in records.items()
-    if (r.get("impacts") or {}).get("gwp_total") is not None
-    and (r.get("impacts") or {}).get("gwp_fossil") is not None
-]
-WITH_COMP = [
-    pid for pid, r in records.items()
-    if len([c for c in (r.get("product_integrity") or {}).get("comp") or []
-            if c.get("percentage") is not None]) >= 2
-]
+CROSS_CHECKABLE = corpus.cross_checkable(records)
+WITH_GWP = corpus.with_gwp(records)
+WITH_COMP = corpus.with_comp(records)
 
 
 # ---------------------------------------------------------------------------

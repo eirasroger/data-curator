@@ -176,11 +176,13 @@ class BigQueryStore:
         event_type: str = "decided",
         actor: str = "pipeline",
         triage_outcome: Any = None,
+        occurred_at: str = "",
     ) -> str:
         """One line in the audit trail."""
         event_id = str(uuid.uuid4())
         self._insert("change_events", [event_row(
-            decision, product_id, event_id, event_type, actor, triage_outcome
+            decision, product_id, event_id, event_type, actor, triage_outcome,
+            occurred_at,
         )])
         return event_id
 

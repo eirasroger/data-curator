@@ -34,7 +34,7 @@ dev = [
 ]
 
 [tool.setuptools]
-packages = ["domain", "domain.providers", "domain.stores"]
+packages = ["domain", "domain.providers", "domain.stores", "sim"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

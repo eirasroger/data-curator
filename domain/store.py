@@ -65,6 +65,7 @@ class Store(Protocol):
         event_type: str = "decided",
         actor: str = "pipeline",
         triage_outcome: Any = None,
+        occurred_at: str = "",
     ) -> str: ...
 
     def save_version(
@@ -141,13 +142,18 @@ def event_row(
     event_type: str,
     actor: str,
     triage_outcome: Any,
+    occurred_at: str = "",
 ) -> dict[str, Any]:
-    """The change_events row. Identical for both backends."""
+    """The change_events row. Identical for both backends.
+
+    `occurred_at` defaults to now. It is only ever passed by a backfill, which
+    is replaying decisions that carry their own timestamps.
+    """
     row: dict[str, Any] = {
         "event_id": event_id,
         "request_id": decision.request_id,
         "product_id": product_id,
-        "occurred_at": now_iso(),
+        "occurred_at": occurred_at or now_iso(),
         "event_type": event_type,
         "actor": actor,
         "action": decision.action.value,
