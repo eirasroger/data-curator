@@ -75,8 +75,10 @@ class SubmitChange(BaseModel):
     product_id: int
     kind: ChangeKind = ChangeKind.FIELD_UPDATE
     source: Source = Source.HUMAN
-    submitted_by: str = Field(description="who is proposing this")
-    reason: str = Field(min_length=3, description="why they think it is right")
+    submitted_by: str = Field(max_length=200, description="who is proposing this")
+    reason: str = Field(
+        min_length=3, max_length=2000, description="why they think it is right"
+    )
     field_path: str | None = Field(
         default=None,
         description="e.g. 'density', 'impacts.gwp_total', "

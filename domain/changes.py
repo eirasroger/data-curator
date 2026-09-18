@@ -89,7 +89,10 @@ class ChangeRequest(BaseModel):
     product_id: int
     kind: ChangeKind
     source: Source
-    submitted_by: str
+    # Capped because both go into the model prompt. Real ones are a line or
+    # two; anything near these limits is a mistake or someone stuffing tokens
+    # they do not pay for.
+    submitted_by: str = Field(max_length=200)
     submitted_at: str = Field(
         default_factory=lambda: datetime.now(UTC).isoformat()
     )
@@ -107,7 +110,9 @@ class ChangeRequest(BaseModel):
     # RECORD_REPLACEMENT only: the whole new record
     replacement: dict | None = None
 
-    reason: str = Field(description="Why the submitter thinks this is right.")
+    reason: str = Field(
+        max_length=2000, description="Why the submitter thinks this is right."
+    )
 
 
 class Decision(BaseModel):
