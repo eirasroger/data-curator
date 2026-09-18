@@ -6,10 +6,6 @@ the store - it has no permission to. If this service were compromised tomorrow,
 the attacker could publish messages the worker would then screen, and nothing
 else.
 
-"Answer fast" here means "do no slow work", NOT "answer before the message is
-safe". The publish is confirmed before we return: replying 202 first would turn
-a Pub/Sub outage into silent data loss, because the caller has been told we
-accepted something we then dropped.
 """
 
 from __future__ import annotations
@@ -25,7 +21,7 @@ from google.cloud import pubsub_v1
 from pydantic import BaseModel, Field
 
 from domain.changes import ChangeKind, ChangeRequest, MessageType, ReviewDecision, Source
-from domain.store import Store
+from domain.store import get_store
 
 PROJECT = os.environ.get("GCP_PROJECT", "")
 TOPIC_ID = os.environ.get("PUBSUB_TOPIC", "epd-changes")
@@ -36,7 +32,7 @@ app = FastAPI(
 )
 
 _publisher: Any = None
-_store = Store()
+_store = get_store()
 
 
 def publisher() -> Any:

@@ -23,9 +23,9 @@ from __future__ import annotations
 import uuid
 from collections.abc import Callable
 from datetime import UTC, date, datetime, timedelta
-from typing import Any
 
 from .changes import ChangeKind, ChangeRequest, Source
+from .store import Store
 
 # A change request pending longer than this is not "in progress", it is forgotten.
 REVIEW_SLA_DAYS = 7
@@ -38,7 +38,7 @@ LOW_MEAN_CONFIDENCE = 0.60
 
 
 def run(
-    store: Any,
+    store: Store,
     publish: Callable[[ChangeRequest], None],
     window_hours: int = 24,
     now: datetime | None = None,
@@ -57,22 +57,13 @@ def run(
     flags: list[str] = []
 
     # --- expiry -------------------------------------------------------------
-    expiry_rows = store.query(
-        f"SELECT product_id, epd_code, prod_name, expiry_date, expiry_state "
-        f"FROM `{store.table('epd_expiry_status')}` "
-        f"WHERE expiry_state IN ('expired', 'expiring within 90 days')"
-    )
+    expiry_rows = store.expiry_candidates()
     expired = [r for r in expiry_rows if r["expiry_state"] == "expired"]
     expiring_soon = [r for r in expiry_rows if r["expiry_state"] != "expired"]
 
     # Only for records not already marked expired, so this cannot loop: applying
     # the request sets status='expired', and the next run skips it.
-    already = {
-        r["product_id"] for r in store.query(
-            f"SELECT DISTINCT product_id FROM `{store.table('epd_current')}` "
-            f"WHERE status = 'expired'"
-        )
-    }
+    already = store.expired_product_ids()
     raised = 0
     for row in expired:
         if row["product_id"] in already:
@@ -96,23 +87,7 @@ def run(
         flags.append(f"{len(expiring_soon)} EPD(s) expire within 90 days")
 
     # --- throughput in the window -------------------------------------------
-    stats = store.query(
-        f"""
-        SELECT
-          COUNT(*) AS total,
-          COUNTIF(action = 'applied') AS applied,
-          COUNTIF(action = 'rejected') AS rejected,
-          COUNTIF(action = 'pending_review') AS pending,
-          COUNTIF(model IS NOT NULL) AS model_calls,
-          AVG(confidence) AS mean_confidence,
-          APPROX_QUANTILES(latency_ms, 100)[OFFSET(95)] AS p95_latency_ms,
-          SUM(cost_usd) AS total_cost
-        FROM `{store.table('change_events')}`
-        WHERE occurred_at >= @window_start AND event_type = 'decided'
-        """,
-        window_start=window_start.isoformat(),
-    )
-    s = stats[0] if stats else {}
+    s = store.decision_stats(window_start)
     total = int(s.get("total") or 0)
     rejected = int(s.get("rejected") or 0)
     mean_conf = s.get("mean_confidence")
@@ -129,28 +104,21 @@ def run(
         )
 
     # --- forgotten reviews ---------------------------------------------------
-    overdue = store.query(
-        f"SELECT COUNT(*) AS n FROM `{store.table('review_queue')}` "
-        f"WHERE hours_waiting > @hours",
-        hours=REVIEW_SLA_DAYS * 24,
-    )
-    overdue_n = int(overdue[0]["n"]) if overdue else 0
+    overdue_n = store.overdue_reviews(REVIEW_SLA_DAYS * 24)
     if overdue_n:
         flags.append(
             f"{overdue_n} change(s) waiting on a person for more than "
             f"{REVIEW_SLA_DAYS} days"
         )
 
-    total_epds = store.query(
-        f"SELECT COUNT(*) AS n FROM `{store.table('epd_current')}`"
-    )
+    total_epds = store.epd_count()
 
     return {
         "run_id": run_id,
         "run_at": now.isoformat(),
         "window_start": window_start.isoformat(),
         "window_end": now.isoformat(),
-        "epds_total": int(total_epds[0]["n"]) if total_epds else 0,
+        "epds_total": total_epds,
         "epds_expired": len(expired),
         "epds_expiring_90d": len(expiring_soon),
         "expiry_requests_raised": raised,

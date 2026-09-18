@@ -31,7 +31,7 @@ from google.cloud import pubsub_v1
 
 from domain import pipeline, reconcile
 from domain.changes import Action, ChangeKind, ChangeRequest, MessageType, ReviewDecision
-from domain.store import InsertError, Store
+from domain.store import InsertError, get_store, to_change_request
 from domain.triage import get_triager
 
 TRIAGE_PROVIDER = os.environ.get("TRIAGE_PROVIDER", "stub")
@@ -42,7 +42,7 @@ TOPIC_ID = os.environ.get("PUBSUB_TOPIC", "epd-changes")
 
 app = FastAPI(title="data-curator worker")
 
-_store = Store()
+_store = get_store()
 _triager: Any = None
 
 
@@ -185,7 +185,7 @@ def handle_review(review: ReviewDecision, delivery: int, started: float) -> Resp
         log("ERROR", "review for an unknown request", request_id=review.request_id)
         return Response(status_code=400)
 
-    req = _store.to_change_request(original)
+    req = to_change_request(original)
 
     from domain.changes import Decision
 

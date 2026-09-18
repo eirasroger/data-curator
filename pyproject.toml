@@ -27,12 +27,14 @@ dev = [
     "httpx==0.28.1",
     "python-dotenv==1.2.3",
     "duckdb==1.4.4",
+    # duckdb needs it to hand a TIMESTAMPTZ back to Python.
+    "pytz==2025.2",
     "ruff==0.15.4",
     "mypy==1.19.1",
 ]
 
 [tool.setuptools]
-packages = ["domain", "domain.providers"]
+packages = ["domain", "domain.providers", "domain.stores"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

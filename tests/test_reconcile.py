@@ -15,28 +15,31 @@ from domain import reconcile
 
 
 class FakeStore:
-    """Answers queries by looking at which view the SQL mentions."""
+    """Returns whatever the test set up, one method at a time.
+
+    tests/test_store.py covers the real queries against a real database. What
+    these tests need is the ability to construct a situation - a review
+    forgotten for two weeks, a night where the model lost its nerve - so the
+    store is only a source of answers here.
+    """
 
     def __init__(self, **results) -> None:
         self.results = results
-        self.queries: list[str] = []
 
-    def table(self, name: str) -> str:
-        return f"p.d.{name}"
+    def expiry_candidates(self) -> list[dict]:
+        return self.results.get("expiry", [])
 
-    def query(self, sql: str, **_params) -> list[dict]:
-        self.queries.append(sql)
-        if "epd_expiry_status" in sql:
-            return self.results.get("expiry", [])
-        if "epd_current" in sql and "status = 'expired'" in sql:
-            return self.results.get("already_expired", [])
-        if "epd_current" in sql:
-            return [{"n": self.results.get("epd_count", 63)}]
-        if "change_events" in sql:
-            return [self.results.get("stats", {})]
-        if "review_queue" in sql:
-            return [{"n": self.results.get("overdue", 0)}]
-        return []
+    def expired_product_ids(self) -> set[int]:
+        return {r["product_id"] for r in self.results.get("already_expired", [])}
+
+    def decision_stats(self, window_start) -> dict:
+        return self.results.get("stats", {})
+
+    def overdue_reviews(self, hours: int) -> int:
+        return self.results.get("overdue", 0)
+
+    def epd_count(self) -> int:
+        return self.results.get("epd_count", 63)
 
 
 def run(store, **kw):
