@@ -96,9 +96,9 @@ def submit_review(request_id: str, approve: bool, note: str) -> None:
     )
 
     if not PROJECT:
-        applied = pipeline.apply_review(review, store=_store)
+        outcome = pipeline.apply_review(review, store=_store)
         log("INFO", "review applied locally",
-            request_id=request_id, approve=approve, found=applied)
+            request_id=request_id, approve=approve, outcome=outcome.value)
         return
 
     message = json.dumps({

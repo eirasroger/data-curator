@@ -16,6 +16,7 @@ from __future__ import annotations
 
 import logging
 from dataclasses import dataclass
+from enum import Enum
 from typing import Any
 
 from . import changes
@@ -108,18 +109,53 @@ def apply_decision(record: dict, request: ChangeRequest, decision: Decision) -> 
     return changes.apply_field_update(record, request.field_path or "", request.new_value)
 
 
-def apply_review(review: ReviewDecision, *, store: Any) -> bool:
+class ReviewOutcome(str, Enum):
+    """What happened to a review, in enough detail for the caller to answer.
+
+    A bool cannot carry this. "Unknown request" is a broken message and belongs
+    in the dead-letter queue; "not pending" is a duplicate or a stale verdict and
+    must be acknowledged, because redelivering it will produce the same answer
+    forever. The worker maps these to HTTP status codes.
+    """
+
+    APPLIED = "applied"
+    REJECTED = "rejected"
+    UNKNOWN_REQUEST = "unknown_request"
+    NOT_PENDING = "not_pending"
+
+
+def apply_review(review: ReviewDecision, *, store: Any) -> ReviewOutcome:
     """Record a person's verdict on a parked change, and act on it.
 
     Lives here rather than in the worker because two things now take reviews -
     the Pub/Sub handler and the operator page running without a queue - and a
     second implementation is a second set of rules about what a review means.
 
-    Returns False when the request is not one we hold.
+    A verdict is only accepted on a request that is actually waiting for one.
+    That single condition closes two holes:
+
+      - Pub/Sub delivers at least once, so the same review arrives twice. The
+        second one used to write a second version of the record. handle_change
+        has guarded against this since the beginning; this path never did.
+      - screen() rejects a change that would break the record's internal
+        consistency, but the rejected request stays in change_requests. An
+        approval arriving afterwards used to apply it anyway, without
+        re-validating - so the deterministic rules had a door around them.
+
+    Both are the same question: what does this request's history already say?
     """
+    # The latest event for this request. A LEFT JOIN from change_requests, so a
+    # row comes back if the request exists at all and `action` is null when it
+    # exists but nothing has decided it yet.
+    status = store.change_status(review.request_id)
+    if status is None:
+        return ReviewOutcome.UNKNOWN_REQUEST
+    if status.get("action") != Action.PENDING_REVIEW.value:
+        return ReviewOutcome.NOT_PENDING
+
     original = store.get_request(review.request_id)
     if original is None:
-        return False
+        return ReviewOutcome.UNKNOWN_REQUEST
 
     from .store import to_change_request
 
@@ -135,16 +171,16 @@ def apply_review(review: ReviewDecision, *, store: Any) -> bool:
     if review.approve:
         record = store.current_record(request.product_id)
         if record is None:
-            return False
+            return ReviewOutcome.UNKNOWN_REQUEST
         updated = apply_decision(record, request, decision)
-        status = "expired" if request.kind is ChangeKind.EXPIRY else "active"
+        status_value = "expired" if request.kind is ChangeKind.EXPIRY else "active"
         store.save_version(
             updated, request.product_id, int(record.get("_version", 1)) + 1,
-            request.request_id, status=status,
+            request.request_id, status=status_value,
         )
 
     # event_type "reviewed", not "decided": the pipeline's original conclusion
     # stays in the log untouched. Both answers are on the record.
     store.save_event(decision, request.product_id,
                      event_type="reviewed", actor=review.reviewer)
-    return True
+    return ReviewOutcome.APPLIED if review.approve else ReviewOutcome.REJECTED

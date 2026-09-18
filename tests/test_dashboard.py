@@ -182,6 +182,77 @@ def test_a_review_for_an_unknown_request_does_not_crash_the_page(client):
     assert c.post("/reviews/no-such-request/approve").status_code == 200
 
 
+def test_a_second_approval_does_not_write_a_second_version(client, store):
+    """Pub/Sub delivers at least once, so the same verdict arrives twice.
+
+    The first approval applies the change. The second used to apply it again
+    and leave a version nobody asked for.
+    """
+    c, _ = client
+    request = park_one(store)
+    before = store.current_record(6)["_version"]
+
+    assert c.post(f"/reviews/{request.request_id}/approve").status_code == 200
+    after_first = store.current_record(6)["_version"]
+    assert after_first == before + 1
+
+    assert c.post(f"/reviews/{request.request_id}/approve").status_code == 200
+    assert store.current_record(6)["_version"] == after_first
+
+    events = store.query(
+        "SELECT event_type FROM change_events WHERE request_id = $rid",
+        rid=request.request_id,
+    )
+    assert [e["event_type"] for e in events] == ["decided", "reviewed"]
+
+
+def test_approving_a_rejected_change_does_not_apply_it(client, store):
+    """The rules said no. A review must not be a way around that.
+
+    screen() rejects a change that would break the record's internal
+    consistency, but the rejected request stays in change_requests. An approval
+    arriving afterwards used to apply it without re-validating anything.
+    """
+    c, _ = client
+    record = store.current_record(6)
+    request = ChangeRequest(
+        request_id="req-rejected", product_id=6, kind=ChangeKind.FIELD_UPDATE,
+        source=Source.HUMAN, submitted_by="tester",
+        # density and thickness cross-check against the conversion ratio, so a
+        # density this wrong breaks the record's own arithmetic.
+        field_path="density", new_value=999999.0,
+        reason="Read it off a different datasheet.",
+    )
+    outcome = pipeline.decide(record, request, StubTriager())
+    assert outcome.decision.action is Action.REJECTED
+    store.save_request(request)
+    store.save_event(outcome.decision, 6, triage_outcome=outcome.triage)
+
+    before = store.current_record(6)["_version"]
+    assert c.post(f"/reviews/{request.request_id}/approve").status_code == 200
+
+    assert store.current_record(6)["_version"] == before
+    assert store.current_record(6)["density"] != 999999.0
+
+
+def test_a_review_outcome_says_which_case_it_was(store):
+    """The worker branches on this, so the distinctions have to hold."""
+    from domain.changes import ReviewDecision
+    from domain.pipeline import ReviewOutcome
+
+    def verdict(request_id: str) -> ReviewOutcome:
+        return pipeline.apply_review(
+            ReviewDecision(request_id=request_id, reviewer="tester", approve=True),
+            store=store,
+        )
+
+    assert verdict("no-such-request") is ReviewOutcome.UNKNOWN_REQUEST
+
+    request = park_one(store)
+    assert verdict(request.request_id) is ReviewOutcome.APPLIED
+    assert verdict(request.request_id) is ReviewOutcome.NOT_PENDING
+
+
 # ---------------------------------------------------------------------------
 # the public snapshot
 # ---------------------------------------------------------------------------

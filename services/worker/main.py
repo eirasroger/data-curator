@@ -31,6 +31,7 @@ from google.cloud import pubsub_v1
 
 from domain import pipeline, reconcile
 from domain.changes import Action, ChangeKind, ChangeRequest, MessageType, ReviewDecision
+from domain.pipeline import ReviewOutcome
 from domain.store import InsertError, get_store
 from domain.triage import get_triager
 
@@ -180,9 +181,19 @@ def handle_change(req: ChangeRequest, delivery: int, started: float) -> Response
 
 def handle_review(review: ReviewDecision, delivery: int, started: float) -> Response:
     """Apply a person's verdict on a parked change."""
-    if not pipeline.apply_review(review, store=_store):
+    outcome = pipeline.apply_review(review, store=_store)
+
+    if outcome is ReviewOutcome.UNKNOWN_REQUEST:
         log("ERROR", "review for an unknown request", request_id=review.request_id)
-        return Response(status_code=400)
+        return Response(status_code=400)  # permanently broken -> DLQ
+
+    if outcome is ReviewOutcome.NOT_PENDING:
+        # A duplicate delivery, or a verdict on something the rules already
+        # settled. 204, not 400: nothing is wrong with the message and a retry
+        # would reach the same conclusion every time.
+        log("INFO", "review ignored, request is not awaiting one",
+            request_id=review.request_id, delivery_attempt=delivery)
+        return Response(status_code=204)
 
     log("INFO", "review applied",
         request_id=review.request_id,
