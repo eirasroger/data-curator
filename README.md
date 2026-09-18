@@ -5,7 +5,11 @@
 Decides what to do when someone proposes changing a published environmental
 product record: apply it, reject it, or send it to a person.
 
-**[See it running →](https://eirasroger.github.io/data-curator/)**
+Most of that decision is ordinary arithmetic. An LLM handles what the
+arithmetic cannot settle. Fixed rules limit what its answer is allowed to
+cause.
+
+**[See the demo →](https://eirasroger.github.io/data-curator/)**
 
 ## Why
 
@@ -15,37 +19,46 @@ quote its numbers in their own calculations.
 So changes are risky. Apply a bad one and a wrong number spreads, and you
 cannot take it back. Apply nothing and errors stay in the data.
 
-Changes arrive from three places: a reviewer spots an error, a manufacturer
+Changes arrive from three places. A reviewer spots an error, a manufacturer
 publishes a new version, or a document reaches its expiry date. All three
-become the same thing, and take the same path.
+become the same kind of request and take the same path.
 
 ## How it works
 
 ![The decision pipeline](docs/img/pipeline.svg)
 
-**`screen()` — arithmetic.** EPD records check themselves. Density times
-thickness should equal the stated weight per unit. The parts of a carbon figure
-should add up to the total. Material percentages should reach 100%.
+**`screen()` does the arithmetic.** EPD records check themselves. Density
+times thickness should equal the stated weight per unit. The parts of a carbon
+figure should add up to the total. Material percentages should reach 100%.
 
-The change is applied to a copy, and the record is checked again. If the change
-breaks the arithmetic, it is rejected. No model involved. Most changes stop
-here.
+The proposed change is applied to a copy, and the record is checked again. A
+change that breaks the arithmetic is rejected on the spot. No LLM involved.
+Most changes stop here.
 
-**`triage()` — the model.** Only for what the arithmetic cannot settle. One
-question: is this a correction, or a mistake? It answers with a category, a
-confidence score, and a reason.
+**`triage()` calls the LLM.** Only for what survived the arithmetic. It gets
+one question. Is this a correction, or a mistake? It answers with a category, a
+confidence score from 0 to 1, and a reason. OpenAI's `gpt-5-mini` by default,
+and swapping it is one class.
 
-**`finalise()` — the rules.** The model's answer is an input, not the decision:
+**`finalise()` applies fixed rules to that answer.** Three of them, in
+order.
 
-- Changes to published figures always go to a person, at any confidence.
-- Low confidence goes to a person.
-- A verdict of "implausible" rejects the change.
+1. A change to a published figure goes to a person, at any confidence.
+2. A verdict of "implausible" rejects the change.
+3. Confidence below the threshold goes to a person.
 
-Those rules are code in `domain/changes.py`. None of them are in the prompt.
+Anything that clears all three is applied. So a confident answer on an ordinary
+field does decide the outcome. What the rules guarantee is the ceiling on that
+authority. The LLM can never apply a change to a published figure, and never
+applies anything it is unsure about.
 
-## Try it
+These rules live in `domain/changes.py` as code, so they can be read and
+tested. The prompt contains none of them.
 
-No Google Cloud account, no API key, nothing to pay for.
+## Running it locally
+
+Runs the whole pipeline on your machine. A local database file stands in for
+BigQuery, and a hardcoded fake stands in for the LLM.
 
 ```bash
 git clone https://github.com/eirasroger/data-curator.git
@@ -61,47 +74,51 @@ python scripts/dashboard.py --db local.duckdb
 
 ![The operator dashboard](docs/img/dashboard.jpg)
 
-It runs on a local file with a stand-in for the model. `--provider openai` uses
-a real one.
+`sim/run.py` invents change proposals and pushes them through the same code the
+deployed worker runs. `scripts/dashboard.py` then shows what it decided and
+what is waiting for a person.
 
-## What is in here
+Add `--provider openai` to use the real LLM. That needs an API key in `.env`
+and costs a fraction of a cent per call.
 
-| Folder | What it does |
+## Repository layout
+
+| Path | Contents |
 | --- | --- |
-| `domain/` | The rules, the model interface, the database layer |
-| `services/` | Four web services: api, webhook, worker, dashboard |
-| `sim/` | Makes proposals and runs them through the real pipeline |
-| `eval/` | Scores the decisions against labelled cases |
-| `analysis/` | Turns a run into charts and findings |
-| `infra/` | Terraform for the Google Cloud setup |
-| `sql/` | Table definitions, for BigQuery and for DuckDB |
+| `domain/` | The rules, the LLM interface, the database layer |
+| `services/` | Four services: api, webhook, worker, dashboard |
+| `sim/` | Generates proposals and runs them through the pipeline |
+| `eval/` | Scores decisions against labelled cases |
+| `analysis/` | Turns a run into charts and figures |
+| `infra/` | Terraform for the Google Cloud resources |
+| `sql/` | Table definitions for BigQuery and DuckDB |
 | `seed/epds.json` | The 63 records |
 
 The records come from a separate project that reads EPD PDFs. This one only
 consumes them.
 
-## Design decisions
+## Design notes
 
-**Two databases, one interface.** `domain/store.py` says what a datastore has
-to do. BigQuery does it in the cloud, DuckDB does it on your laptop. Same
-methods, same tests. That is why this runs without an account.
+**Two databases, one interface.** `domain/store.py` defines what a datastore
+has to do. BigQuery implements it in the cloud, DuckDB on your laptop. Same
+methods, same tests. That is why the project runs without a cloud account.
 
 **Nothing is edited in place.** Applying a change writes a new version and
 leaves the old one alone. When a person overrules the system, both answers stay
 on the record.
 
 **Expiry is an event.** When a document passes its date, the nightly job files
-a change request like a person would, rather than quietly marking it expired.
-So there is always a record of when it was noticed.
+a change request, the same way a person would. So there is always a record of
+when it was noticed and what happened next.
 
-**The public endpoint has almost no power.** Manufacturers post signed updates
-to their own service. It can publish to one queue and read its own signing key.
-It cannot touch the database.
+**The public endpoint holds almost no permissions.** Manufacturers post signed
+updates to a service of its own. It can publish to one queue and read its own
+signing key. It has no access to the database.
 
-**The tests use the real records.** Rules that only meet made-up data tend to
-work only on made-up data.
+**The tests run against the real records.** Rules that only meet invented data
+tend to work only on invented data.
 
-## Running it on Google Cloud
+## Deploying to Google Cloud
 
 ```bash
 terraform -chdir=infra apply       # dataset, tables, queues, identities, secrets
@@ -115,17 +132,108 @@ services and stops the spending; data and secrets stay.
 
 Google Cloud has no hard spending limit, so set a budget alert first.
 
-## Measured results
+---
 
-The decisions were measured rather than assumed — how often the rules settle a
-change without a model, whether the confidence score can be trusted, and where
-the threshold for acting alone should sit.
+# Analysis of a test run
 
-**[Read the findings →](analysis/FINDINGS.md)**
+The threshold for acting without a person was picked by hand. This is the work
+that checked whether it was right.
 
-## Limitations
+2000 change proposals against the 63 real records, decided by the
+real pipeline using `gpt-5-mini`, spread over 90 simulated days. 948 of them
+reached the LLM, at a total cost of $0.87.
 
-- The 63 records are real. The proposals are generated: break a value, then
-  propose putting it back.
-- The offline stand-in for the model knows a few arithmetic patterns and
-  nothing else. Results from it describe it, not a real model.
+Nobody submitted those 2000 proposals. They were generated by breaking a value
+and proposing the original back, which means the correct answer for each one is
+known in advance. That is what makes the rest measurable.
+
+Regenerate everything below with `python analysis/report.py`.
+
+## The threshold was too low
+
+It was set at 0.85. At that level, five wrong changes get applied with nobody
+looking. At 0.90, none do.
+
+![What each threshold would do](analysis/figures/floors.png)
+
+| threshold | applied correctly | applied wrongly |
+| --- | --- | --- |
+| 0.95 | 6 | 0 |
+| **0.90** | **134** | **0** |
+| 0.85 (old) | 208 | **5** |
+| 0.80 | 243 | 13 |
+| 0.70 | 261 | 44 |
+
+74 fewer changes applied automatically, in exchange for five published figures
+not being corrupted. It is 0.90 now.
+
+An earlier 150-case check had reported 0.85 as safe. The failure rate in that
+band is around 2%, and 150 cases is too few to catch it. Small test sets find
+regressions; setting a threshold needs a large one.
+
+## The confidence score is worth trusting
+
+![Stated confidence against how often it was right](analysis/figures/calibration.png)
+
+| LLM says | actually correct |
+| --- | --- |
+| 0.25 | 21% |
+| 0.60 | 26% |
+| 0.75 | 37% |
+| 0.83 | 81% |
+| 0.88 | 94% |
+| 0.93 | 100% |
+
+It rises the whole way, with a sharp jump between 0.75 and 0.83. Below that the
+LLM understates itself, which is the safe direction for a threshold that only
+reads the top of the range.
+
+## The rules do half the work for free
+
+![What decided each outcome](analysis/figures/rules_vs_model.png)
+
+1052 of the 2000 were settled by arithmetic alone. The remaining 948 LLM calls
+cost $0.87 in total, about $0.0009 each, at a median of 4.4 seconds.
+
+Two checks account for nearly every rejection. Density against thickness and
+declared weight fired 166 times, carbon components against the declared total
+165 times.
+A further 46 were replacements that did not match the schema. The remaining
+checks never blocked anything.
+
+## The drift alarm works
+
+![Daily rejection rate](analysis/figures/drift.png)
+
+Normally the daily rejection rate sits between 0.30 and 0.50. When the mix of
+incoming proposals is deliberately worsened, it climbs to 0.60–0.85 and the
+nightly job raises a flag.
+
+A second alarm watches mean confidence and fires below 0.60. It was going off
+on normal traffic, but only while the offline fake was in use. That fake
+averages 0.53. The LLM averages 0.77, well clear of the alarm. Left as it is.
+
+## What the offline fake is good for
+
+The fake knows a handful of arithmetic patterns. Run the pipeline with it and
+the results describe the fake. They say nothing about an LLM.
+
+| Same 2000 proposals | fake | gpt-5-mini |
+| --- | --- | --- |
+| Applied | 349 | 565 |
+| Rejected | 637 | 873 |
+| Sent to a person | 948 | 562 |
+| Mean confidence | 0.53 | 0.77 |
+| Applied at a safe threshold | 0 | 134 |
+
+It never rejects on judgement and never clears the threshold, so everything it
+sees turns into review work. It exists so the pipeline can be run and tested
+for free, and for nothing else.
+
+## One score got worse when the system got safer
+
+The 54-case eval scored 53/54 at the old threshold and 51/54 at the new one.
+Two correct changes now wait for a person.
+
+The eval contains no example of a change that is wrong at 0.87, because 54
+cases cannot contain one. The 2000-proposal run contained five.

@@ -1,4 +1,4 @@
-"""Regenerate every figure and number in FINDINGS.md.
+"""Regenerate every figure and number in the README's analysis section.
 
 One command, no manual steps, no hand-edited numbers. If a figure and the text
 disagree, the text is stale and this is what fixes it.

@@ -74,7 +74,7 @@ MATERIAL_FIELDS = {
 # calls, 0.85 auto-applied 208 correct changes and 5 wrong ones, and 0.90
 # auto-applied 134 with none wrong. The 74 that move to review cost somebody a
 # few minutes each; the 5 corrupt published figures other people go on to
-# quote. See analysis/FINDINGS.md.
+# quote. The README's analysis section has the table.
 #
 # An earlier 150-case benchmark reported 0.85 as safe. It was not wrong about
 # what it saw - it was too small to find a 2% failure rate in the 0.85-0.90

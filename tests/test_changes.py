@@ -329,7 +329,7 @@ def test_the_confidence_floor_is_where_the_measurement_put_it(record):
 
     Measured over 948 real model calls: 0.85 auto-applied five wrong changes,
     0.90 auto-applied none. Lowering this is a safety decision, not a tuning
-    knob - analysis/FINDINGS.md has the table.
+    knob - the README's analysis section has the table.
     """
     assert changes.CONFIDENCE_FLOOR == 0.90
 
