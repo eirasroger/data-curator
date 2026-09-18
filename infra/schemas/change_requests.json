@@ -1,0 +1,55 @@
+[
+  {
+    "mode": "REQUIRED",
+    "name": "request_id",
+    "type": "STRING"
+  },
+  {
+    "mode": "REQUIRED",
+    "name": "product_id",
+    "type": "INTEGER"
+  },
+  {
+    "description": "field_update | record_replacement | expiry",
+    "mode": "REQUIRED",
+    "name": "kind",
+    "type": "STRING"
+  },
+  {
+    "description": "human | manufacturer_feed | scheduler",
+    "mode": "REQUIRED",
+    "name": "source",
+    "type": "STRING"
+  },
+  {
+    "mode": "REQUIRED",
+    "name": "submitted_by",
+    "type": "STRING"
+  },
+  {
+    "mode": "REQUIRED",
+    "name": "submitted_at",
+    "type": "TIMESTAMP"
+  },
+  {
+    "description": "e.g. 'density', 'impacts.gwp_total'",
+    "name": "field_path",
+    "type": "STRING"
+  },
+  {
+    "description": "JSON so a number, a string or null are all the same column",
+    "name": "new_value",
+    "type": "JSON"
+  },
+  {
+    "description": "the whole new record, for record_replacement",
+    "name": "replacement",
+    "type": "JSON"
+  },
+  {
+    "description": "why the submitter thinks this is right",
+    "mode": "REQUIRED",
+    "name": "reason",
+    "type": "STRING"
+  }
+]

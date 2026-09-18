@@ -1,0 +1,76 @@
+[
+  {
+    "mode": "REQUIRED",
+    "name": "agent_id",
+    "type": "STRING"
+  },
+  {
+    "mode": "REQUIRED",
+    "name": "display_name",
+    "type": "STRING"
+  },
+  {
+    "description": "one sentence: what decision this agent makes",
+    "mode": "REQUIRED",
+    "name": "purpose",
+    "type": "STRING"
+  },
+  {
+    "description": "a person, not a team alias",
+    "mode": "REQUIRED",
+    "name": "owner",
+    "type": "STRING"
+  },
+  {
+    "description": "active | deprecated",
+    "mode": "REQUIRED",
+    "name": "status",
+    "type": "STRING"
+  },
+  {
+    "name": "provider",
+    "type": "STRING"
+  },
+  {
+    "name": "model",
+    "type": "STRING"
+  },
+  {
+    "name": "prompt_version",
+    "type": "STRING"
+  },
+  {
+    "name": "input_contract",
+    "type": "STRING"
+  },
+  {
+    "name": "output_contract",
+    "type": "STRING"
+  },
+  {
+    "name": "eval_pass_rate",
+    "type": "FLOAT"
+  },
+  {
+    "description": "unsafe auto-applies in the last run; must be 0",
+    "name": "eval_unsafe",
+    "type": "INTEGER"
+  },
+  {
+    "name": "eval_size",
+    "type": "INTEGER"
+  },
+  {
+    "name": "eval_run_at",
+    "type": "TIMESTAMP"
+  },
+  {
+    "name": "last_reviewed",
+    "type": "DATE"
+  },
+  {
+    "mode": "REQUIRED",
+    "name": "created_at",
+    "type": "TIMESTAMP"
+  }
+]

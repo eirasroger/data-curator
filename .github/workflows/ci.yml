@@ -49,6 +49,20 @@ jobs:
       # in the repo (it is gigabytes-adjacent and regenerable), so CI cannot
       # rebuild them. It can prove the analysis still runs end to end, which is
       # what breaks silently when a column is renamed.
+      # Credential-free and network-free once the provider is cached: fmt and
+      # validate check syntax and provider schemas without touching GCP, so CI
+      # never authenticates and never spends anything.
+      - uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.16.2
+          terraform_wrapper: false
+
+      - name: Terraform
+        run: |
+          terraform -chdir=infra fmt -check -recursive
+          terraform -chdir=infra init -backend=false -input=false
+          terraform -chdir=infra validate
+
       - name: Analysis pipeline
         run: |
           python scripts/seed_local.py --db ci.duckdb --replace

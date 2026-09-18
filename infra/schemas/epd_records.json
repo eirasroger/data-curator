@@ -1,0 +1,89 @@
+[
+  {
+    "mode": "REQUIRED",
+    "name": "product_id",
+    "type": "INTEGER"
+  },
+  {
+    "description": "1 for the seeded record, +1 per applied change",
+    "mode": "REQUIRED",
+    "name": "version",
+    "type": "INTEGER"
+  },
+  {
+    "description": "when this version was written",
+    "mode": "REQUIRED",
+    "name": "valid_from",
+    "type": "TIMESTAMP"
+  },
+  {
+    "description": "the request that produced this version; null for the seed",
+    "name": "change_request_id",
+    "type": "STRING"
+  },
+  {
+    "name": "epd_code",
+    "type": "STRING"
+  },
+  {
+    "name": "prod_name",
+    "type": "STRING"
+  },
+  {
+    "name": "prod_man",
+    "type": "STRING"
+  },
+  {
+    "name": "prod_site",
+    "type": "STRING"
+  },
+  {
+    "description": "the EPD's 'valid until' date, NOT its publication date",
+    "name": "expiry_date",
+    "type": "DATE"
+  },
+  {
+    "description": "active | expired | superseded",
+    "mode": "REQUIRED",
+    "name": "status",
+    "type": "STRING"
+  },
+  {
+    "name": "reference_unit",
+    "type": "STRING"
+  },
+  {
+    "name": "density",
+    "type": "FLOAT"
+  },
+  {
+    "name": "thickness",
+    "type": "FLOAT"
+  },
+  {
+    "name": "lifespan",
+    "type": "FLOAT"
+  },
+  {
+    "name": "gwp_total",
+    "type": "FLOAT"
+  },
+  {
+    "name": "gwp_fossil",
+    "type": "FLOAT"
+  },
+  {
+    "name": "gwp_luluc",
+    "type": "FLOAT"
+  },
+  {
+    "name": "gwp_bio",
+    "type": "FLOAT"
+  },
+  {
+    "description": "the complete EPDProduct as extracted",
+    "mode": "REQUIRED",
+    "name": "record",
+    "type": "JSON"
+  }
+]

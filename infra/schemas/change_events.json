@@ -1,0 +1,88 @@
+[
+  {
+    "mode": "REQUIRED",
+    "name": "event_id",
+    "type": "STRING"
+  },
+  {
+    "mode": "REQUIRED",
+    "name": "request_id",
+    "type": "STRING"
+  },
+  {
+    "mode": "REQUIRED",
+    "name": "product_id",
+    "type": "INTEGER"
+  },
+  {
+    "mode": "REQUIRED",
+    "name": "occurred_at",
+    "type": "TIMESTAMP"
+  },
+  {
+    "description": "decided (by the pipeline) | reviewed (by a person)",
+    "mode": "REQUIRED",
+    "name": "event_type",
+    "type": "STRING"
+  },
+  {
+    "description": "'pipeline', or who reviewed it",
+    "mode": "REQUIRED",
+    "name": "actor",
+    "type": "STRING"
+  },
+  {
+    "description": "applied | rejected | pending_review",
+    "mode": "REQUIRED",
+    "name": "action",
+    "type": "STRING"
+  },
+  {
+    "description": "which rule produced this, in words",
+    "mode": "REQUIRED",
+    "name": "reason",
+    "type": "STRING"
+  },
+  {
+    "description": "validation errors the change would introduce",
+    "mode": "REPEATED",
+    "name": "blocking_issues",
+    "type": "STRING"
+  },
+  {
+    "name": "old_value",
+    "type": "JSON"
+  },
+  {
+    "name": "triage",
+    "type": "STRING"
+  },
+  {
+    "name": "confidence",
+    "type": "FLOAT"
+  },
+  {
+    "name": "rationale",
+    "type": "STRING"
+  },
+  {
+    "name": "model",
+    "type": "STRING"
+  },
+  {
+    "name": "prompt_tokens",
+    "type": "INTEGER"
+  },
+  {
+    "name": "completion_tokens",
+    "type": "INTEGER"
+  },
+  {
+    "name": "cost_usd",
+    "type": "NUMERIC"
+  },
+  {
+    "name": "latency_ms",
+    "type": "INTEGER"
+  }
+]

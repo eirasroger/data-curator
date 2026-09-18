@@ -1,0 +1,87 @@
+[
+  {
+    "mode": "REQUIRED",
+    "name": "run_id",
+    "type": "STRING"
+  },
+  {
+    "mode": "REQUIRED",
+    "name": "run_at",
+    "type": "TIMESTAMP"
+  },
+  {
+    "mode": "REQUIRED",
+    "name": "window_start",
+    "type": "TIMESTAMP"
+  },
+  {
+    "mode": "REQUIRED",
+    "name": "window_end",
+    "type": "TIMESTAMP"
+  },
+  {
+    "name": "epds_total",
+    "type": "INTEGER"
+  },
+  {
+    "name": "epds_expired",
+    "type": "INTEGER"
+  },
+  {
+    "name": "epds_expiring_90d",
+    "type": "INTEGER"
+  },
+  {
+    "description": "expiry changes this run submitted",
+    "name": "expiry_requests_raised",
+    "type": "INTEGER"
+  },
+  {
+    "name": "requests_total",
+    "type": "INTEGER"
+  },
+  {
+    "name": "requests_applied",
+    "type": "INTEGER"
+  },
+  {
+    "name": "requests_rejected",
+    "type": "INTEGER"
+  },
+  {
+    "name": "requests_pending",
+    "type": "INTEGER"
+  },
+  {
+    "description": "pending more than 7 days",
+    "name": "reviews_overdue",
+    "type": "INTEGER"
+  },
+  {
+    "name": "model_calls",
+    "type": "INTEGER"
+  },
+  {
+    "name": "mean_confidence",
+    "type": "FLOAT"
+  },
+  {
+    "name": "p95_latency_ms",
+    "type": "INTEGER"
+  },
+  {
+    "name": "total_cost_usd",
+    "type": "NUMERIC"
+  },
+  {
+    "description": "human-readable reasons this window looks off",
+    "mode": "REPEATED",
+    "name": "drift_flags",
+    "type": "STRING"
+  },
+  {
+    "mode": "REQUIRED",
+    "name": "needs_attention",
+    "type": "BOOLEAN"
+  }
+]

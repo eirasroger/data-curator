@@ -5,3 +5,8 @@ __pycache__/
 PLAN.md
 *.egg-info/
 *.duckdb
+.terraform/
+*.tfstate
+*.tfstate.*
+crash.log
+terraform.tfvars

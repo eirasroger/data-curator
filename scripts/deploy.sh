@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 # Build both images, deploy both services, and wire Pub/Sub to the worker.
-# Idempotent - safe to re-run. Run scripts/setup_gcp.sh first.
+# Idempotent - safe to re-run. Run `terraform -chdir=infra apply` first:
+# it creates the topics, dataset, identities and secrets this assumes.
 #
 # COST
 #   Cloud Build   free tier 2,500 build-minutes/month; each build here is ~1-2.
@@ -134,13 +135,9 @@ gcloud run services add-iam-policy-binding curator-worker \
   --role="roles/run.invoker" --quiet >/dev/null
 echo "  curator-pubsub -> run.invoker on curator-worker"
 
-# The API reads the review queue and current records. Read only: it must never
-# be able to write to the store.
-python scripts/grant_dataset_access.py >/dev/null
-gcloud projects add-iam-policy-binding "$PROJECT" \
-  --member="serviceAccount:$(sa_email curator-api)" \
-  --role="roles/bigquery.jobUser" --condition=None --quiet >/dev/null
-echo "  curator-api -> dataset READER (read only) + jobUser"
+# Dataset access and jobUser are terraform's now (infra/bigquery.tf and
+# infra/iam.tf). Granting them here too would mean two owners of one
+# binding and a plan that never settles.
 
 # --- The push subscription ---------------------------------------------------
 # --ack-deadline=60, not the 10s default. The eval measured the model at 4.6s
