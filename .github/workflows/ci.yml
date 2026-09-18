@@ -6,6 +6,12 @@ on:
   pull_request:
     branches: [main]
 
+# Read-only, explicitly. Without this the job gets whatever the repository
+# default is, which on a public repo can be a token that may write to it - far
+# more than checkout, pip and pytest need.
+permissions:
+  contents: read
+
 # A new push supersedes the run it interrupted; there is no reason to pay for
 # both.
 concurrency:
