@@ -1,0 +1,58 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 250" width="900" height="250"
+     role="img" aria-label="A proposed change goes through screen(), which settles most of them with arithmetic alone. What is left goes to the model, then to finalise(), which applies the rules. Every change ends up applied, rejected, or waiting for a person.">
+  <defs>
+    <marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#52514e"/>
+    </marker>
+  </defs>
+
+  <rect width="900" height="250" fill="#fcfcfb"/>
+
+  <g font-family="ui-sans-serif, system-ui, -apple-system, Segoe UI, sans-serif">
+
+    <rect x="16" y="76" width="132" height="54" rx="8" fill="#ffffff" stroke="#c9c8c3"/>
+    <text x="82" y="99" text-anchor="middle" font-size="13" font-weight="600" fill="#0b0b0b">a proposed</text>
+    <text x="82" y="116" text-anchor="middle" font-size="13" font-weight="600" fill="#0b0b0b">change</text>
+
+    <line x1="148" y1="103" x2="196" y2="103" stroke="#52514e" stroke-width="1.6" marker-end="url(#a)"/>
+
+    <rect x="198" y="68" width="140" height="70" rx="8" fill="#ffffff" stroke="#2a78d6" stroke-width="1.6"/>
+    <text x="268" y="92" text-anchor="middle" font-size="13" font-weight="600" fill="#0b0b0b">screen()</text>
+    <text x="268" y="110" text-anchor="middle" font-size="11" fill="#52514e">does it break</text>
+    <text x="268" y="126" text-anchor="middle" font-size="11" fill="#52514e">the arithmetic?</text>
+
+    <polyline points="268,138 268,196 740,196" fill="none" stroke="#2a78d6" stroke-width="1.6"/>
+    <text x="280" y="190" font-size="12" fill="#2a78d6">most stop here</text>
+
+    <line x1="338" y1="103" x2="396" y2="103" stroke="#52514e" stroke-width="1.6" marker-end="url(#a)"/>
+    <text x="367" y="94" text-anchor="middle" font-size="11" fill="#52514e">the rest</text>
+
+    <rect x="398" y="68" width="140" height="70" rx="8" fill="#ffffff" stroke="#eb6834" stroke-width="1.6"/>
+    <text x="468" y="92" text-anchor="middle" font-size="13" font-weight="600" fill="#0b0b0b">triage()</text>
+    <text x="468" y="110" text-anchor="middle" font-size="11" fill="#52514e">the model, asked</text>
+    <text x="468" y="126" text-anchor="middle" font-size="11" fill="#52514e">one question</text>
+
+    <line x1="538" y1="103" x2="576" y2="103" stroke="#52514e" stroke-width="1.6" marker-end="url(#a)"/>
+
+    <rect x="578" y="68" width="140" height="70" rx="8" fill="#ffffff" stroke="#2a78d6" stroke-width="1.6"/>
+    <text x="648" y="92" text-anchor="middle" font-size="13" font-weight="600" fill="#0b0b0b">finalise()</text>
+    <text x="648" y="110" text-anchor="middle" font-size="11" fill="#52514e">rules decide,</text>
+    <text x="648" y="126" text-anchor="middle" font-size="11" fill="#52514e">not the model</text>
+
+    <line x1="718" y1="103" x2="740" y2="103" stroke="#52514e" stroke-width="1.6"/>
+    <line x1="740" y1="45" x2="740" y2="196" stroke="#52514e" stroke-width="1.2"/>
+
+    <rect x="758" y="26" width="126" height="38" rx="6" fill="#ffffff" stroke="#0ca30c"/>
+    <text x="772" y="50" font-size="12" fill="#0b0b0b">applied</text>
+
+    <rect x="758" y="84" width="126" height="38" rx="6" fill="#ffffff" stroke="#d03b3b"/>
+    <text x="772" y="108" font-size="12" fill="#0b0b0b">rejected</text>
+
+    <rect x="758" y="142" width="126" height="38" rx="6" fill="#ffffff" stroke="#2a78d6"/>
+    <text x="772" y="166" font-size="12" fill="#0b0b0b">sent to a person</text>
+
+    <line x1="740" y1="45" x2="756" y2="45" stroke="#52514e" stroke-width="1.2" marker-end="url(#a)"/>
+    <line x1="740" y1="103" x2="756" y2="103" stroke="#52514e" stroke-width="1.2" marker-end="url(#a)"/>
+    <line x1="740" y1="161" x2="756" y2="161" stroke="#52514e" stroke-width="1.2" marker-end="url(#a)"/>
+  </g>
+</svg>
