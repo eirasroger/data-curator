@@ -103,8 +103,9 @@ python scripts/dashboard.py --db local.duckdb
 deployed worker runs. `scripts/dashboard.py` then shows what it decided and
 what is waiting for a person.
 
-Add `--provider openai` to use the real LLM. That needs an API key in `.env`
-and costs a fraction of a cent per call.
+Add `--provider openai` to use the real LLM. That needs an API key in
+`~/.config/data-curator/.env` - outside the repository, deliberately; see
+`.env.example` - and costs a fraction of a cent per call.
 
 ## Repository layout
 

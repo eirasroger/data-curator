@@ -25,13 +25,11 @@ from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime, timedelta
 from pathlib import Path
 
-ROOT_FOR_ENV = Path(__file__).resolve().parents[1]
-try:
-    from dotenv import load_dotenv
+# Local runs only; deployed services get their key from Secret Manager. See
+# domain/localenv.py for where the file lives and why it is not in the repo.
+from domain.localenv import load as _load_local_env  # noqa: E402
 
-    load_dotenv(ROOT_FOR_ENV / ".env")
-except ImportError:
-    pass
+_load_local_env()
 
 from domain import pipeline, reconcile  # noqa: E402
 from domain.changes import Action, ChangeKind  # noqa: E402

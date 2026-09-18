@@ -50,12 +50,11 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 
-try:
-    from dotenv import load_dotenv
+# Local runs only; deployed services get their key from Secret Manager. See
+# domain/localenv.py for where the file lives and why it is not in the repo.
+from domain.localenv import load as _load_local_env  # noqa: E402
 
-    load_dotenv(ROOT / ".env")
-except ImportError:
-    pass
+_load_local_env()
 
 from domain import changes  # noqa: E402
 from domain.changes import TriageClass  # noqa: E402
