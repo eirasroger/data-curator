@@ -21,8 +21,9 @@ sources - a person, a manufacturer, the calendar - one system instead of three.
 from __future__ import annotations
 
 import uuid
-from datetime import date, datetime, timedelta, timezone
-from typing import Any, Callable, Optional
+from collections.abc import Callable
+from datetime import UTC, date, datetime, timedelta
+from typing import Any
 
 from .changes import ChangeKind, ChangeRequest, Source
 
@@ -40,15 +41,15 @@ def run(
     store: Any,
     publish: Callable[[ChangeRequest], None],
     window_hours: int = 24,
-    now: Optional[datetime] = None,
-    today: Optional[date] = None,
+    now: datetime | None = None,
+    today: date | None = None,
 ) -> dict:
     """Do the checks and return the row describing this run.
 
     `publish` and the clock are passed in rather than reached for, so this can
     be tested end to end without a scheduler, a topic, or waiting until midnight.
     """
-    now = now or datetime.now(timezone.utc)
+    now = now or datetime.now(UTC)
     today = today or now.date()
     window_start = now - timedelta(hours=window_hours)
     run_id = str(uuid.uuid4())

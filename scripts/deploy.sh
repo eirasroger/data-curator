@@ -17,6 +17,17 @@ cd "$(dirname "$0")/.."
 
 REPO="${REPO:-curator}"
 REGISTRY="$REGION-docker.pkg.dev/$PROJECT/$REPO"
+
+# The webhook receiver is the only service reachable without a Google identity,
+# and Google Cloud has no hard spending cap. Opt in with --with-webhook, or use
+# scripts/webhook_demo.sh, which deletes it again on exit.
+WITH_WEBHOOK=0
+for arg in "$@"; do
+  case "$arg" in
+    --with-webhook) WITH_WEBHOOK=1 ;;
+    *) echo "unknown argument: $arg" >&2; exit 2 ;;
+  esac
+done
 say() { printf '\n\033[1m==> %s\033[0m\n' "$*"; }
 sa_email() { echo "$1@$PROJECT.iam.gserviceaccount.com"; }
 
@@ -49,7 +60,11 @@ gcloud artifacts repositories set-cleanup-policies "$REPO" \
 
 # --- Build -------------------------------------------------------------------
 say "Building images"
-for svc in api worker webhook; do
+services_to_build="api worker"
+if [ "$WITH_WEBHOOK" = 1 ]; then
+  services_to_build="$services_to_build webhook"
+fi
+for svc in $services_to_build; do
   echo "  building $svc ..."
   gcloud builds submit --config=cloudbuild.yaml \
     --substitutions="_SERVICE=$svc,_IMAGE=$REGISTRY/$svc:latest" \
@@ -76,6 +91,7 @@ gcloud run deploy curator-api \
 API_URL="$(gcloud run services describe curator-api --region="$REGION" --format='value(status.url)')"
 echo "  $API_URL"
 
+if [ "$WITH_WEBHOOK" = 1 ]; then
 say "Deploying webhook receiver"
 # --allow-unauthenticated, and it is the only service with that flag.
 #
@@ -87,6 +103,10 @@ say "Deploying webhook receiver"
 gcloud run deploy curator-webhook --image="$REGISTRY/webhook:latest" --region="$REGION" --service-account="$(sa_email curator-webhook)" --set-env-vars="GCP_PROJECT=$PROJECT,PUBSUB_TOPIC=$TOPIC" --set-secrets="WEBHOOK_SECRET_MANUFACTURER=webhook-secret-manufacturer:latest" --allow-unauthenticated --max-instances=3 --memory=512Mi --timeout=30s --quiet >/dev/null
 WEBHOOK_URL="$(gcloud run services describe curator-webhook --region="$REGION" --format='value(status.url)')"
 echo "  $WEBHOOK_URL  (public)"
+else
+WEBHOOK_URL=""
+say "Skipping webhook receiver (--with-webhook to deploy it)"
+fi
 
 say "Deploying worker"
 # The key is mounted from Secret Manager at start-up, using the worker's own
@@ -167,7 +187,11 @@ echo "  pubsub agent -> pubsub.subscriber on $SUBSCRIPTION"
 say "Deployed"
 echo "  API     $API_URL"
 echo "  worker  $WORKER_URL"
-echo "  webhook $WEBHOOK_URL  (public, signature-verified)"
+if [ -n "$WEBHOOK_URL" ]; then
+  echo "  webhook $WEBHOOK_URL  (public, signature-verified)"
+else
+  echo "  webhook not deployed"
+fi
 echo
 echo "Try it:"
 echo "  TOKEN=\$(gcloud auth print-identity-token)"

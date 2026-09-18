@@ -18,7 +18,6 @@ from __future__ import annotations
 import hashlib
 import hmac
 import time
-from typing import Optional
 
 # How far out of date a request may be. Long enough to survive clock skew and a
 # slow network, short enough that a captured request is useless by the time
@@ -50,9 +49,9 @@ def sign(secret: str, timestamp: str, body: bytes) -> str:
 def verify(
     secret: str,
     body: bytes,
-    signature: Optional[str],
-    timestamp: Optional[str],
-    now: Optional[float] = None,
+    signature: str | None,
+    timestamp: str | None,
+    now: float | None = None,
     max_age: int = MAX_AGE_SECONDS,
 ) -> tuple[bool, str]:
     """Check a request. Returns (accepted, reason).

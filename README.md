@@ -116,7 +116,9 @@ to human review by existing code.
 The receiver is the only component reachable without a Google identity, and
 Google Cloud has no hard spending cap, so it is not left deployed.
 `scripts/webhook_demo.sh` deploys it at `--max-instances=1`, runs all four
-cases, and deletes it on exit. `--keep` leaves it running.
+cases, and deletes it on exit. `--keep` leaves it running. `deploy.sh` skips it
+unless given `--with-webhook`, so a normal deployment has no public surface at
+all.
 
 ## Data model
 

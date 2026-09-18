@@ -16,7 +16,7 @@ import shutil
 import subprocess
 import sys
 import tempfile
-from datetime import date, datetime, timezone
+from datetime import UTC, date, datetime
 from pathlib import Path
 
 PROJECT = os.environ.get("PROJECT", "data-curator-507614")
@@ -43,24 +43,30 @@ row = {
     "provider": scores.get("provider") or os.environ.get("TRIAGE_PROVIDER", "openai"),
     "model": scores.get("model") or os.environ.get("TRIAGE_MODEL", "gpt-5-mini"),
     "prompt_version": "1",
-    "input_contract": "EPD context block + the proposed field change (domain/triage.py build_context)",
+    "input_contract": (
+        "EPD context block + the proposed field change "
+        "(domain/triage.py build_context)"
+    ),
     "output_contract": "TriageResult: triage class, confidence 0-1, rationale",
     "eval_pass_rate": scores.get("pass_rate"),
     "eval_unsafe": scores.get("unsafe"),
     "eval_size": scores.get("cases"),
     "eval_run_at": scores.get("run_at"),
     "last_reviewed": date.today().isoformat(),
-    "created_at": datetime.now(timezone.utc).isoformat(),
+    "created_at": datetime.now(UTC).isoformat(),
 }
 
 # Replace rather than append: unlike the event log, the registry describes what
 # is true NOW. History of an agent's scores lives in the eval runs, not here.
 subprocess.run([BQ, f"--location={BQ_LOCATION}", "query", f"--project_id={PROJECT}",
                 "--use_legacy_sql=false", "--quiet",
-                f"DELETE FROM `{DATASET}.agent_registry` WHERE agent_id = 'epd-change-triage'"],
+                f"DELETE FROM `{DATASET}.agent_registry` "
+                f"WHERE agent_id = 'epd-change-triage'"],
                capture_output=True, text=True)
 
-with tempfile.NamedTemporaryFile("w", suffix=".ndjson", delete=False, encoding="utf-8") as fh:
+with tempfile.NamedTemporaryFile(
+    "w", suffix=".ndjson", delete=False, encoding="utf-8"
+) as fh:
     fh.write(json.dumps(row) + "\n")
     path = fh.name
 

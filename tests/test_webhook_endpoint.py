@@ -9,7 +9,6 @@ from __future__ import annotations
 
 import importlib.util
 import json
-import sys
 import time
 from pathlib import Path
 
@@ -31,7 +30,6 @@ def service(monkeypatch_session=None):
     os.environ["GCP_PROJECT"] = "test-project"
     os.environ["PUBSUB_TOPIC"] = "test-topic"
     os.environ["WEBHOOK_SECRET_MANUFACTURER"] = SECRET
-    sys.path.insert(0, str(ROOT))
     spec = importlib.util.spec_from_file_location(
         "webhook_service", ROOT / "services" / "webhook" / "main.py")
     module = importlib.util.module_from_spec(spec)

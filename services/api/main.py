@@ -18,7 +18,7 @@ import json
 import os
 import time
 import uuid
-from typing import Any, Optional
+from typing import Any
 
 from fastapi import FastAPI, HTTPException
 from google.cloud import pubsub_v1
@@ -81,13 +81,13 @@ class SubmitChange(BaseModel):
     source: Source = Source.HUMAN
     submitted_by: str = Field(description="who is proposing this")
     reason: str = Field(min_length=3, description="why they think it is right")
-    field_path: Optional[str] = Field(
+    field_path: str | None = Field(
         default=None,
         description="e.g. 'density', 'impacts.gwp_total', "
                     "'product_integrity.comp[Basalt].percentage'",
     )
     new_value: Any = None
-    replacement: Optional[dict] = None
+    replacement: dict | None = None
 
 
 @app.get("/health")
@@ -126,7 +126,9 @@ def submit_change(body: SubmitChange) -> dict:
     except Exception as exc:  # noqa: BLE001
         log("ERROR", "publish failed", error=str(exc), request_id=request.request_id)
         # 503, not 202. The caller must know we did not keep this.
-        raise HTTPException(503, "could not queue the request; nothing was stored")
+        raise HTTPException(
+            503, "could not queue the request; nothing was stored"
+        ) from exc
 
     log("INFO", "change request queued",
         request_id=request.request_id, product_id=request.product_id,
@@ -156,7 +158,7 @@ def review(request_id: str, body: ReviewDecision) -> dict:
         )
     except Exception as exc:  # noqa: BLE001
         log("ERROR", "publish failed", error=str(exc), request_id=request_id)
-        raise HTTPException(503, "could not queue the review")
+        raise HTTPException(503, "could not queue the review") from exc
 
     log("INFO", "review queued", request_id=request_id,
         reviewer=body.reviewer, approve=body.approve, message_id=message_id)

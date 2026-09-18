@@ -19,17 +19,15 @@ import argparse
 import json
 import shutil
 import subprocess
-import sys
 import time
 import urllib.error
 import urllib.request
 from copy import deepcopy
 from pathlib import Path
 
-ROOT = Path(__file__).resolve().parents[1]
-sys.path.insert(0, str(ROOT))
+from domain import webhooks
 
-from domain import webhooks  # noqa: E402
+ROOT = Path(__file__).resolve().parents[1]
 
 SEED = ROOT / "seed" / "epds.json"
 

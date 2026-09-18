@@ -1,0 +1,68 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "data-curator"
+version = "0.1.0"
+description = "Change management for a corpus of Environmental Product Declarations."
+readme = "README.md"
+requires-python = ">=3.12"
+
+# Pinned to the same versions as the per-service requirements.txt files, which
+# the Dockerfiles install from. Two sources for one dependency set is a real
+# cost, paid to keep the image layer cache working; they must not drift.
+dependencies = [
+    "fastapi==0.141.1",
+    "uvicorn[standard]==0.52.4",
+    "google-cloud-pubsub==2.40.0",
+    "google-cloud-bigquery==3.45.0",
+    "openai==3.8.0",
+    "pydantic==2.13.5",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest==9.1.1",
+    "httpx==0.28.1",
+    "python-dotenv==1.2.3",
+    "duckdb==1.4.4",
+    "ruff==0.15.4",
+    "mypy==1.19.1",
+]
+
+[tool.setuptools]
+packages = ["domain", "domain.providers"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q"
+
+[tool.ruff]
+line-length = 90
+target-version = "py312"
+extend-exclude = [".venv", "seed"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B"]
+
+# UP042 wants StrEnum. Rejected: `str(member)` returns the member name under
+# (str, Enum) and the value under StrEnum, and these enums are written to
+# BigQuery and to log lines.
+ignore = ["UP042"]
+
+[tool.ruff.lint.per-file-ignores]
+# schema.py is a declaration, one field per line with the description the
+# extractor prompts on. Wrapping each Field() to four lines costs more than the
+# limit buys.
+"domain/schema.py" = ["E501"]
+
+[tool.mypy]
+# domain/ only. The services are thin adapters over it and the scripts are
+# operational, so the rules are where type errors would actually cost something.
+files = ["domain"]
+python_version = "3.12"
+plugins = ["pydantic.mypy"]
+ignore_missing_imports = true
+warn_unused_ignores = true
+warn_redundant_casts = true

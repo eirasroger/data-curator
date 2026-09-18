@@ -12,7 +12,7 @@ changes.finalise(), in code, under rules the model cannot influence.
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Any, Optional, Protocol
+from typing import Any, Protocol
 
 from pydantic import BaseModel, Field
 
@@ -157,7 +157,7 @@ def build_context(record: dict, request: ChangeRequest) -> str:
     return "\n".join(lines)
 
 
-def _read_safely(record: dict, path: Optional[str]) -> Any:
+def _read_safely(record: dict, path: str | None) -> Any:
     from .changes import PathError, read_field
 
     if not path:

@@ -21,7 +21,7 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any
 
 ROOT = Path(__file__).resolve().parents[1]
 SEED = ROOT / "seed" / "epds.json"
@@ -37,15 +37,15 @@ def case(
     product_id: int,
     expected_action: str,
     note: str,
-    expected_triage: Optional[str] = None,
-    corrupt: Optional[dict[str, Any]] = None,
+    expected_triage: str | None = None,
+    corrupt: dict[str, Any] | None = None,
     kind: str = "field_update",
-    field_path: Optional[str] = None,
+    field_path: str | None = None,
     new_value: Any = None,
     reason: str = "",
     source: str = "human",
     submitted_by: str = "reviewer",
-    replacement: Optional[dict] = None,
+    replacement: dict | None = None,
 ) -> None:
     cases.append(
         {
@@ -69,7 +69,7 @@ def case(
     )
 
 
-def kg_per_unit(rec: dict) -> Optional[float]:
+def kg_per_unit(rec: dict) -> float | None:
     unit = rec.get("reference_unit")
     for r in rec.get("conversion_ratios") or []:
         if r.get("measured_unit") == "kg" and r.get("per_unit") == unit:
@@ -182,7 +182,10 @@ for pid in WITH_COMP[:4]:
         f"B_repair_{pid}", "applied_by_rules", pid, "applied",
         "The stored record contradicts itself; this change resolves it and "
         "breaks nothing. No judgement required.",
-        corrupt={f"product_integrity.comp[{name}].percentage": round(correct + (105.0 - total) + 15.0, 4)},
+        corrupt={
+            f"product_integrity.comp[{name}].percentage":
+                round(correct + (105.0 - total) + 15.0, 4)
+        },
         field_path=f"product_integrity.comp[{name}].percentage", new_value=correct,
         reason="The percentages currently add up to more than the whole product.",
     )

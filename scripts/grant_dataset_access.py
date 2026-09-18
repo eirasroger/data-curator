@@ -42,7 +42,9 @@ if not added:
     sys.exit(0)
 
 meta["access"] = access
-with tempfile.NamedTemporaryFile("w", suffix=".json", delete=False, encoding="utf-8") as fh:
+with tempfile.NamedTemporaryFile(
+    "w", suffix=".json", delete=False, encoding="utf-8"
+) as fh:
     json.dump(meta, fh)
     path = fh.name
 

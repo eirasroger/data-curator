@@ -10,7 +10,6 @@ from __future__ import annotations
 
 import os
 import time
-from typing import Optional
 
 from ..changes import ChangeRequest
 from ..triage import INSTRUCTIONS, TriageOutcome, TriageResult, build_context
@@ -34,7 +33,7 @@ class OpenAITriager:
     def __init__(
         self,
         model: str = "gpt-5-mini",
-        api_key: Optional[str] = None,
+        api_key: str | None = None,
         effort: str = "low",
         max_output_tokens: int = 2000,
         timeout_s: float = 30.0,

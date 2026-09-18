@@ -9,7 +9,7 @@ against real data.
 
 from __future__ import annotations
 
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 from domain import reconcile
 
@@ -43,7 +43,7 @@ def run(store, **kw):
     published: list = []
     summary = reconcile.run(
         store, published.append,
-        now=datetime(2026, 9, 4, 2, 0, tzinfo=timezone.utc), **kw
+        now=datetime(2026, 9, 4, 2, 0, tzinfo=UTC), **kw
     )
     return summary, published
 

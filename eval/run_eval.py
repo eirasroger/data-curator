@@ -18,11 +18,10 @@ import argparse
 import json
 import sys
 from collections import defaultdict
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
-sys.path.insert(0, str(ROOT))
 
 # Load OPENAI_API_KEY from .env if present. Absent is fine - the stub provider
 # is the default and needs no credentials.
@@ -126,17 +125,24 @@ def main() -> int:
 
         if args.verbose:
             mark = "ok " if ok else "MISS"
-            print(f"[{mark}] {case['case_id']:<24} {got:<14} {outcome.decision.reason[:80]}")
+            print(
+                f"[{mark}] {case['case_id']:<24} {got:<14} "
+                f"{outcome.decision.reason[:80]}"
+            )
 
     n = len(cases)
     print()
     print("=" * 72)
-    print(f"provider={args.provider}" + (f" model={args.model}" if args.provider != "stub" else ""))
+    suffix = f" model={args.model}" if args.provider != "stub" else ""
+    print(f"provider={args.provider}{suffix}")
     print("=" * 72)
     print(f"accuracy         {correct}/{n}  ({correct / n:.0%})")
     if triage_total:
-        print(f"triage class     {triage_hits}/{triage_total}  ({triage_hits / triage_total:.0%}) "
-              f"on cases where the label is determinate")
+        print(
+            f"triage class     {triage_hits}/{triage_total}  "
+            f"({triage_hits / triage_total:.0%}) "
+            f"on cases where the label is determinate"
+        )
     print(f"unsafe applies   {len(unsafe)}   <- the number that must be zero")
 
     print()
@@ -151,9 +157,12 @@ def main() -> int:
     if latencies:
         latencies.sort()
         p95 = latencies[min(int(len(latencies) * 0.95), len(latencies) - 1)]
-        print(f"latency          median {latencies[len(latencies) // 2]} ms, p95 {p95} ms")
-    print(f"cost             ${total_cost:.4f}"
-          + (f"  (${total_cost / model_calls:.5f} per model call)" if model_calls else ""))
+        median = latencies[len(latencies) // 2]
+        print(f"latency          median {median} ms, p95 {p95} ms")
+    per_call = (
+        f"  (${total_cost / model_calls:.5f} per model call)" if model_calls else ""
+    )
+    print(f"cost             ${total_cost:.4f}{per_call}")
 
     if args.out:
         import json as _json
@@ -166,7 +175,7 @@ def main() -> int:
             "unsafe": len(unsafe),
             "model_calls": model_calls,
             "cost_usd": round(total_cost, 6),
-            "run_at": datetime.now(timezone.utc).isoformat(),
+            "run_at": datetime.now(UTC).isoformat(),
         }, indent=2), encoding="utf-8")
         print(f"summary written to {args.out}")
 

@@ -12,10 +12,8 @@ open-ended dicts. The original prompt used dynamic keys ("data_Knauf KON13",
 """
 
 from enum import Enum
-from typing import Optional
 
 from pydantic import BaseModel, Field
-
 
 # --------------------------------------------------------------------------
 # Enums: these become JSON Schema `enum`, so the model literally cannot
@@ -42,7 +40,7 @@ class C2CLevel(str, Enum):
 class Component(BaseModel):
     """One material in the product composition (packaging excluded)."""
     name: str = Field(description="Material name, translated to English.")
-    percentage: Optional[float] = Field(
+    percentage: float | None = Field(
         None, ge=0, le=100,
         description=(
             "Share of total product weight, in percent. If the EPD gives kg, "
@@ -55,13 +53,13 @@ class Component(BaseModel):
 class RecycledContent(BaseModel):
     """Content-information board values, per material. Must mirror `comp` names."""
     name: str = Field(description="Material name; must match a name used in comp.")
-    perc_pre: Optional[float] = Field(None, ge=0, le=100, description="Pre-consumer recycled content, %.")
-    perc_post: Optional[float] = Field(None, ge=0, le=100, description="Post-consumer recycled content, %.")
-    perc_renew: Optional[float] = Field(
+    perc_pre: float | None = Field(None, ge=0, le=100, description="Pre-consumer recycled content, %.")
+    perc_post: float | None = Field(None, ge=0, le=100, description="Post-consumer recycled content, %.")
+    perc_renew: float | None = Field(
         None, ge=0, le=100,
         description="Rapidly renewable content (may appear as FSC/PEFC), %. NOT the same as biogenic.",
     )
-    perc_bio: Optional[float] = Field(
+    perc_bio: float | None = Field(
         None, ge=0, le=100,
         description="Biogenic content, %. NOT the same as rapidly renewable; judge independently.",
     )
@@ -75,19 +73,19 @@ class Circularity(BaseModel):
     All fields except `orig` should sum to 100 for each material.
     """
     name: str = Field(description="Material name matching comp, or 'product' if only product-level data exists.")
-    orig: Optional[float] = Field(None, ge=0, le=100, description="Share from circular/recycled sources, %. Independent of the end-of-life fields.")
-    reuse: Optional[float] = Field(None, ge=0, le=100, description="Directly reused without significant processing, %.")
-    comp: Optional[float] = Field(None, ge=0, le=100, description="Sent to composting / biological treatment, %.")
-    recycl: Optional[float] = Field(None, ge=0, le=100, description="Recycled into raw materials, excluding WEEE, %.")
-    WEEErecycl: Optional[float] = Field(None, ge=0, le=100, description="Recycled via WEEE-specific processes, %.")
-    backfill: Optional[float] = Field(None, ge=0, le=100, description="Recovered as backfill or aggregate, %.")
-    refurb: Optional[float] = Field(None, ge=0, le=100, description="Recovered via refurbishment/reconditioning, %.")
-    incin: Optional[float] = Field(None, ge=0, le=100, description="Incinerated, with or without energy recovery, %.")
-    landfill: Optional[float] = Field(None, ge=0, le=100, description="Inert or non-hazardous landfill, %.")
-    hazard: Optional[float] = Field(None, ge=0, le=100, description="Hazardous waste disposal, %.")
-    nonrecov: Optional[float] = Field(None, ge=0, le=100, description="No declared recovery route / non-recoverable, %.")
-    takebackrecycl: Optional[float] = Field(None, ge=0, le=100, description="Returned to manufacturer for recycling, %.")
-    unknown: Optional[float] = Field(
+    orig: float | None = Field(None, ge=0, le=100, description="Share from circular/recycled sources, %. Independent of the end-of-life fields.")
+    reuse: float | None = Field(None, ge=0, le=100, description="Directly reused without significant processing, %.")
+    comp: float | None = Field(None, ge=0, le=100, description="Sent to composting / biological treatment, %.")
+    recycl: float | None = Field(None, ge=0, le=100, description="Recycled into raw materials, excluding WEEE, %.")
+    WEEErecycl: float | None = Field(None, ge=0, le=100, description="Recycled via WEEE-specific processes, %.")
+    backfill: float | None = Field(None, ge=0, le=100, description="Recovered as backfill or aggregate, %.")
+    refurb: float | None = Field(None, ge=0, le=100, description="Recovered via refurbishment/reconditioning, %.")
+    incin: float | None = Field(None, ge=0, le=100, description="Incinerated, with or without energy recovery, %.")
+    landfill: float | None = Field(None, ge=0, le=100, description="Inert or non-hazardous landfill, %.")
+    hazard: float | None = Field(None, ge=0, le=100, description="Hazardous waste disposal, %.")
+    nonrecov: float | None = Field(None, ge=0, le=100, description="No declared recovery route / non-recoverable, %.")
+    takebackrecycl: float | None = Field(None, ge=0, le=100, description="Returned to manufacturer for recycling, %.")
+    unknown: float | None = Field(
         None, ge=0, le=100,
         description="End-of-life not specified in the EPD, %. Missing data -- NOT confirmed non-recovery.",
     )
@@ -123,7 +121,7 @@ class ConversionRatio(BaseModel):
             "copied as-is; if you find yourself dividing, you have inverted it."
         )
     )
-    variant: Optional[str] = Field(
+    variant: str | None = Field(
         None,
         description="Variant this factor belongs to, matching a name in `variants`. Null if it applies to the whole EPD.",
     )
@@ -137,7 +135,7 @@ class CorrectionFactor(BaseModel):
 
 class Variant(BaseModel):
     name: str = Field(description="Exact commercial name of the variant as written in the EPD.")
-    worst_case: Optional[bool] = Field(
+    worst_case: bool | None = Field(
         None,
         description=(
             "True ONLY for a combined worst-case table covering several variants at once "
@@ -149,12 +147,12 @@ class Variant(BaseModel):
 
 class EnvironmentalImpacts(BaseModel):
     """A1-A3 impacts. Never aggregate across stages; take A1-A3 as declared."""
-    gwp_total: Optional[float] = Field(None, description="Total GWP, kg CO2-eq, A1-A3. May appear as 'climate change' or 'CO2 emissions'.")
-    gwp_fossil: Optional[float] = Field(None, description="Fossil GWP, kg CO2-eq, A1-A3.")
-    gwp_luluc: Optional[float] = Field(None, description="Land use / land use change GWP, kg CO2-eq, A1-A3.")
-    gwp_bio: Optional[float] = Field(None, description="Biogenic GWP, kg CO2-eq, A1-A3.")
-    fw_use: Optional[float] = Field(None, description="Total freshwater use, m3, A1-A3. NOT water deprivation potential.")
-    wdp: Optional[float] = Field(None, description="Water deprivation potential, A1-A3.")
+    gwp_total: float | None = Field(None, description="Total GWP, kg CO2-eq, A1-A3. May appear as 'climate change' or 'CO2 emissions'.")
+    gwp_fossil: float | None = Field(None, description="Fossil GWP, kg CO2-eq, A1-A3.")
+    gwp_luluc: float | None = Field(None, description="Land use / land use change GWP, kg CO2-eq, A1-A3.")
+    gwp_bio: float | None = Field(None, description="Biogenic GWP, kg CO2-eq, A1-A3.")
+    fw_use: float | None = Field(None, description="Total freshwater use, m3, A1-A3. NOT water deprivation potential.")
+    wdp: float | None = Field(None, description="Water deprivation potential, A1-A3.")
 
 
 class VariantImpacts(BaseModel):
@@ -186,36 +184,36 @@ class EPDProduct(BaseModel):
         ),
     )
 
-    prod_name: Optional[str] = Field(None, description="Commercial product name, usually on the EPD cover page.")
-    epd_code: Optional[str] = Field(None, description="EPD registration code/number, usually on the cover page.")
-    methods_A1_A2: Optional[str] = Field(
+    prod_name: str | None = Field(None, description="Commercial product name, usually on the EPD cover page.")
+    epd_code: str | None = Field(None, description="EPD registration code/number, usually on the cover page.")
+    methods_A1_A2: str | None = Field(
         None,
         description=(
             "Full regulatory names, e.g. 'EN 15804:2012+A2:2019/AC:2021'. "
             "Separate several with commas."
         ),
     )
-    qual: Optional[Quality] = Field(None, description="Data quality indicator, stated early in the EPD.")
-    PCR: Optional[str] = Field(None, description="Product Category Rules referenced, including any sub-PCR.")
-    date: Optional[str] = Field(
+    qual: Quality | None = Field(None, description="Data quality indicator, stated early in the EPD.")
+    PCR: str | None = Field(None, description="Product Category Rules referenced, including any sub-PCR.")
+    date: str | None = Field(
         None,
         description="EXPIRY date (YYYY-MM-DD): 'Valid until' / 'Validity'. NOT the publication date.",
     )
-    prod_man: Optional[str] = Field(None, description="Product manufacturer.")
-    prod_site: Optional[str] = Field(None, description="Production site: city and country where stated.")
+    prod_man: str | None = Field(None, description="Product manufacturer.")
+    prod_site: str | None = Field(None, description="Production site: city and country where stated.")
 
-    lifespan: Optional[float] = Field(None, description="Reference service life (RSL) used for the LCA, in years.")
-    lifespan_exp: Optional[float] = Field(
+    lifespan: float | None = Field(None, description="Reference service life (RSL) used for the LCA, in years.")
+    lifespan_exp: float | None = Field(
         None,
         description="Manufacturer's expected service life, in years. If only one value exists, use it for both.",
     )
 
-    reference_unit: Optional[str] = Field(
+    reference_unit: str | None = Field(
         None,
         description="Declared unit, e.g. m2, kg, metric ton, litre. Note '1000 kg' means a metric ton.",
     )
-    thickness: Optional[float] = Field(None, description="Product thickness in metres, if applicable.")
-    density: Optional[float] = Field(None, description="Density in kg/m3, if applicable.")
+    thickness: float | None = Field(None, description="Product thickness in metres, if applicable.")
+    density: float | None = Field(None, description="Density in kg/m3, if applicable.")
 
     conversion_ratios: list[ConversionRatio] = Field(
         default_factory=list,
@@ -228,13 +226,13 @@ class EPDProduct(BaseModel):
         default_factory=list,
         description="Correction multipliers per variant, when the EPD gives factors instead of separate tables.",
     )
-    variant_ref: Optional[str] = Field(
+    variant_ref: str | None = Field(
         None,
         description="Name of the reference variant the correction factors relate to. Only if the EPD states it.",
     )
 
-    C2C: Optional[bool] = Field(None, description="True only on an explicit Cradle to Cradle certification.")
-    C2C_lvl: Optional[C2CLevel] = Field(
+    C2C: bool | None = Field(None, description="True only on an explicit Cradle to Cradle certification.")
+    C2C_lvl: C2CLevel | None = Field(
         None,
         description="Certification level; 'unknown' if C2C is true but no level is stated. Null when C2C is false.",
     )

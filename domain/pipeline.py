@@ -16,7 +16,6 @@ from __future__ import annotations
 
 import logging
 from dataclasses import dataclass
-from typing import Optional
 
 from . import changes
 from .changes import Action, ChangeRequest, Decision
@@ -30,7 +29,7 @@ class Outcome:
     """What happened to one change request."""
 
     decision: Decision
-    triage: Optional[TriageOutcome]  # None when the rules settled it alone
+    triage: TriageOutcome | None  # None when the rules settled it alone
 
     @property
     def used_model(self) -> bool:

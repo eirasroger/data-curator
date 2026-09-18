@@ -20,7 +20,7 @@ import json
 import os
 import subprocess
 import tempfile
-from datetime import date, datetime, timezone
+from datetime import UTC, date, datetime
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -124,7 +124,7 @@ def main() -> int:
         return 1
 
     records = json.loads(SEED.read_text(encoding="utf-8"))
-    now = datetime.now(timezone.utc).isoformat()
+    now = datetime.now(UTC).isoformat()
     rows = [to_row(r, now) for r in records]
 
     with tempfile.NamedTemporaryFile("w", suffix=".ndjson", delete=False,

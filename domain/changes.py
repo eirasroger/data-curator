@@ -11,9 +11,9 @@ from __future__ import annotations
 
 import copy
 import re
-from datetime import date, datetime, timezone
+from datetime import UTC, date, datetime
 from enum import Enum
-from typing import Any, Optional
+from typing import Any
 
 from pydantic import BaseModel, Field
 
@@ -78,11 +78,11 @@ class ChangeRequest(BaseModel):
     source: Source
     submitted_by: str
     submitted_at: str = Field(
-        default_factory=lambda: datetime.now(timezone.utc).isoformat()
+        default_factory=lambda: datetime.now(UTC).isoformat()
     )
 
     # FIELD_UPDATE only
-    field_path: Optional[str] = Field(
+    field_path: str | None = Field(
         default=None,
         description=(
             "Dotted path, e.g. 'density' or 'impacts.gwp_total'. List entries are "
@@ -92,7 +92,7 @@ class ChangeRequest(BaseModel):
     new_value: Any = None
 
     # RECORD_REPLACEMENT only: the whole new record
-    replacement: Optional[dict] = None
+    replacement: dict | None = None
 
     reason: str = Field(description="Why the submitter thinks this is right.")
 
@@ -103,16 +103,16 @@ class Decision(BaseModel):
     request_id: str
     action: Action
     decided_at: str = Field(
-        default_factory=lambda: datetime.now(timezone.utc).isoformat()
+        default_factory=lambda: datetime.now(UTC).isoformat()
     )
     # Which rule produced this outcome, in words a person can read.
     reason: str
     # Deterministic findings: validation errors the change would introduce.
     blocking_issues: list[str] = Field(default_factory=list)
     # Model output, only present when the model was actually consulted.
-    triage: Optional[TriageClass] = None
-    confidence: Optional[float] = None
-    rationale: Optional[str] = None
+    triage: TriageClass | None = None
+    confidence: float | None = None
+    rationale: str | None = None
     old_value: Any = None
 
 
@@ -230,7 +230,7 @@ def is_material(path: str) -> bool:
     return path in MATERIAL_FIELDS
 
 
-def screen(record: dict, request: ChangeRequest) -> Optional[Decision]:
+def screen(record: dict, request: ChangeRequest) -> Decision | None:
     """Decide without the model, if the rules already settle it.
 
     Returns a Decision when the answer is certain, or None when the request
@@ -406,7 +406,7 @@ def finalise(
     )
 
 
-def is_expired(record: dict, on: Optional[date] = None) -> bool:
+def is_expired(record: dict, on: date | None = None) -> bool:
     """Whether the EPD's validity has lapsed.
 
     `date` in these records is the EXPIRY date, not the publication date - see

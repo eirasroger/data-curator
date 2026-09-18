@@ -23,7 +23,8 @@ elif mode == "action":
     print(data.get("action") or "")
 
 elif mode == "decision":
-    print(f"    -> {str(data.get('action', '?')).upper()}: {data.get('decision_reason', '')}")
+    action = str(data.get("action", "?")).upper()
+    print(f"    -> {action}: {data.get('decision_reason', '')}")
     if data.get("triage"):
         cost = data.get("cost_usd") or 0
         print(f"       model said {data['triage']} @ {data.get('confidence')}  "

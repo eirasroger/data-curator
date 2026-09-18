@@ -18,8 +18,8 @@ from __future__ import annotations
 import json
 import os
 import uuid
-from datetime import datetime, timezone
-from typing import Any, Optional
+from datetime import UTC, datetime
+from typing import Any
 
 from google.cloud import bigquery
 
@@ -28,7 +28,7 @@ DATASET = os.environ.get("BQ_DATASET", "curator")
 
 
 def _now() -> str:
-    return datetime.now(timezone.utc).isoformat()
+    return datetime.now(UTC).isoformat()
 
 
 class InsertError(RuntimeError):
@@ -39,7 +39,7 @@ class Store:
     def __init__(self, project: str = "", dataset: str = "") -> None:
         self.project = project or PROJECT
         self.dataset = dataset or DATASET
-        self._client: Optional[bigquery.Client] = None
+        self._client: bigquery.Client | None = None
 
     @property
     def client(self) -> bigquery.Client:
@@ -64,9 +64,10 @@ class Store:
         job_config = bigquery.QueryJobConfig(
             query_parameters=[_param(k, v) for k, v in params.items()]
         )
-        return [dict(row) for row in self.client.query(sql, job_config=job_config).result()]
+        rows = self.client.query(sql, job_config=job_config).result()
+        return [dict(row) for row in rows]
 
-    def current_record(self, product_id: int) -> Optional[dict]:
+    def current_record(self, product_id: int) -> dict | None:
         """The latest version of one EPD, as the extractor's own dict shape."""
         rows = self.query(
             f"SELECT version, record FROM `{self.table('epd_current')}` "
@@ -102,7 +103,7 @@ class Store:
             limit=limit,
         )
 
-    def get_request(self, request_id: str) -> Optional[dict]:
+    def get_request(self, request_id: str) -> dict | None:
         """The original proposal, as submitted."""
         rows = self.query(
             f"SELECT * FROM `{self.table('change_requests')}` "
@@ -135,14 +136,20 @@ class Store:
             kind=row["kind"],
             source=row["source"],
             submitted_by=row["submitted_by"],
-            submitted_at=submitted.isoformat() if hasattr(submitted, "isoformat") else str(submitted),
+            # BigQuery hands back a datetime for a TIMESTAMP column, but a
+            # replayed or hand-inserted row can carry a string.
+            submitted_at=(
+                submitted.isoformat()
+                if isinstance(submitted, datetime)
+                else str(submitted)
+            ),
             field_path=row.get("field_path"),
             new_value=unjson(row.get("new_value")),
             replacement=unjson(row.get("replacement")),
             reason=row["reason"],
         )
 
-    def change_status(self, request_id: str) -> Optional[dict]:
+    def change_status(self, request_id: str) -> dict | None:
         rows = self.query(
             f"SELECT * FROM `{self.table('change_status')}` "
             f"WHERE request_id = @request_id",
@@ -170,7 +177,9 @@ class Store:
             # JSON columns take a JSON-encoded string, which lets one column
             # hold a number, a string or null without three columns.
             "new_value": json.dumps(request.new_value),
-            "replacement": json.dumps(request.replacement) if request.replacement else None,
+            "replacement": (
+                json.dumps(request.replacement) if request.replacement else None
+            ),
             "reason": request.reason,
         }])
 

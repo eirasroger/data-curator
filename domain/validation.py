@@ -14,7 +14,7 @@ Each check returns Issue objects. An Issue is machine-readable on purpose: the
 repair node in graph.py feeds `field` and `detail` straight back to the model.
 """
 
-from dataclasses import dataclass, asdict
+from dataclasses import asdict, dataclass
 from typing import Literal
 
 Severity = Literal["error", "warning"]
@@ -55,7 +55,8 @@ def check_gwp(p: dict) -> list[Issue]:
         return [Issue(
             "impacts.gwp_total", "error",
             f"gwp_total={total} but gwp_fossil+gwp_luluc+gwp_bio={s:.4g}. "
-            f"Re-read the A1-A3 impact table; a value was likely taken from the wrong row or column.",
+            f"Re-read the A1-A3 impact table; a value was likely taken from the "
+            f"wrong row or column.",
         )]
     return []
 
@@ -94,7 +95,8 @@ def check_composition(p: dict) -> list[Issue]:
         return [Issue(
             "product_integrity.comp", "error",
             f"Material percentages total {total:.1f}%, which exceeds 100%. "
-            f"A value was likely double counted or misread. Do NOT add or remove materials "
+            f"A value was likely double counted or misread. Do NOT add or remove "
+            f"materials "
             f"to force a total -- re-read the composition table.",
         )]
 
@@ -141,7 +143,8 @@ def check_circularity(p: dict) -> list[Issue]:
             issues.append(Issue(
                 f"product_integrity.circ[{entry.get('name')}]", "warning",
                 f"End-of-life routes total {total:.1f}%, not 100%. "
-                f"Assign any remainder to nonrecov, or to unknown if the EPD does not say.",
+                f"Assign any remainder to nonrecov, or to unknown if the EPD does "
+                f"not say.",
             ))
     return issues
 
@@ -167,7 +170,8 @@ def check_variant_names(p: dict) -> list[Issue]:
     if orphans:
         issues.append(Issue(
             "variants", "error",
-            f"These variant names are referenced but missing from `variants`: {sorted(orphans)}. "
+            f"These variant names are referenced but missing from `variants`: "
+            f"{sorted(orphans)}. "
             f"List EVERY variant named in the EPD.",
         ))
     return issues
@@ -190,19 +194,27 @@ def check_flag(p: dict) -> list[Issue]:
 
 def check_c2c(p: dict) -> list[Issue]:
     if p.get("C2C_lvl") and not p.get("C2C"):
-        return [Issue("C2C_lvl", "warning",
-                      "A C2C level is set but C2C is not true. Clear the level or set C2C.")]
+        return [Issue(
+            "C2C_lvl", "warning",
+            "A C2C level is set but C2C is not true. Clear the level or set C2C.",
+        )]
     return []
 
 
 def check_lifespan(p: dict) -> list[Issue]:
     ls, le = p.get("lifespan"), p.get("lifespan_exp")
     if ls is None and le is not None:
-        return [Issue("lifespan", "warning",
-                      "lifespan_exp is set but lifespan is null. If the EPD gives one value, use it for both.")]
+        return [Issue(
+            "lifespan", "warning",
+            "lifespan_exp is set but lifespan is null. If the EPD gives one value, "
+            "use it for both.",
+        )]
     if le is None and ls is not None:
-        return [Issue("lifespan_exp", "warning",
-                      "lifespan is set but lifespan_exp is null. If the EPD gives one value, use it for both.")]
+        return [Issue(
+            "lifespan_exp", "warning",
+            "lifespan is set but lifespan_exp is null. If the EPD gives one value, "
+            "use it for both.",
+        )]
     return []
 
 

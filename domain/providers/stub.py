@@ -128,7 +128,8 @@ class StubTriager:
             return TriageResult(
                 triage=TriageClass.GENUINE_CORRECTION,
                 confidence=0.60,
-                rationale="Small adjustment, consistent with re-reading a rounded figure.",
+                rationale="Small adjustment, consistent with re-reading a "
+                          "rounded figure.",
             )
 
         return TriageResult(
