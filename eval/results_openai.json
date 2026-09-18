@@ -1,0 +1,21 @@
+{
+  "provider": "openai",
+  "model": "gpt-5-mini",
+  "cases": 54,
+  "correct": 51,
+  "pass_rate": 0.9444,
+  "rules_only": {
+    "correct": 39,
+    "total": 39
+  },
+  "model_layer": {
+    "correct": 12,
+    "total": 15,
+    "pass_rate": 0.8
+  },
+  "unsafe": 0,
+  "confidence_floor": 0.9,
+  "model_calls": 15,
+  "cost_usd": 0.012404,
+  "run_at": "2026-09-18T18:50:54.938811+00:00"
+}

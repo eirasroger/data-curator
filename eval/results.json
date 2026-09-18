@@ -1,0 +1,21 @@
+{
+  "provider": "stub",
+  "model": "stub",
+  "cases": 54,
+  "correct": 50,
+  "pass_rate": 0.9259,
+  "rules_only": {
+    "correct": 39,
+    "total": 39
+  },
+  "model_layer": {
+    "correct": 11,
+    "total": 15,
+    "pass_rate": 0.7333
+  },
+  "unsafe": 0,
+  "confidence_floor": 0.9,
+  "model_calls": 15,
+  "cost_usd": 0.0,
+  "run_at": "2026-09-18T18:51:20.215181+00:00"
+}

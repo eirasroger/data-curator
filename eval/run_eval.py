@@ -1,11 +1,22 @@
 """Score the decision pipeline against the labelled cases.
 
-ACCURACY is how often the pipeline reached the outcome we labelled as correct.
-UNSAFE is how often it APPLIED a change that should have been rejected or sent
-to a person. Those are not equally bad. A change wrongly parked for review costs
-somebody five minutes. A change wrongly applied silently corrupts a published
-figure that other people go on to quote. A run with 95% accuracy and one unsafe
-error is worse than a run with 85% accuracy and none.
+Three figures, because one hides the interesting part.
+
+END TO END is how often the pipeline reached the labelled outcome. On its own
+it flatters the system: the rules settle roughly three quarters of these cases
+for free, so the headline mostly measures arithmetic that cannot be wrong.
+
+RULES ONLY and MODEL LAYER split that. The first is the cases `screen()`
+settled without asking anything; the second is the cases that survived it and
+reached a triager. Only the second changes when the provider changes, and it is
+the only one worth comparing between a stub and a paid model.
+
+UNSAFE is how often a change was APPLIED that should have been rejected or sent
+to a person. It is not on the same scale as the others. A change wrongly parked
+costs somebody five minutes; a change wrongly applied corrupts a published
+figure other people go on to quote. A run with 95% accuracy and one unsafe
+error is worse than one with 85% and none, which is why this exits non-zero on
+any unsafe count regardless of accuracy.
 
 Run:
     python eval/run_eval.py                      # stub, free, no network
@@ -65,6 +76,8 @@ def main() -> int:
     ap.add_argument("--limit", type=int, default=0, help="only run the first N cases")
     ap.add_argument("--verbose", action="store_true", help="print every case")
     ap.add_argument("--out", default="", help="write a JSON summary here")
+    ap.add_argument("--min-accuracy", type=float, default=0.0,
+                    help="exit non-zero below this end-to-end accuracy; the CI gate")
     args = ap.parse_args()
 
     records = {r["product_id"]: r for r in json.loads(SEED.read_text(encoding="utf-8"))}
@@ -82,6 +95,9 @@ def main() -> int:
     latencies: list[int] = []
     per_category: dict[str, list[bool]] = defaultdict(list)
     failures: list[str] = []
+    # Split by who actually decided, so the model layer can be scored alone.
+    rules_hits = rules_total = 0
+    model_hits = model_total = 0
 
     for case in cases:
         record = load_record(records, case)
@@ -100,8 +116,13 @@ def main() -> int:
 
         if outcome.used_model:
             model_calls += 1
+            model_total += 1
+            model_hits += ok
             total_cost += outcome.cost_usd
             latencies.append(outcome.latency_ms)
+        else:
+            rules_total += 1
+            rules_hits += ok
 
         want_triage = case.get("expected_triage")
         if want_triage and outcome.decision.triage:
@@ -136,7 +157,15 @@ def main() -> int:
     suffix = f" model={args.model}" if args.provider != "stub" else ""
     print(f"provider={args.provider}{suffix}")
     print("=" * 72)
-    print(f"accuracy         {correct}/{n}  ({correct / n:.0%})")
+    print(f"end to end       {correct}/{n}  ({correct / n:.0%})")
+    if rules_total:
+        print(f"  rules only     {rules_hits}/{rules_total}  "
+              f"({rules_hits / rules_total:.0%})"
+              f"   settled by screen(), provider-independent")
+    if model_total:
+        print(f"  model layer    {model_hits}/{model_total}  "
+              f"({model_hits / model_total:.0%})"
+              f"   what the triager is actually worth")
     if triage_total:
         print(
             f"triage class     {triage_hits}/{triage_total}  "
@@ -172,7 +201,14 @@ def main() -> int:
             "cases": n,
             "correct": correct,
             "pass_rate": round(correct / n, 4),
+            "rules_only": {"correct": rules_hits, "total": rules_total},
+            "model_layer": {
+                "correct": model_hits,
+                "total": model_total,
+                "pass_rate": round(model_hits / model_total, 4) if model_total else None,
+            },
             "unsafe": len(unsafe),
+            "confidence_floor": changes.CONFIDENCE_FLOOR,
             "model_calls": model_calls,
             "cost_usd": round(total_cost, 6),
             "run_at": datetime.now(UTC).isoformat(),
@@ -191,7 +227,18 @@ def main() -> int:
         for f in failures:
             print(f)
 
-    return 1 if unsafe else 0
+    # Two gates, and they are not the same kind of thing. Unsafe must be zero
+    # whatever the accuracy. Accuracy has a floor rather than a target, because
+    # a regression matters and the exact figure does not.
+    failed = False
+    if unsafe:
+        failed = True
+    if args.min_accuracy and correct / n < args.min_accuracy:
+        print()
+        print(f"FAIL: accuracy {correct / n:.1%} is below the "
+              f"{args.min_accuracy:.0%} baseline.")
+        failed = True
+    return 1 if failed else 0
 
 
 if __name__ == "__main__":

@@ -15,7 +15,8 @@ below measurable.
 
 ## 1. The confidence floor is set too low. It should be 0.90, not 0.85.
 
-This is the finding that changes the code.
+This is the finding that changes the code. **Applied**: `CONFIDENCE_FLOOR` in
+`domain/changes.py` is now 0.90.
 
 ![what each confidence floor would do](figures/floors.png)
 
@@ -168,20 +169,45 @@ What the model classified, over 948 calls:
 | transcription | 110 |
 | unit_conversion | 1 |
 
-`unit_conversion` fired once. Either the class is redundant with `decimal_slip`,
-or the traffic here does not contain the kg/tonne confusions it was written for.
-The generated `unit_confusion` proposals - a clean factor of 1000 - were
-classified `implausible` instead, which is a defensible reading: the proposal
-*is* wrong, and naming the mechanism is secondary.
+`unit_conversion` fired once in 948 calls, and once more across the 150-case
+benchmark: twice in 1,098.
+
+The first reading - that the class is redundant with `decimal_slip` - is wrong.
+The class describes a proposal that CORRECTS a unit error, and every x1000
+proposal in this traffic is a proposal that INTRODUCES one. The model called
+those `implausible`, which is right: the proposal is wrong, and naming the
+mechanism it got wrong is secondary.
+
+So the class is not dead, the traffic is. Nothing in `sim/generate.py` builds a
+correct kg/tonne fix, so the one case the class exists for never arrives. The
+finding is about the generator, not the taxonomy: the enum stays, and the
+missing shape is the thing worth adding.
 
 ---
+
+## 9. Raising the floor makes the eval score worse. That is the trade.
+
+Moving the floor to 0.90 cost end-to-end eval accuracy: at 0.85 the 54-case set
+scores 53/54, at 0.90 it scores 51/54. Three `E_fix_lifespan` cases are correct
+proposals the model rated 0.80, 0.85 and 0.88, and the two above 0.85 used to
+pass.
+
+The eval is not wrong. It contains no case where a 0.85-0.89 change is actually
+harmful, because with 54 cases it cannot - the 948-call run found five. So the
+small set rewards a floor the large run proves unsafe, and the large run wins.
+
+Worth stating plainly rather than quietly raising the floor and letting the
+number drop: a benchmark that gets worse when the system gets safer is
+measuring the wrong thing on that axis, and the fix is to trust it for
+regressions rather than for thresholds.
 
 ## What to change
 
 1. **Raise the confidence floor to 0.90** in `changes.finalise()`. Five wrong
    auto-applies at 0.85 is the whole argument.
 2. **Leave `LOW_MEAN_CONFIDENCE` at 0.60.** It only misfired on stub histories.
-3. **Consider dropping `unit_conversion`** from `TriageClass`, or rewrite its
-   description so it is distinguishable from `decimal_slip` in the prompt.
+3. **Keep `unit_conversion`, and add a proposal shape that earns it.** The
+   generator never builds a correct unit fix, so the class cannot fire. That is
+   a gap in the simulated traffic, not in the taxonomy.
 4. **Do not quote the 150-case benchmark as evidence a floor is safe.** Use it
    to compare triagers; use a run of this size to set a threshold.

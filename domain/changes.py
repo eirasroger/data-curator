@@ -69,6 +69,19 @@ MATERIAL_FIELDS = {
 }
 
 
+# Below this, the model's answer is advice attached to a review rather than a
+# decision. 0.90, not the 0.85 this shipped with: measured over 948 real model
+# calls, 0.85 auto-applied 208 correct changes and 5 wrong ones, and 0.90
+# auto-applied 134 with none wrong. The 74 that move to review cost somebody a
+# few minutes each; the 5 corrupt published figures other people go on to
+# quote. See analysis/FINDINGS.md.
+#
+# An earlier 150-case benchmark reported 0.85 as safe. It was not wrong about
+# what it saw - it was too small to find a 2% failure rate in the 0.85-0.90
+# band. Thresholds need the bigger run.
+CONFIDENCE_FLOOR = 0.90
+
+
 class ChangeRequest(BaseModel):
     """One proposal to change one EPD. Immutable once submitted."""
 
@@ -348,7 +361,7 @@ def finalise(
     triage: TriageClass,
     confidence: float,
     rationale: str,
-    confidence_floor: float = 0.85,
+    confidence_floor: float = CONFIDENCE_FLOOR,
 ) -> Decision:
     """Turn the model's opinion into an outcome, under rules the model cannot bend.
 

@@ -52,6 +52,13 @@ jobs:
       # Credential-free and network-free once the provider is cached: fmt and
       # validate check syntax and provider schemas without touching GCP, so CI
       # never authenticates and never spends anything.
+      # The stub provider, so this costs nothing and needs no key. Two gates:
+      # any unsafe apply fails the build whatever the accuracy, and accuracy
+      # below the committed baseline fails it as a regression. Baseline is
+      # eval/results.json; raise it when a change earns it.
+      - name: Eval gate
+        run: python eval/run_eval.py --min-accuracy 0.90
+
       - uses: hashicorp/setup-terraform@v3
         with:
           terraform_version: 1.16.2

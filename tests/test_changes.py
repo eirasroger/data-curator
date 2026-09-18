@@ -322,3 +322,31 @@ def test_density_cross_check_is_silent_without_all_three_values(all_records):
         if any(i.field == "density" for i in validation.validate(r))
     ]
     assert flagged == []
+
+
+def test_the_confidence_floor_is_where_the_measurement_put_it(record):
+    """0.90, and a test so it cannot drift back without someone deciding to.
+
+    Measured over 948 real model calls: 0.85 auto-applied five wrong changes,
+    0.90 auto-applied none. Lowering this is a safety decision, not a tuning
+    knob - analysis/FINDINGS.md has the table.
+    """
+    assert changes.CONFIDENCE_FLOOR == 0.90
+
+    just_under = changes.finalise(
+        request_for(record, "lifespan", 50.0),
+        old_value=500.0,
+        triage=TriageClass.DECIMAL_SLIP,
+        confidence=0.89,
+        rationale="ten times out",
+    )
+    assert just_under.action is Action.PENDING_REVIEW
+
+    at_the_floor = changes.finalise(
+        request_for(record, "lifespan", 50.0),
+        old_value=500.0,
+        triage=TriageClass.DECIMAL_SLIP,
+        confidence=0.90,
+        rationale="ten times out",
+    )
+    assert at_the_floor.action is Action.APPLIED
