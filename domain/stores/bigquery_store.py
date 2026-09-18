@@ -93,6 +93,10 @@ class BigQueryStore:
             limit=limit,
         )
 
+    def review_queue_depth(self) -> int:
+        rows = self.query(f"SELECT COUNT(*) AS n FROM `{self.table('review_queue')}`")
+        return int(rows[0]["n"]) if rows else 0
+
     def get_request(self, request_id: str) -> dict | None:
         rows = self.query(
             f"SELECT * FROM `{self.table('change_requests')}` "
@@ -137,6 +141,7 @@ class BigQueryStore:
               COUNTIF(action = 'pending_review') AS pending,
               COUNTIF(model IS NOT NULL) AS model_calls,
               AVG(confidence) AS mean_confidence,
+              APPROX_QUANTILES(latency_ms, 100)[OFFSET(50)] AS p50_latency_ms,
               APPROX_QUANTILES(latency_ms, 100)[OFFSET(95)] AS p95_latency_ms,
               SUM(cost_usd) AS total_cost
             FROM `{self.table('change_events')}`
@@ -157,6 +162,20 @@ class BigQueryStore:
     def epd_count(self) -> int:
         rows = self.query(f"SELECT COUNT(*) AS n FROM `{self.table('epd_current')}`")
         return int(rows[0]["n"]) if rows else 0
+
+    def latest_reconciliation(self) -> dict | None:
+        # One row per night, so this is the cheapest read in the system and the
+        # reason the dashboard never scans change_events for drift state.
+        rows = self.query(
+            f"SELECT * FROM `{self.table('reconciliation_runs')}` "
+            f"ORDER BY run_at DESC LIMIT 1"
+        )
+        return rows[0] if rows else None
+
+    def agents_needing_attention(self) -> list[dict]:
+        return self.query(
+            f"SELECT * FROM `{self.table('agent_registry_attention')}`"
+        )
 
     # -- writes --------------------------------------------------------------
 

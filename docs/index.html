@@ -1,0 +1,1583 @@
+
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>data-curator - operator</title>
+
+<style>
+  /* Colours are the validated data-viz palette: categorical slots 1-2 for
+     identity, the status four only where the colour means a state. */
+  :root {
+    --surface: #fcfcfb; --raised: #ffffff; --line: #e6e5e1;
+    --ink: #0b0b0b; --ink-2: #52514e; --muted: #8a8983;
+    --blue: #2a78d6; --orange: #eb6834;
+    --good: #0ca30c; --warning: #fab219; --serious: #ec835a; --critical: #d03b3b;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --surface: #1a1a19; --raised: #232322; --line: #383835;
+      --ink: #ffffff; --ink-2: #c3c2b7; --muted: #8a8983;
+      --blue: #3987e5; --orange: #d95926;
+    }
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--surface); color: var(--ink);
+    font: 15px/1.5 ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  }
+  .wrap { max-width: 1120px; margin: 0 auto; padding: 24px 16px 64px; }
+  header { display: flex; align-items: baseline; gap: 16px; flex-wrap: wrap; }
+  h1 { font-size: 20px; margin: 0; font-weight: 650; letter-spacing: -0.01em; }
+  h2 { font-size: 13px; margin: 32px 0 12px; font-weight: 650;
+       text-transform: uppercase; letter-spacing: 0.06em; color: var(--ink-2); }
+  .asof { color: var(--muted); font-size: 13px; }
+  .banner {
+    margin: 16px 0 0; padding: 10px 14px; border-radius: 8px;
+    border: 1px solid var(--line); background: var(--raised);
+    color: var(--ink-2); font-size: 13px;
+  }
+  .tiles { display: grid; gap: 10px; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); }
+  .tile { background: var(--raised); border: 1px solid var(--line);
+          border-radius: 10px; padding: 14px 16px; }
+  .tile .k { font-size: 12px; color: var(--ink-2); }
+  .tile .v { font-size: 26px; font-weight: 640; letter-spacing: -0.02em;
+             margin-top: 4px; font-variant-numeric: tabular-nums; }
+  .tile .s { font-size: 12px; color: var(--muted); margin-top: 2px; }
+  table { width: 100%; border-collapse: collapse; font-size: 14px; }
+  th { text-align: left; font-size: 12px; font-weight: 600; color: var(--ink-2);
+       padding: 8px 10px; border-bottom: 1px solid var(--line); white-space: nowrap; }
+  td { padding: 10px; border-bottom: 1px solid var(--line); vertical-align: top; }
+  tr:last-child td { border-bottom: none; }
+  .panel { background: var(--raised); border: 1px solid var(--line);
+           border-radius: 10px; overflow: hidden; }
+  code, .mono { font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+                font-size: 13px; }
+  .val-old { color: var(--ink-2); text-decoration: line-through; }
+  .val-new { color: var(--ink); font-weight: 600; }
+  .pill { display: inline-block; padding: 1px 8px; border-radius: 999px;
+          font-size: 12px; border: 1px solid var(--line); color: var(--ink-2); }
+  .flag { display: flex; gap: 8px; align-items: baseline; padding: 8px 0;
+          border-bottom: 1px solid var(--line); }
+  .flag:last-child { border-bottom: none; }
+  /* Status never travels on colour alone - each carries its own glyph. */
+  .dot::before { font-size: 13px; }
+  .dot.ok::before    { content: "\25cf"; color: var(--good); }
+  .dot.warn::before  { content: "\25b2"; color: var(--serious); }
+  .dot.crit::before  { content: "\25a0"; color: var(--critical); }
+  button {
+    font: inherit; font-size: 13px; padding: 5px 12px; border-radius: 7px;
+    border: 1px solid var(--line); background: var(--surface);
+    color: var(--ink); cursor: pointer;
+  }
+  button:hover { border-color: var(--muted); }
+  button.approve { border-color: var(--good); color: var(--good); }
+  button.reject { border-color: var(--critical); color: var(--critical); }
+  .bar { display: flex; height: 8px; border-radius: 999px; overflow: hidden;
+         background: var(--line); margin-top: 8px; }
+  .bar span { display: block; }
+  .legend { display: flex; gap: 14px; font-size: 12px; color: var(--ink-2);
+            margin-top: 8px; flex-wrap: wrap; }
+  .legend i { display: inline-block; width: 9px; height: 9px; border-radius: 2px;
+              margin-right: 5px; }
+  .empty { padding: 18px; color: var(--muted); font-size: 14px; }
+  .right { text-align: right; font-variant-numeric: tabular-nums; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <h1>data-curator</h1>
+    <span class="asof">63 EPDs &middot; read
+      2026-09-18 18:19 UTC</span>
+    
+  </header>
+
+  
+  <p class="banner">
+    <strong>Demo snapshot.</strong> A frozen copy of a simulated decision
+    history: real EPD records, the real pipeline, real model outputs. Approving
+    or rejecting here changes only this page &mdash; there is no server behind
+    it. The working version runs against the live datastore.
+  </p>
+  
+
+  
+
+
+
+<h2>Needs a person</h2>
+<div class="tiles">
+  <div class="tile">
+    <div class="k">Waiting for review</div>
+    <div class="v" id="queue-depth" data-total="562">562</div>
+    <div class="s">520 past the 7-day SLA</div>
+  </div>
+  <div class="tile">
+    <div class="k">Decisions today</div>
+    <div class="v">25</div>
+    <div class="s">11 applied &middot; 10 rejected</div>
+  </div>
+  <div class="tile">
+    <div class="k">Settled without a model</div>
+    <div class="v">56%</div>
+    <div class="s">14 of 25 today</div>
+  </div>
+  <div class="tile">
+    <div class="k">Spend today</div>
+    <div class="v">$0.0109</div>
+    <div class="s">$0.00044 per decision</div>
+  </div>
+  <div class="tile">
+    <div class="k">Model latency</div>
+    <div class="v">7.2s</div>
+    <div class="s">p95 &middot; p50 4.6s</div>
+  </div>
+</div>
+
+<h2>Last nightly check</h2>
+<div class="panel" style="padding: 4px 16px">
+  
+    
+    <div class="flag">
+      <span class="dot crit"></span>
+      <span>
+        Ran 2026-09-18 19:59 UTC over
+        26 decisions.
+        
+      </span>
+    </div>
+    
+    <div class="flag">
+      <span class="dot warn"></span><span>1 EPD(s) expired and were flagged this run</span>
+    </div>
+    
+    <div class="flag">
+      <span class="dot warn"></span><span>2 EPD(s) expire within 90 days</span>
+    </div>
+    
+    <div class="flag">
+      <span class="dot warn"></span><span>519 change(s) waiting on a person for more than 7 days</span>
+    </div>
+    
+  
+</div>
+
+
+
+<h2>Throughput</h2>
+<div class="panel" style="padding: 16px">
+  <table>
+    <thead>
+      <tr>
+        <th>Window</th><th class="right">Decisions</th><th class="right">Applied</th>
+        <th class="right">Rejected</th><th class="right">To a person</th>
+        <th class="right">Rules</th><th class="right">Cost</th>
+      </tr>
+    </thead>
+    <tbody>
+    
+      <tr>
+        <td>today</td>
+        <td class="right">25</td>
+        <td class="right">11</td>
+        <td class="right">10</td>
+        <td class="right">4</td>
+        <td class="right">56%</td>
+        <td class="right">$0.0109</td>
+      </tr>
+    
+      <tr>
+        <td>7 days</td>
+        <td class="right">152</td>
+        <td class="right">40</td>
+        <td class="right">70</td>
+        <td class="right">42</td>
+        <td class="right">48%</td>
+        <td class="right">$0.0715</td>
+      </tr>
+    
+      <tr>
+        <td>30 days</td>
+        <td class="right">673</td>
+        <td class="right">182</td>
+        <td class="right">307</td>
+        <td class="right">184</td>
+        <td class="right">53%</td>
+        <td class="right">$0.2896</td>
+      </tr>
+    
+    </tbody>
+  </table>
+
+  
+  
+  <div class="bar" role="img"
+       aria-label="Over 30 days: 182 applied, 307 rejected, 184 sent to a person">
+    <span style="width: 27.043090638930163%; background: var(--good)"></span>
+    <span style="width: 45.61664190193165%; background: var(--critical)"></span>
+    <span style="width: 27.340267459138186%; background: var(--blue)"></span>
+  </div>
+  <div class="legend">
+    <span><i style="background: var(--good)"></i>applied 182</span>
+    <span><i style="background: var(--critical)"></i>rejected 307</span>
+    <span><i style="background: var(--blue)"></i>to a person 184</span>
+    <span>over 30 days</span>
+  </div>
+  
+</div>
+
+<h2>Review queue</h2>
+<div class="panel">
+  
+  <table>
+    <thead>
+      <tr>
+        <th>Field</th><th>Change</th><th>Why the pipeline stopped</th>
+        <th class="right">Waiting</th><th></th>
+      </tr>
+    </thead>
+    <tbody>
+    
+      <tr data-request="sim-material-000010">
+        <td>
+          <div class="mono">date</div>
+          <div class="s" style="color: var(--muted); font-size: 12px">
+            EPD 36 &middot; e.lindqvist
+          </div>
+        </td>
+        <td class="mono">
+          
+          <span class="val-new">&#34;2030-01-01&#34;</span>
+          
+          
+          <div><span class="pill">unclear
+            0.75</span></div>
+          
+        </td>
+        <td style="max-width: 380px">
+          date is a published figure; these are never decided without a person, whatever the model concluded.
+          
+          <div style="color: var(--ink-2); font-size: 13px; margin-top: 4px">
+            Proposed change only alters the expiry date (2030-01-17 → 2030-01-01). This is not a numeric correction tied to the record’s internal numeric consistency (density/thickness/convert, GWP component sums, or material percentages), and no supporting document or reason beyond the submitter’s note is provided. The record’s numeric fields (e.g. gwp_total 2.52 vs components) are unchanged and consistent, so there isn’t enough information to classify this as a decimal/unit/transcription/genuine correction or to accept the date change automatically.
+          </div>
+          
+        </td>
+        <td class="right">2154h</td>
+        <td style="white-space: nowrap">
+          
+          <button class="approve" data-act="approve">Approve</button>
+          <button class="reject" data-act="reject">Reject</button>
+          
+        </td>
+      </tr>
+    
+      <tr data-request="sim-uncdec-000018">
+        <td>
+          <div class="mono">density</div>
+          <div class="s" style="color: var(--muted); font-size: 12px">
+            EPD 110 &middot; e.lindqvist
+          </div>
+        </td>
+        <td class="mono">
+          
+          <span class="val-new">1040.0</span>
+          
+          
+          <div><span class="pill">decimal_slip
+            0.84</span></div>
+          
+        </td>
+        <td style="max-width: 380px">
+          Confidence 0.84 is below the 0.85 floor.
+          
+          <div style="color: var(--ink-2); font-size: 13px; margin-top: 4px">
+            10400 kg/m3 is implausibly high for a coating (10.4 g/cm3, metal-like). A value of 1040 kg/m3 is a plausible coating density and matches the submitter’s claim of a misplaced decimal. Other record checks (GWP parts summing to the stored gwp_total: 7.87+0.00409+0.0181 ≈ 7.89219 → 7.89) are internally consistent, so the only anomaly is the density’s decimal placement.
+          </div>
+          
+        </td>
+        <td class="right">2144h</td>
+        <td style="white-space: nowrap">
+          
+          <button class="approve" data-act="approve">Approve</button>
+          <button class="reject" data-act="reject">Reject</button>
+          
+        </td>
+      </tr>
+    
+      <tr data-request="sim-material-000020">
+        <td>
+          <div class="mono">date</div>
+          <div class="s" style="color: var(--muted); font-size: 12px">
+            EPD 27 &middot; c.okafor
+          </div>
+        </td>
+        <td class="mono">
+          
+          <span class="val-new">&#34;2030-01-01&#34;</span>
+          
+          
+          <div><span class="pill">genuine_correction
+            0.72</span></div>
+          
+        </td>
+        <td style="max-width: 380px">
+          date is a published figure; these are never decided without a person, whatever the model concluded.
+          
+          <div style="color: var(--ink-2); font-size: 13px; margin-top: 4px">
+            The proposal changes only the EPD expiry date (2029-05-29 → 2030-01-01), not any numeric property. This is an administrative update provided by the manufacturer, so it is a genuine correction rather than a numeric transcription/unit/decimal error. The record&#39;s internal numeric consistency (conversion ratio, GWP components, material percentages) is unaffected.
+          </div>
+          
+        </td>
+        <td class="right">2144h</td>
+        <td style="white-space: nowrap">
+          
+          <button class="approve" data-act="approve">Approve</button>
+          <button class="reject" data-act="reject">Reject</button>
+          
+        </td>
+      </tr>
+    
+      <tr data-request="sim-replace-000021">
+        <td>
+          <div class="mono">record_replacement</div>
+          <div class="s" style="color: var(--muted); font-size: 12px">
+            EPD 12 &middot; feed-watcher
+          </div>
+        </td>
+        <td class="mono">
+          
+          <span style="color: var(--muted)">whole record</span>
+          
+          
+        </td>
+        <td style="max-width: 380px">
+          A replacement supersedes the whole record and is always reviewed.
+          
+        </td>
+        <td class="right">2143h</td>
+        <td style="white-space: nowrap">
+          
+          <button class="approve" data-act="approve">Approve</button>
+          <button class="reject" data-act="reject">Reject</button>
+          
+        </td>
+      </tr>
+    
+      <tr data-request="sim-material-000023">
+        <td>
+          <div class="mono">reference_unit</div>
+          <div class="s" style="color: var(--muted); font-size: 12px">
+            EPD 37 &middot; b.martinez
+          </div>
+        </td>
+        <td class="mono">
+          
+          <span class="val-new">&#34;kg&#34;</span>
+          
+          
+          <div><span class="pill">genuine_correction
+            0.60</span></div>
+          
+        </td>
+        <td style="max-width: 380px">
+          reference_unit is a published figure; these are never decided without a person, whatever the model concluded.
+          
+          <div style="color: var(--ink-2); font-size: 13px; margin-top: 4px">
+            The EPD shows a 1.0 kg per 1 kg conversion ratio, so the impacts (per kg) and compositions are already expressed per kilogram; changing the label from “kg pipe” to the standard “kg” is a metadata clarification rather than a numeric fix. The stored numeric fields (e.g. gwp_total 2.6) are consistent with a per‑kg basis, so this proposed label change is a legitimate correction to the reference unit.
+          </div>
+          
+        </td>
+        <td class="right">2141h</td>
+        <td style="white-space: nowrap">
+          
+          <button class="approve" data-act="approve">Approve</button>
+          <button class="reject" data-act="reject">Reject</button>
+          
+        </td>
+      </tr>
+    
+      <tr data-request="sim-lifespan-000026">
+        <td>
+          <div class="mono">lifespan</div>
+          <div class="s" style="color: var(--muted); font-size: 12px">
+            EPD 86 &middot; a.rossi
+          </div>
+        </td>
+        <td class="mono">
+          
+          <span class="val-new">20.0</span>
+          
+          
+          <div><span class="pill">unclear
+            0.74</span></div>
+          
+        </td>
+        <td style="max-width: 380px">
+          Confidence 0.74 is below the 0.85 floor.
+          
+          <div style="color: var(--ink-2); font-size: 13px; margin-top: 4px">
+            The record is internally consistent: density 2287.5 kg/m3 × thickness 0.08 m = 183.0 kg/m2 (one of the listed conversion ratios), and A1–A3 GWP components sum to gwp_total within rounding (28.1 + 0.0517 − 4.68 ≈ 23.47 ≈ 23.4). Lifespan (10.0 yr) is not cross-referenced elsewhere in the record, so the proposal to change it to 20.0 yr cannot be verified or rejected from the provided data.
+          </div>
+          
+        </td>
+        <td class="right">2139h</td>
+        <td style="white-space: nowrap">
+          
+          <button class="approve" data-act="approve">Approve</button>
+          <button class="reject" data-act="reject">Reject</button>
+          
+        </td>
+      </tr>
+    
+      <tr data-request="sim-lifespan-000030">
+        <td>
+          <div class="mono">lifespan</div>
+          <div class="s" style="color: var(--muted); font-size: 12px">
+            EPD 75 &middot; c.okafor
+          </div>
+        </td>
+        <td class="mono">
+          
+          <span class="val-new">5.0</span>
+          
+          
+          <div><span class="pill">unclear
+            0.50</span></div>
+          
+        </td>
+        <td style="max-width: 380px">
+          Confidence 0.50 is below the 0.85 floor.
+          
+          <div style="color: var(--ink-2); font-size: 13px; margin-top: 4px">
+            The record contains no cross-referenced fields tied to lifespan (mass, GWP, conversion ratios are unchanged). There is nothing else in the EPD data provided to verify whether service life is 15 or 5 years, so the change cannot be confirmed from these numbers alone.
+          </div>
+          
+        </td>
+        <td class="right">2137h</td>
+        <td style="white-space: nowrap">
+          
+          <button class="approve" data-act="approve">Approve</button>
+          <button class="reject" data-act="reject">Reject</button>
+          
+        </td>
+      </tr>
+    
+      <tr data-request="sim-uncdec-000038">
+        <td>
+          <div class="mono">density</div>
+          <div class="s" style="color: var(--muted); font-size: 12px">
+            EPD 109 &middot; e.lindqvist
+          </div>
+        </td>
+        <td class="mono">
+          
+          <span class="val-new">1040.0</span>
+          
+          
+          <div><span class="pill">decimal_slip
+            0.84</span></div>
+          
+        </td>
+        <td style="max-width: 380px">
+          Confidence 0.84 is below the 0.85 floor.
+          
+          <div style="color: var(--ink-2); font-size: 13px; margin-top: 4px">
+            10400 kg/m3 is implausibly high for a coating (denser than many metals); 1040 kg/m3 is a realistic value and matches the submitter’s note that the decimal point is misplaced. Other record checks (A1–A3 GWP parts sum to 5.83274 ≈ gwp_total 5.84; material fractions sum to 100%) contain no contradiction, so this appears to be a decimal-point error rather than a unit or transcription issue.
+          </div>
+          
+        </td>
+        <td class="right">2130h</td>
+        <td style="white-space: nowrap">
+          
+          <button class="approve" data-act="approve">Approve</button>
+          <button class="reject" data-act="reject">Reject</button>
+          
+        </td>
+      </tr>
+    
+      <tr data-request="sim-lifespan-000039">
+        <td>
+          <div class="mono">lifespan</div>
+          <div class="s" style="color: var(--muted); font-size: 12px">
+            EPD 75 &middot; a.rossi
+          </div>
+        </td>
+        <td class="mono">
+          
+          <span class="val-new">5.0</span>
+          
+          
+          <div><span class="pill">unclear
+            0.50</span></div>
+          
+        </td>
+        <td style="max-width: 380px">
+          Confidence 0.50 is below the 0.85 floor.
+          
+          <div style="color: var(--ink-2); font-size: 13px; margin-top: 4px">
+            Lifespan (15 → 5 years) is not cross-checked by any other field in the record. The mass and material percentages (total 108.905 kg, materials sum to 100%) and GWP components (676.0 + 0.963 − 0.423 ≈ 676.54 ≈ 677.0) are internally consistent, so there is no evidence in the record to confirm the proposer’s recollection; additional documentation is needed.
+          </div>
+          
+        </td>
+        <td class="right">2129h</td>
+        <td style="white-space: nowrap">
+          
+          <button class="approve" data-act="approve">Approve</button>
+          <button class="reject" data-act="reject">Reject</button>
+          
+        </td>
+      </tr>
+    
+      <tr data-request="sim-material-000047">
+        <td>
+          <div class="mono">date</div>
+          <div class="s" style="color: var(--muted); font-size: 12px">
+            EPD 18 &middot; d.novak
+          </div>
+        </td>
+        <td class="mono">
+          
+          <span class="val-new">&#34;2030-01-01&#34;</span>
+          
+          
+          <div><span class="pill">genuine_correction
+            0.95</span></div>
+          
+        </td>
+        <td style="max-width: 380px">
+          date is a published figure; these are never decided without a person, whatever the model concluded.
+          
+          <div style="color: var(--ink-2); font-size: 13px; margin-top: 4px">
+            The proposal changes the EPD expiry date (metadata) from 2029-07-30 to 2030-01-01 based on the manufacturer’s notice. No numeric fields (densities, conversion ratios, or impacts) are altered and internal numeric consistency is unaffected, so this is a legitimate metadata update rather than a numeric transcription, unit, or decimal error.
+          </div>
+          
+        </td>
+        <td class="right">2121h</td>
+        <td style="white-space: nowrap">
+          
+          <button class="approve" data-act="approve">Approve</button>
+          <button class="reject" data-act="reject">Reject</button>
+          
+        </td>
+      </tr>
+    
+      <tr data-request="sim-smalladj-000050">
+        <td>
+          <div class="mono">density</div>
+          <div class="s" style="color: var(--muted); font-size: 12px">
+            EPD 108 &middot; f.haddad
+          </div>
+        </td>
+        <td class="mono">
+          
+          <span class="val-new">1275.0</span>
+          
+          
+          <div><span class="pill">transcription
+            0.55</span></div>
+          
+        </td>
+        <td style="max-width: 380px">
+          Confidence 0.55 is below the 0.85 floor.
+          
+          <div style="color: var(--ink-2); font-size: 13px; margin-top: 4px">
+            The proposer says the published table gives one more significant figure and is changing 1250 → 1275, which looks like correcting a misread digit rather than a unit change. No other fields reference density (no thickness or kg/m2 given) so internal consistency checks can’t confirm, but the change is consistent with a transcription-level correction.
+          </div>
+          
+        </td>
+        <td class="right">2117h</td>
+        <td style="white-space: nowrap">
+          
+          <button class="approve" data-act="approve">Approve</button>
+          <button class="reject" data-act="reject">Reject</button>
+          
+        </td>
+      </tr>
+    
+      <tr data-request="sim-lifespan-000053">
+        <td>
+          <div class="mono">lifespan</div>
+          <div class="s" style="color: var(--muted); font-size: 12px">
+            EPD 14 &middot; e.lindqvist
+          </div>
+        </td>
+        <td class="mono">
+          
+          <span class="val-new">105.0</span>
+          
+          
+          <div><span class="pill">unclear
+            0.70</span></div>
+          
+        </td>
+        <td style="max-width: 380px">
+          Confidence 0.70 is below the 0.85 floor.
+          
+          <div style="color: var(--ink-2); font-size: 13px; margin-top: 4px">
+            Lifespan (100 → 105 years) is not cross-referenced with other fields here (density, conversion, and GWP components are internally consistent). There’s no independent value in the record to confirm which is correct, so the change cannot be classified as a decimal slip, transcription, unit conversion, genuine correction, or implausible from the available data.
+          </div>
+          
+        </td>
+        <td class="right">2115h</td>
+        <td style="white-space: nowrap">
+          
+          <button class="approve" data-act="approve">Approve</button>
+          <button class="reject" data-act="reject">Reject</button>
+          
+        </td>
+      </tr>
+    
+      <tr data-request="sim-lifespan-000055">
+        <td>
+          <div class="mono">lifespan</div>
+          <div class="s" style="color: var(--muted); font-size: 12px">
+            EPD 40 &middot; f.haddad
+          </div>
+        </td>
+        <td class="mono">
+          
+          <span class="val-new">95.0</span>
+          
+          
+          <div><span class="pill">unclear
+            0.70</span></div>
+          
+        </td>
+        <td style="max-width: 380px">
+          Confidence 0.70 is below the 0.85 floor.
+          
+          <div style="color: var(--ink-2); font-size: 13px; margin-top: 4px">
+            The change is to lifespan (100 → 95 years), which is not tied to the numeric cross-check rules given (density×thickness, GWP component sums, material percentages). The record contains no independent evidence (source page, normative service life table, or linked calculation) to confirm 95 vs 100, so there isn’t enough information to decide whether this is a genuine correction.
+          </div>
+          
+        </td>
+        <td class="right">2113h</td>
+        <td style="white-space: nowrap">
+          
+          <button class="approve" data-act="approve">Approve</button>
+          <button class="reject" data-act="reject">Reject</button>
+          
+        </td>
+      </tr>
+    
+      <tr data-request="sim-material-000069">
+        <td>
+          <div class="mono">epd_code</div>
+          <div class="s" style="color: var(--muted); font-size: 12px">
+            EPD 86 &middot; e.lindqvist
+          </div>
+        </td>
+        <td class="mono">
+          
+          <span class="val-new">&#34;EPD-9616&#34;</span>
+          
+          
+          <div><span class="pill">genuine_correction
+            0.82</span></div>
+          
+        </td>
+        <td style="max-width: 380px">
+          epd_code is a published figure; these are never decided without a person, whatever the model concluded.
+          
+          <div style="color: var(--ink-2); font-size: 13px; margin-top: 4px">
+            The proposal changes only the registration code (metadata), not any numeric field. The numeric data are internally consistent (density 2287.5 kg/m3 × thickness 0.08 m = 183.0 kg/m2), so this is not a unit/decimal/transcription error in the measured values; updating a reissued registration number is a genuine metadata correction.
+          </div>
+          
+        </td>
+        <td class="right">2095h</td>
+        <td style="white-space: nowrap">
+          
+          <button class="approve" data-act="approve">Approve</button>
+          <button class="reject" data-act="reject">Reject</button>
+          
+        </td>
+      </tr>
+    
+      <tr data-request="sim-material-000078">
+        <td>
+          <div class="mono">date</div>
+          <div class="s" style="color: var(--muted); font-size: 12px">
+            EPD 2 &middot; e.lindqvist
+          </div>
+        </td>
+        <td class="mono">
+          
+          <span class="val-new">&#34;2030-01-01&#34;</span>
+          
+          
+          <div><span class="pill">genuine_correction
+            0.85</span></div>
+          
+        </td>
+        <td style="max-width: 380px">
+          date is a published figure; these are never decided without a person, whatever the model concluded.
+          
+          <div style="color: var(--ink-2); font-size: 13px; margin-top: 4px">
+            The proposal updates the EPD expiry date (metadata) from 2029-11-13 to 2030-01-01 based on manufacturer notification. This is not a numeric/unit/transcription issue and does not conflict with the record&#39;s internal numeric consistency (density, conversion ratios, and GWP parts are unchanged), so it is a genuine correction.
+          </div>
+          
+        </td>
+        <td class="right">2086h</td>
+        <td style="white-space: nowrap">
+          
+          <button class="approve" data-act="approve">Approve</button>
+          <button class="reject" data-act="reject">Reject</button>
+          
+        </td>
+      </tr>
+    
+      <tr data-request="sim-lifefix-000082">
+        <td>
+          <div class="mono">lifespan</div>
+          <div class="s" style="color: var(--muted); font-size: 12px">
+            EPD 77 &middot; f.haddad
+          </div>
+        </td>
+        <td class="mono">
+          
+          <span class="val-new">12.0</span>
+          
+          
+          <div><span class="pill">genuine_correction
+            0.80</span></div>
+          
+        </td>
+        <td style="max-width: 380px">
+          Confidence 0.80 is below the 0.85 floor.
+          
+          <div style="color: var(--ink-2); font-size: 13px; margin-top: 4px">
+            The proposed change corrects the product reference service life from an implausible 120 years to 12 years as stated in the EPD. There are no internal numeric relationships (e.g. mass/area conversions or GWP component sums) that enforce the 120‑year value, and 12 years is a realistic service life for a rolling high‑speed door. This appears to be a correction to a mistaken stored value rather than a decimal slip, unit issue, transcription of another numeric field, or a contradictory/implausible proposal.
+          </div>
+          
+        </td>
+        <td class="right">2083h</td>
+        <td style="white-space: nowrap">
+          
+          <button class="approve" data-act="approve">Approve</button>
+          <button class="reject" data-act="reject">Reject</button>
+          
+        </td>
+      </tr>
+    
+      <tr data-request="sim-material-000086">
+        <td>
+          <div class="mono">date</div>
+          <div class="s" style="color: var(--muted); font-size: 12px">
+            EPD 112 &middot; a.rossi
+          </div>
+        </td>
+        <td class="mono">
+          
+          <span class="val-new">&#34;2030-01-01&#34;</span>
+          
+          
+          <div><span class="pill">unclear
+            0.40</span></div>
+          
+        </td>
+        <td style="max-width: 380px">
+          date is a published figure; these are never decided without a person, whatever the model concluded.
+          
+          <div style="color: var(--ink-2); font-size: 13px; margin-top: 4px">
+            The proposal only changes the document expiry date (2030-01-21 → 2030-01-01), which cannot be checked against the numeric cross‑references (density, conversion, GWP components, material percentages) in the record. There is no evidence here to verify the manufacturer’s claim, so the change is not classifiable as a numeric correction and is unclear from the provided data.
+          </div>
+          
+        </td>
+        <td class="right">2080h</td>
+        <td style="white-space: nowrap">
+          
+          <button class="approve" data-act="approve">Approve</button>
+          <button class="reject" data-act="reject">Reject</button>
+          
+        </td>
+      </tr>
+    
+      <tr data-request="sim-material-000089">
+        <td>
+          <div class="mono">date</div>
+          <div class="s" style="color: var(--muted); font-size: 12px">
+            EPD 104 &middot; e.lindqvist
+          </div>
+        </td>
+        <td class="mono">
+          
+          <span class="val-new">&#34;2030-01-01&#34;</span>
+          
+          
+          <div><span class="pill">unclear
+            0.57</span></div>
+          
+        </td>
+        <td style="max-width: 380px">
+          date is a published figure; these are never decided without a person, whatever the model concluded.
+          
+          <div style="color: var(--ink-2); font-size: 13px; margin-top: 4px">
+            The proposed change is to the expiry date (2030-01-21 → 2030-01-01), a metadata edit rather than a numeric/material value. The record’s numeric consistency checks (density, A1–A3 breakout, material percentages) don’t confirm or contradict a date change, and no supporting doc is provided—so there isn’t enough information to classify this as a decimal slip, transcription, unit conversion, genuine correction or implausible.
+          </div>
+          
+        </td>
+        <td class="right">2077h</td>
+        <td style="white-space: nowrap">
+          
+          <button class="approve" data-act="approve">Approve</button>
+          <button class="reject" data-act="reject">Reject</button>
+          
+        </td>
+      </tr>
+    
+      <tr data-request="sim-lifespan-000094">
+        <td>
+          <div class="mono">lifespan</div>
+          <div class="s" style="color: var(--muted); font-size: 12px">
+            EPD 17 &middot; e.lindqvist
+          </div>
+        </td>
+        <td class="mono">
+          
+          <span class="val-new">10.0</span>
+          
+          
+          <div><span class="pill">unclear
+            0.40</span></div>
+          
+        </td>
+        <td style="max-width: 380px">
+          Confidence 0.40 is below the 0.85 floor.
+          
+          <div style="color: var(--ink-2); font-size: 13px; margin-top: 4px">
+            The change is to lifespan (5.0 → 10.0) but there are no other fields in the record that reference or constrain lifespan (e.g., annualised or per-day conversions) to verify which is correct. Declared unit is &#39;day of effective usage&#39;, but the EPD data shown do not show how lifespan was used, so I cannot tell if this is a genuine correction, a transcription, or an implausible change from the internal data alone.
+          </div>
+          
+        </td>
+        <td class="right">2066h</td>
+        <td style="white-space: nowrap">
+          
+          <button class="approve" data-act="approve">Approve</button>
+          <button class="reject" data-act="reject">Reject</button>
+          
+        </td>
+      </tr>
+    
+      <tr data-request="sim-material-000097">
+        <td>
+          <div class="mono">reference_unit</div>
+          <div class="s" style="color: var(--muted); font-size: 12px">
+            EPD 15 &middot; c.okafor
+          </div>
+        </td>
+        <td class="mono">
+          
+          <span class="val-new">&#34;kg&#34;</span>
+          
+          
+          <div><span class="pill">implausible
+            0.93</span></div>
+          
+        </td>
+        <td style="max-width: 380px">
+          reference_unit is a published figure; these are never decided without a person, whatever the model concluded.
+          
+          <div style="color: var(--ink-2); font-size: 13px; margin-top: 4px">
+            The record includes density = 460 kg/m3 and conversion ratios listed as 460 kg per 1 m3, which indicates the EPD is declared per m3. Changing reference_unit to kg would contradict those conversion statements: e.g. gwp_total = -480 corresponds sensibly to -480 kg CO2e per m3 (not per kg). The stored physical values and conversion ratios are internally consistent, so the proposal to make the declared unit kg is implausible.
+          </div>
+          
+        </td>
+        <td class="right">2063h</td>
+        <td style="white-space: nowrap">
+          
+          <button class="approve" data-act="approve">Approve</button>
+          <button class="reject" data-act="reject">Reject</button>
+          
+        </td>
+      </tr>
+    
+      <tr data-request="sim-material-000102">
+        <td>
+          <div class="mono">reference_unit</div>
+          <div class="s" style="color: var(--muted); font-size: 12px">
+            EPD 75 &middot; c.okafor
+          </div>
+        </td>
+        <td class="mono">
+          
+          <span class="val-new">&#34;kg&#34;</span>
+          
+          
+          <div><span class="pill">implausible
+            0.90</span></div>
+          
+        </td>
+        <td style="max-width: 380px">
+          reference_unit is a published figure; these are never decided without a person, whatever the model concluded.
+          
+          <div style="color: var(--ink-2); font-size: 13px; margin-top: 4px">
+            The record gives a conversion ratio of 108.905 kg per 1 piece, so the EPD’s impact numbers (gwp_total 677, gwp_fossil 676, gwp_luluc 0.963, gwp_bio -0.423) are consistent with being per piece. Switching reference_unit to kg without changing those impact figures would be incorrect (per‑kg GWP would be ~677/108.905 ≈ 6.22 kg CO2e/kg). Therefore the proposed change is implausible.
+          </div>
+          
+        </td>
+        <td class="right">2059h</td>
+        <td style="white-space: nowrap">
+          
+          <button class="approve" data-act="approve">Approve</button>
+          <button class="reject" data-act="reject">Reject</button>
+          
+        </td>
+      </tr>
+    
+      <tr data-request="sim-material-000104">
+        <td>
+          <div class="mono">date</div>
+          <div class="s" style="color: var(--muted); font-size: 12px">
+            EPD 8 &middot; d.novak
+          </div>
+        </td>
+        <td class="mono">
+          
+          <span class="val-new">&#34;2030-01-01&#34;</span>
+          
+          
+          <div><span class="pill">genuine_correction
+            0.85</span></div>
+          
+        </td>
+        <td style="max-width: 380px">
+          date is a published figure; these are never decided without a person, whatever the model concluded.
+          
+          <div style="color: var(--ink-2); font-size: 13px; margin-top: 4px">
+            This is a change to the expiry date (metadata), not a numeric value tied to the internal mass/impact relationships. The submitter states the manufacturer extended the date, so it is a bona fide update rather than a transcription/unit/decimal error.
+          </div>
+          
+        </td>
+        <td class="right">2053h</td>
+        <td style="white-space: nowrap">
+          
+          <button class="approve" data-act="approve">Approve</button>
+          <button class="reject" data-act="reject">Reject</button>
+          
+        </td>
+      </tr>
+    
+      <tr data-request="sim-lifefix-000105">
+        <td>
+          <div class="mono">lifespan</div>
+          <div class="s" style="color: var(--muted); font-size: 12px">
+            EPD 77 &middot; b.martinez
+          </div>
+        </td>
+        <td class="mono">
+          
+          <span class="val-new">12.0</span>
+          
+          
+          <div><span class="pill">transcription
+            0.82</span></div>
+          
+        </td>
+        <td style="max-width: 380px">
+          Confidence 0.82 is below the 0.85 floor.
+          
+          <div style="color: var(--ink-2); font-size: 13px; margin-top: 4px">
+            The change corrects a likely reading error (120 → 12) according to the submitter who cites the EPD. Lifespan is not used elsewhere in the record (no density/thickness relation involves lifespan) and the stored values for mass (296.584 kg/pc) and A1–A3 impacts remain internally consistent, so this appears to be a transcription correction rather than a unit conversion or physical-implausibility fix.
+          </div>
+          
+        </td>
+        <td class="right">2053h</td>
+        <td style="white-space: nowrap">
+          
+          <button class="approve" data-act="approve">Approve</button>
+          <button class="reject" data-act="reject">Reject</button>
+          
+        </td>
+      </tr>
+    
+      <tr data-request="sim-material-000110">
+        <td>
+          <div class="mono">epd_code</div>
+          <div class="s" style="color: var(--muted); font-size: 12px">
+            EPD 108 &middot; e.lindqvist
+          </div>
+        </td>
+        <td class="mono">
+          
+          <span class="val-new">&#34;EPD-8660&#34;</span>
+          
+          
+          <div><span class="pill">genuine_correction
+            0.77</span></div>
+          
+        </td>
+        <td style="max-width: 380px">
+          epd_code is a published figure; these are never decided without a person, whatever the model concluded.
+          
+          <div style="color: var(--ink-2); font-size: 13px; margin-top: 4px">
+            This is a metadata update: the registration number was reissued. It does not affect or contradict any numeric fields (density 1250 kg/m3 and the A1–A3 GWP parts remain consistent), so the proposed EPD code replacement is a legitimate administrative correction rather than a decimal/unit/transcription error.
+          </div>
+          
+        </td>
+        <td class="right">2050h</td>
+        <td style="white-space: nowrap">
+          
+          <button class="approve" data-act="approve">Approve</button>
+          <button class="reject" data-act="reject">Reject</button>
+          
+        </td>
+      </tr>
+    
+      <tr data-request="sim-lifespan-000112">
+        <td>
+          <div class="mono">lifespan</div>
+          <div class="s" style="color: var(--muted); font-size: 12px">
+            EPD 5 &middot; d.novak
+          </div>
+        </td>
+        <td class="mono">
+          
+          <span class="val-new">55.0</span>
+          
+          
+          <div><span class="pill">unclear
+            0.60</span></div>
+          
+        </td>
+        <td style="max-width: 380px">
+          Confidence 0.60 is below the 0.85 floor.
+          
+          <div style="color: var(--ink-2); font-size: 13px; margin-top: 4px">
+            The record’s internal checks (density 100 kg/m3 × thickness 0.1 m = 10 kg/m2) are consistent, and lifespan is not tied to other fields here. There’s no independent data in the record to verify whether 50 or 55 years is correct, so the change can’t be classified from the available information.
+          </div>
+          
+        </td>
+        <td class="right">2045h</td>
+        <td style="white-space: nowrap">
+          
+          <button class="approve" data-act="approve">Approve</button>
+          <button class="reject" data-act="reject">Reject</button>
+          
+        </td>
+      </tr>
+    
+      <tr data-request="sim-replace-000114">
+        <td>
+          <div class="mono">record_replacement</div>
+          <div class="s" style="color: var(--muted); font-size: 12px">
+            EPD 111 &middot; feed-watcher
+          </div>
+        </td>
+        <td class="mono">
+          
+          <span style="color: var(--muted)">whole record</span>
+          
+          
+        </td>
+        <td style="max-width: 380px">
+          A replacement supersedes the whole record and is always reviewed.
+          
+        </td>
+        <td class="right">2042h</td>
+        <td style="white-space: nowrap">
+          
+          <button class="approve" data-act="approve">Approve</button>
+          <button class="reject" data-act="reject">Reject</button>
+          
+        </td>
+      </tr>
+    
+      <tr data-request="sim-replace-000115">
+        <td>
+          <div class="mono">record_replacement</div>
+          <div class="s" style="color: var(--muted); font-size: 12px">
+            EPD 35 &middot; feed-watcher
+          </div>
+        </td>
+        <td class="mono">
+          
+          <span style="color: var(--muted)">whole record</span>
+          
+          
+        </td>
+        <td style="max-width: 380px">
+          A replacement supersedes the whole record and is always reviewed.
+          
+        </td>
+        <td class="right">2042h</td>
+        <td style="white-space: nowrap">
+          
+          <button class="approve" data-act="approve">Approve</button>
+          <button class="reject" data-act="reject">Reject</button>
+          
+        </td>
+      </tr>
+    
+      <tr data-request="sim-material-000116">
+        <td>
+          <div class="mono">epd_code</div>
+          <div class="s" style="color: var(--muted); font-size: 12px">
+            EPD 99 &middot; e.lindqvist
+          </div>
+        </td>
+        <td class="mono">
+          
+          <span class="val-new">&#34;EPD-8975&#34;</span>
+          
+          
+          <div><span class="pill">genuine_correction
+            0.84</span></div>
+          
+        </td>
+        <td style="max-width: 380px">
+          epd_code is a published figure; these are never decided without a person, whatever the model concluded.
+          
+          <div style="color: var(--ink-2); font-size: 13px; margin-top: 4px">
+            The change is to the registration identifier (EPD code), not a numeric property. It updates the document reference because the registration was reissued; no physical relationships (density 2235 kg/m3, 2235 kg per m3, GWP components) are affected, so this is a genuine correction to the meta-data rather than a numeric fix.
+          </div>
+          
+        </td>
+        <td class="right">2040h</td>
+        <td style="white-space: nowrap">
+          
+          <button class="approve" data-act="approve">Approve</button>
+          <button class="reject" data-act="reject">Reject</button>
+          
+        </td>
+      </tr>
+    
+      <tr data-request="sim-replace-000121">
+        <td>
+          <div class="mono">record_replacement</div>
+          <div class="s" style="color: var(--muted); font-size: 12px">
+            EPD 40 &middot; feed-watcher
+          </div>
+        </td>
+        <td class="mono">
+          
+          <span style="color: var(--muted)">whole record</span>
+          
+          
+        </td>
+        <td style="max-width: 380px">
+          A replacement supersedes the whole record and is always reviewed.
+          
+        </td>
+        <td class="right">2036h</td>
+        <td style="white-space: nowrap">
+          
+          <button class="approve" data-act="approve">Approve</button>
+          <button class="reject" data-act="reject">Reject</button>
+          
+        </td>
+      </tr>
+    
+      <tr data-request="sim-material-000128">
+        <td>
+          <div class="mono">date</div>
+          <div class="s" style="color: var(--muted); font-size: 12px">
+            EPD 4 &middot; e.lindqvist
+          </div>
+        </td>
+        <td class="mono">
+          
+          <span class="val-new">&#34;2030-01-01&#34;</span>
+          
+          
+          <div><span class="pill">genuine_correction
+            0.72</span></div>
+          
+        </td>
+        <td style="max-width: 380px">
+          date is a published figure; these are never decided without a person, whatever the model concluded.
+          
+          <div style="color: var(--ink-2); font-size: 13px; margin-top: 4px">
+            The proposed change updates the EPD expiry date (metadata) from 2029-11-20 to 2030-01-01 per the manufacturer. This does not affect numeric fields or internal consistency (densities, conversion ratios and GWP components remain unchanged), so the proposal is a straightforward factual update rather than a numeric correction, transcription, or implausible change.
+          </div>
+          
+        </td>
+        <td class="right">2032h</td>
+        <td style="white-space: nowrap">
+          
+          <button class="approve" data-act="approve">Approve</button>
+          <button class="reject" data-act="reject">Reject</button>
+          
+        </td>
+      </tr>
+    
+      <tr data-request="sim-smalladj-000131">
+        <td>
+          <div class="mono">density</div>
+          <div class="s" style="color: var(--muted); font-size: 12px">
+            EPD 106 &middot; e.lindqvist
+          </div>
+        </td>
+        <td class="mono">
+          
+          <span class="val-new">1479.0</span>
+          
+          
+          <div><span class="pill">transcription
+            0.70</span></div>
+          
+        </td>
+        <td style="max-width: 380px">
+          Confidence 0.70 is below the 0.85 floor.
+          
+          <div style="color: var(--ink-2); font-size: 13px; margin-top: 4px">
+            The record otherwise internally consistent (gwp_total 6.12 ≈ 6.62 + 0.00677 − 0.509 = 6.11777). No thickness or area data to force a density check, and the proposer says the published table gives a more precise value — this looks like correcting a transcription to the source (1450 → 1479), not a decimal slip or unit conversion.
+          </div>
+          
+        </td>
+        <td class="right">2029h</td>
+        <td style="white-space: nowrap">
+          
+          <button class="approve" data-act="approve">Approve</button>
+          <button class="reject" data-act="reject">Reject</button>
+          
+        </td>
+      </tr>
+    
+      <tr data-request="sim-replace-000132">
+        <td>
+          <div class="mono">record_replacement</div>
+          <div class="s" style="color: var(--muted); font-size: 12px">
+            EPD 103 &middot; feed-watcher
+          </div>
+        </td>
+        <td class="mono">
+          
+          <span style="color: var(--muted)">whole record</span>
+          
+          
+        </td>
+        <td style="max-width: 380px">
+          A replacement supersedes the whole record and is always reviewed.
+          
+        </td>
+        <td class="right">2028h</td>
+        <td style="white-space: nowrap">
+          
+          <button class="approve" data-act="approve">Approve</button>
+          <button class="reject" data-act="reject">Reject</button>
+          
+        </td>
+      </tr>
+    
+      <tr data-request="sim-material-000133">
+        <td>
+          <div class="mono">epd_code</div>
+          <div class="s" style="color: var(--muted); font-size: 12px">
+            EPD 92 &middot; c.okafor
+          </div>
+        </td>
+        <td class="mono">
+          
+          <span class="val-new">&#34;EPD-7053&#34;</span>
+          
+          
+          <div><span class="pill">genuine_correction
+            0.85</span></div>
+          
+        </td>
+        <td style="max-width: 380px">
+          epd_code is a published figure; these are never decided without a person, whatever the model concluded.
+          
+          <div style="color: var(--ink-2); font-size: 13px; margin-top: 4px">
+            The proposal changes only the registration code (EPD-IES-0018636 -&gt; EPD-7053), a metadata update rather than a numeric correction. No numeric fields are altered; internal consistency checks pass (material percentages sum to 100.0, and impact fields are self-consistent), so this appears to be a legitimate reissue of the registration rather than a transcription/decimal/unit error.
+          </div>
+          
+        </td>
+        <td class="right">2028h</td>
+        <td style="white-space: nowrap">
+          
+          <button class="approve" data-act="approve">Approve</button>
+          <button class="reject" data-act="reject">Reject</button>
+          
+        </td>
+      </tr>
+    
+      <tr data-request="sim-smalladj-000145">
+        <td>
+          <div class="mono">density</div>
+          <div class="s" style="color: var(--muted); font-size: 12px">
+            EPD 104 &middot; b.martinez
+          </div>
+        </td>
+        <td class="mono">
+          
+          <span class="val-new">1887.0</span>
+          
+          
+          <div><span class="pill">transcription
+            0.72</span></div>
+          
+        </td>
+        <td style="max-width: 380px">
+          Confidence 0.72 is below the 0.85 floor.
+          
+          <div style="color: var(--ink-2); font-size: 13px; margin-top: 4px">
+            The change is a small refinement in the recorded density (1850 → 1887 kg/m³) consistent with someone adding the extra significant figures from the published table rather than a unit conversion or decimal-place error. Other record checks (GWP components: 2.49 + 0.0016 + 0.0161 = 2.5077 ≈ gwp_total 2.51; material percentages sum to 100%) show the stored values are internally consistent, so this looks like correcting a transcription/rounding difference to match the published table.
+          </div>
+          
+        </td>
+        <td class="right">2014h</td>
+        <td style="white-space: nowrap">
+          
+          <button class="approve" data-act="approve">Approve</button>
+          <button class="reject" data-act="reject">Reject</button>
+          
+        </td>
+      </tr>
+    
+      <tr data-request="sim-lifespan-000149">
+        <td>
+          <div class="mono">lifespan</div>
+          <div class="s" style="color: var(--muted); font-size: 12px">
+            EPD 15 &middot; a.rossi
+          </div>
+        </td>
+        <td class="mono">
+          
+          <span class="val-new">105.0</span>
+          
+          
+          <div><span class="pill">unclear
+            0.63</span></div>
+          
+        </td>
+        <td style="max-width: 380px">
+          Confidence 0.63 is below the 0.85 floor.
+          
+          <div style="color: var(--ink-2); font-size: 13px; margin-top: 4px">
+            The proposed change alters only lifespan (100 → 105 years), which is not cross-checked by any other stored fields (density, mass-per-volume, GWP components, material percentages). There is no internal inconsistency in the record that flags the current value as wrong, nor is there evidence of a decimal/unit/transcription error. Without external documentation or evidence, I cannot tell whether 105 is a true correction or not.
+          </div>
+          
+        </td>
+        <td class="right">2011h</td>
+        <td style="white-space: nowrap">
+          
+          <button class="approve" data-act="approve">Approve</button>
+          <button class="reject" data-act="reject">Reject</button>
+          
+        </td>
+      </tr>
+    
+      <tr data-request="sim-lifespan-000155">
+        <td>
+          <div class="mono">lifespan</div>
+          <div class="s" style="color: var(--muted); font-size: 12px">
+            EPD 5 &middot; f.haddad
+          </div>
+        </td>
+        <td class="mono">
+          
+          <span class="val-new">55.0</span>
+          
+          
+          <div><span class="pill">unclear
+            0.60</span></div>
+          
+        </td>
+        <td style="max-width: 380px">
+          Confidence 0.60 is below the 0.85 floor.
+          
+          <div style="color: var(--ink-2); font-size: 13px; margin-top: 4px">
+            The record is internally consistent (density 100 kg/m3 × thickness 0.1 m = 10 kg/m2) and the lifespan change (50 → 55 years) does not interact with any other stored values to confirm correctness. There is no supporting evidence in the record or conversion relationships to verify that 55 is more accurate than 50, so the change cannot be classified from the available data.
+          </div>
+          
+        </td>
+        <td class="right">2002h</td>
+        <td style="white-space: nowrap">
+          
+          <button class="approve" data-act="approve">Approve</button>
+          <button class="reject" data-act="reject">Reject</button>
+          
+        </td>
+      </tr>
+    
+      <tr data-request="sim-lifespan-000160">
+        <td>
+          <div class="mono">lifespan</div>
+          <div class="s" style="color: var(--muted); font-size: 12px">
+            EPD 16 &middot; e.lindqvist
+          </div>
+        </td>
+        <td class="mono">
+          
+          <span class="val-new">90.0</span>
+          
+          
+          <div><span class="pill">unclear
+            0.35</span></div>
+          
+        </td>
+        <td style="max-width: 380px">
+          Confidence 0.35 is below the 0.85 floor.
+          
+          <div style="color: var(--ink-2); font-size: 13px; margin-top: 4px">
+            Lifespan (100 → 90 years) is independent of the other stored values and does not affect density, mass conversion or GWP consistency; the record gives no supporting source or internal inconsistency to justify which is correct, so there is insufficient evidence to decide.
+          </div>
+          
+        </td>
+        <td class="right">2000h</td>
+        <td style="white-space: nowrap">
+          
+          <button class="approve" data-act="approve">Approve</button>
+          <button class="reject" data-act="reject">Reject</button>
+          
+        </td>
+      </tr>
+    
+      <tr data-request="sim-material-000161">
+        <td>
+          <div class="mono">date</div>
+          <div class="s" style="color: var(--muted); font-size: 12px">
+            EPD 113 &middot; c.okafor
+          </div>
+        </td>
+        <td class="mono">
+          
+          <span class="val-new">&#34;2030-01-01&#34;</span>
+          
+          
+          <div><span class="pill">genuine_correction
+            0.86</span></div>
+          
+        </td>
+        <td style="max-width: 380px">
+          date is a published figure; these are never decided without a person, whatever the model concluded.
+          
+          <div style="color: var(--ink-2); font-size: 13px; margin-top: 4px">
+            The proposal changes only the expiry date metadata (2030-01-21 → 2030-01-01) based on the manufacturer’s input. It does not alter numeric fields or violate internal numeric consistency (density, GWP components etc. remain unchanged), so this is a legitimate metadata correction rather than a unit/decimal/transcription error or an implausible numeric change.
+          </div>
+          
+        </td>
+        <td class="right">1999h</td>
+        <td style="white-space: nowrap">
+          
+          <button class="approve" data-act="approve">Approve</button>
+          <button class="reject" data-act="reject">Reject</button>
+          
+        </td>
+      </tr>
+    
+      <tr data-request="sim-material-000171">
+        <td>
+          <div class="mono">reference_unit</div>
+          <div class="s" style="color: var(--muted); font-size: 12px">
+            EPD 75 &middot; e.lindqvist
+          </div>
+        </td>
+        <td class="mono">
+          
+          <span class="val-new">&#34;kg&#34;</span>
+          
+          
+          <div><span class="pill">implausible
+            0.90</span></div>
+          
+        </td>
+        <td style="max-width: 380px">
+          reference_unit is a published figure; these are never decided without a person, whatever the model concluded.
+          
+          <div style="color: var(--ink-2); font-size: 13px; margin-top: 4px">
+            The record includes a conversion ratio of 108.905 kg per 1 piece, which supports &#39;piece&#39; as the declared unit. Changing reference_unit to &#39;kg&#39; would contradict that explicit conversion (and would imply gwp and other impacts are per kg when they appear to be per piece). Therefore the proposed change is implausible.
+          </div>
+          
+        </td>
+        <td class="right">1987h</td>
+        <td style="white-space: nowrap">
+          
+          <button class="approve" data-act="approve">Approve</button>
+          <button class="reject" data-act="reject">Reject</button>
+          
+        </td>
+      </tr>
+    
+      <tr data-request="sim-material-000173">
+        <td>
+          <div class="mono">date</div>
+          <div class="s" style="color: var(--muted); font-size: 12px">
+            EPD 13 &middot; c.okafor
+          </div>
+        </td>
+        <td class="mono">
+          
+          <span class="val-new">&#34;2030-01-01&#34;</span>
+          
+          
+          <div><span class="pill">genuine_correction
+            0.66</span></div>
+          
+        </td>
+        <td style="max-width: 380px">
+          date is a published figure; these are never decided without a person, whatever the model concluded.
+          
+          <div style="color: var(--ink-2); font-size: 13px; margin-top: 4px">
+            The proposal only changes the expiry date (metadata), not any numeric field. This is not a decimal/unit/transcription error in the numeric records and does not conflict with internal numeric consistency (densities, GWP, material %s). Therefore it appears to be a genuine correction to the document date provided by the manufacturer.
+          </div>
+          
+        </td>
+        <td class="right">1985h</td>
+        <td style="white-space: nowrap">
+          
+          <button class="approve" data-act="approve">Approve</button>
+          <button class="reject" data-act="reject">Reject</button>
+          
+        </td>
+      </tr>
+    
+    </tbody>
+  </table>
+  
+  <div class="empty">
+    Showing 40 of 562, oldest first.
+  </div>
+  
+  
+</div>
+
+</div>
+
+
+<script>
+// The static demo keeps your clicks in the browser so the page behaves like the
+// real one. Nothing leaves the tab, and a reload with storage cleared restores
+// the snapshot.
+(function () {
+  var KEY = "curator-demo-reviewed";
+  var done = {};
+  try { done = JSON.parse(localStorage.getItem(KEY) || "{}"); } catch (e) { done = {}; }
+
+  // The queue is longer than the page of it shown here, so the count has to
+  // come off the real total rather than off the visible rows.
+  var el = document.getElementById("queue-depth");
+  var total = el ? parseInt(el.dataset.total, 10) : 0;
+  function depth() {
+    if (!el) return;
+    var hidden = 0;
+    document.querySelectorAll("tr[data-request]").forEach(function (r) {
+      if (r.hidden) hidden++;
+    });
+    el.textContent = Math.max(total - hidden, 0);
+  }
+  function paint() {
+    document.querySelectorAll("tr[data-request]").forEach(function (row) {
+      if (done[row.dataset.request]) row.hidden = true;
+    });
+    depth();
+  }
+  document.addEventListener("click", function (e) {
+    var b = e.target.closest("button[data-act]");
+    if (!b) return;
+    var row = b.closest("tr[data-request]");
+    done[row.dataset.request] = b.dataset.act;
+    try { localStorage.setItem(KEY, JSON.stringify(done)); } catch (e) {}
+    row.hidden = true;
+    depth();
+  });
+  paint();
+})();
+</script>
+
+</body>
+</html>

@@ -1,0 +1,158 @@
+{# The one page. Rendered by the live service and by the static export, so the
+   demo cannot drift from the real thing. `static` is true only in the export. #}
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>data-curator - operator</title>
+{% if not static %}<script src="https://cdn.jsdelivr.net/npm/htmx.org@2.0.4/dist/htmx.min.js"></script>{% endif %}
+<style>
+  /* Colours are the validated data-viz palette: categorical slots 1-2 for
+     identity, the status four only where the colour means a state. */
+  :root {
+    --surface: #fcfcfb; --raised: #ffffff; --line: #e6e5e1;
+    --ink: #0b0b0b; --ink-2: #52514e; --muted: #8a8983;
+    --blue: #2a78d6; --orange: #eb6834;
+    --good: #0ca30c; --warning: #fab219; --serious: #ec835a; --critical: #d03b3b;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --surface: #1a1a19; --raised: #232322; --line: #383835;
+      --ink: #ffffff; --ink-2: #c3c2b7; --muted: #8a8983;
+      --blue: #3987e5; --orange: #d95926;
+    }
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--surface); color: var(--ink);
+    font: 15px/1.5 ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  }
+  .wrap { max-width: 1120px; margin: 0 auto; padding: 24px 16px 64px; }
+  header { display: flex; align-items: baseline; gap: 16px; flex-wrap: wrap; }
+  h1 { font-size: 20px; margin: 0; font-weight: 650; letter-spacing: -0.01em; }
+  h2 { font-size: 13px; margin: 32px 0 12px; font-weight: 650;
+       text-transform: uppercase; letter-spacing: 0.06em; color: var(--ink-2); }
+  .asof { color: var(--muted); font-size: 13px; }
+  .banner {
+    margin: 16px 0 0; padding: 10px 14px; border-radius: 8px;
+    border: 1px solid var(--line); background: var(--raised);
+    color: var(--ink-2); font-size: 13px;
+  }
+  .tiles { display: grid; gap: 10px; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); }
+  .tile { background: var(--raised); border: 1px solid var(--line);
+          border-radius: 10px; padding: 14px 16px; }
+  .tile .k { font-size: 12px; color: var(--ink-2); }
+  .tile .v { font-size: 26px; font-weight: 640; letter-spacing: -0.02em;
+             margin-top: 4px; font-variant-numeric: tabular-nums; }
+  .tile .s { font-size: 12px; color: var(--muted); margin-top: 2px; }
+  table { width: 100%; border-collapse: collapse; font-size: 14px; }
+  th { text-align: left; font-size: 12px; font-weight: 600; color: var(--ink-2);
+       padding: 8px 10px; border-bottom: 1px solid var(--line); white-space: nowrap; }
+  td { padding: 10px; border-bottom: 1px solid var(--line); vertical-align: top; }
+  tr:last-child td { border-bottom: none; }
+  .panel { background: var(--raised); border: 1px solid var(--line);
+           border-radius: 10px; overflow: hidden; }
+  code, .mono { font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+                font-size: 13px; }
+  .val-old { color: var(--ink-2); text-decoration: line-through; }
+  .val-new { color: var(--ink); font-weight: 600; }
+  .pill { display: inline-block; padding: 1px 8px; border-radius: 999px;
+          font-size: 12px; border: 1px solid var(--line); color: var(--ink-2); }
+  .flag { display: flex; gap: 8px; align-items: baseline; padding: 8px 0;
+          border-bottom: 1px solid var(--line); }
+  .flag:last-child { border-bottom: none; }
+  /* Status never travels on colour alone - each carries its own glyph. */
+  .dot::before { font-size: 13px; }
+  .dot.ok::before    { content: "\25cf"; color: var(--good); }
+  .dot.warn::before  { content: "\25b2"; color: var(--serious); }
+  .dot.crit::before  { content: "\25a0"; color: var(--critical); }
+  button {
+    font: inherit; font-size: 13px; padding: 5px 12px; border-radius: 7px;
+    border: 1px solid var(--line); background: var(--surface);
+    color: var(--ink); cursor: pointer;
+  }
+  button:hover { border-color: var(--muted); }
+  button.approve { border-color: var(--good); color: var(--good); }
+  button.reject { border-color: var(--critical); color: var(--critical); }
+  .bar { display: flex; height: 8px; border-radius: 999px; overflow: hidden;
+         background: var(--line); margin-top: 8px; }
+  .bar span { display: block; }
+  .legend { display: flex; gap: 14px; font-size: 12px; color: var(--ink-2);
+            margin-top: 8px; flex-wrap: wrap; }
+  .legend i { display: inline-block; width: 9px; height: 9px; border-radius: 2px;
+              margin-right: 5px; }
+  .empty { padding: 18px; color: var(--muted); font-size: 14px; }
+  .right { text-align: right; font-variant-numeric: tabular-nums; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <h1>data-curator</h1>
+    <span class="asof">{{ overview.epd_count }} EPDs &middot; read
+      {{ overview.as_of.strftime("%Y-%m-%d %H:%M") }} UTC</span>
+    {% if not static %}
+    <button hx-get="/" hx-target="body" hx-swap="outerHTML" style="margin-left:auto">
+      Refresh
+    </button>
+    {% endif %}
+  </header>
+
+  {% if static %}
+  <p class="banner">
+    <strong>Demo snapshot.</strong> A frozen copy of a simulated decision
+    history: real EPD records, the real pipeline, real model outputs. Approving
+    or rejecting here changes only this page &mdash; there is no server behind
+    it. The working version runs against the live datastore.
+  </p>
+  {% endif %}
+
+  {% include "_panels.html" %}
+
+</div>
+
+{% if static %}
+<script>
+// The static demo keeps your clicks in the browser so the page behaves like the
+// real one. Nothing leaves the tab, and a reload with storage cleared restores
+// the snapshot.
+(function () {
+  var KEY = "curator-demo-reviewed";
+  var done = {};
+  try { done = JSON.parse(localStorage.getItem(KEY) || "{}"); } catch (e) { done = {}; }
+
+  // The queue is longer than the page of it shown here, so the count has to
+  // come off the real total rather than off the visible rows.
+  var el = document.getElementById("queue-depth");
+  var total = el ? parseInt(el.dataset.total, 10) : 0;
+  function depth() {
+    if (!el) return;
+    var hidden = 0;
+    document.querySelectorAll("tr[data-request]").forEach(function (r) {
+      if (r.hidden) hidden++;
+    });
+    el.textContent = Math.max(total - hidden, 0);
+  }
+  function paint() {
+    document.querySelectorAll("tr[data-request]").forEach(function (row) {
+      if (done[row.dataset.request]) row.hidden = true;
+    });
+    depth();
+  }
+  document.addEventListener("click", function (e) {
+    var b = e.target.closest("button[data-act]");
+    if (!b) return;
+    var row = b.closest("tr[data-request]");
+    done[row.dataset.request] = b.dataset.act;
+    try { localStorage.setItem(KEY, JSON.stringify(done)); } catch (e) {}
+    row.hidden = true;
+    depth();
+  });
+  paint();
+})();
+</script>
+{% endif %}
+</body>
+</html>

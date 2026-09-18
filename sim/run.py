@@ -33,7 +33,7 @@ try:
 except ImportError:
     pass
 
-from domain import pipeline  # noqa: E402
+from domain import pipeline, reconcile  # noqa: E402
 from domain.changes import Action, ChangeKind  # noqa: E402
 from domain.store import get_store  # noqa: E402
 from domain.triage import get_triager  # noqa: E402
@@ -130,6 +130,31 @@ def main() -> int:
 
         if i % 250 == 0:
             print(f"  {i}/{len(proposals)} decided")
+
+    # A 90-day history in which the nightly job never ran is not a history the
+    # system could actually have produced, and it leaves the dashboard's drift
+    # panel empty. Expiry requests are settled by rule, so this costs nothing.
+    expiries: list = []
+
+    def publish_expiry(request):
+        expiries.append(request)
+        record = store.current_record(request.product_id)
+        if record is None:
+            return
+        outcome = pipeline.decide(record, request, triager)
+        store.save_request(request)
+        store.save_event(outcome.decision, request.product_id)
+        if outcome.decision.action is Action.APPLIED:
+            updated = pipeline.apply_decision(record, request, outcome.decision)
+            store.save_version(updated, request.product_id,
+                               int(record.get("_version", 1)) + 1,
+                               request.request_id, "expired")
+
+    summary = reconcile.run(store, publish_expiry)
+    store.save_reconciliation(summary)
+    print()
+    print(f"nightly job: {len(expiries)} expiry request(s), "
+          f"{len(summary['drift_flags'])} flag(s)")
 
     n = len(proposals)
     print()

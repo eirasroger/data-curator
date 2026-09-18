@@ -16,9 +16,10 @@ from __future__ import annotations
 
 import logging
 from dataclasses import dataclass
+from typing import Any
 
 from . import changes
-from .changes import Action, ChangeRequest, Decision
+from .changes import Action, ChangeKind, ChangeRequest, Decision, ReviewDecision
 from .triage import TriageOutcome, Triager
 
 log = logging.getLogger(__name__)
@@ -105,3 +106,45 @@ def apply_decision(record: dict, request: ChangeRequest, decision: Decision) -> 
         return dict(request.replacement)
 
     return changes.apply_field_update(record, request.field_path or "", request.new_value)
+
+
+def apply_review(review: ReviewDecision, *, store: Any) -> bool:
+    """Record a person's verdict on a parked change, and act on it.
+
+    Lives here rather than in the worker because two things now take reviews -
+    the Pub/Sub handler and the operator page running without a queue - and a
+    second implementation is a second set of rules about what a review means.
+
+    Returns False when the request is not one we hold.
+    """
+    original = store.get_request(review.request_id)
+    if original is None:
+        return False
+
+    from .store import to_change_request
+
+    request = to_change_request(original)
+    decision = Decision(
+        request_id=review.request_id,
+        action=Action.APPLIED if review.approve else Action.REJECTED,
+        reason=f"Reviewed by {review.reviewer}: "
+               f"{'approved' if review.approve else 'rejected'}."
+               + (f" {review.note}" if review.note else ""),
+    )
+
+    if review.approve:
+        record = store.current_record(request.product_id)
+        if record is None:
+            return False
+        updated = apply_decision(record, request, decision)
+        status = "expired" if request.kind is ChangeKind.EXPIRY else "active"
+        store.save_version(
+            updated, request.product_id, int(record.get("_version", 1)) + 1,
+            request.request_id, status=status,
+        )
+
+    # event_type "reviewed", not "decided": the pipeline's original conclusion
+    # stays in the log untouched. Both answers are on the record.
+    store.save_event(decision, request.product_id,
+                     event_type="reviewed", actor=review.reviewer)
+    return True

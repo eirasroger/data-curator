@@ -1,0 +1,181 @@
+{# Everything below the header. Split out so the live service can re-render the
+   body alone after an action without repeating the page chrome. #}
+
+{% set t = overview.today %}
+
+<h2>Needs a person</h2>
+<div class="tiles">
+  <div class="tile">
+    <div class="k">Waiting for review</div>
+    <div class="v" id="queue-depth" data-total="{{ overview.queue_depth }}">{{ overview.queue_depth }}</div>
+    <div class="s">{{ overview.overdue }} past the {{ sla_days }}-day SLA</div>
+  </div>
+  <div class="tile">
+    <div class="k">Decisions today</div>
+    <div class="v">{{ t.total }}</div>
+    <div class="s">{{ t.applied }} applied &middot; {{ t.rejected }} rejected</div>
+  </div>
+  <div class="tile">
+    <div class="k">Settled without a model</div>
+    <div class="v">{{ "%.0f%%"|format(t.rules_share * 100) }}</div>
+    <div class="s">{{ t.settled_by_rules }} of {{ t.total }} today</div>
+  </div>
+  <div class="tile">
+    <div class="k">Spend today</div>
+    <div class="v">${{ "%.4f"|format(t.cost_usd) }}</div>
+    <div class="s">${{ "%.5f"|format(t.cost_per_decision) }} per decision</div>
+  </div>
+  <div class="tile">
+    <div class="k">Model latency</div>
+    <div class="v">{{ (t.p95_latency_ms / 1000)|round(1) }}s</div>
+    <div class="s">p95 &middot; p50 {{ (t.p50_latency_ms / 1000)|round(1) }}s</div>
+  </div>
+</div>
+
+<h2>Last nightly check</h2>
+<div class="panel" style="padding: 4px 16px">
+  {% if overview.reconciliation %}
+    {% set r = overview.reconciliation %}
+    <div class="flag">
+      <span class="dot {{ 'crit' if r.needs_attention else 'ok' }}"></span>
+      <span>
+        Ran {{ r.run_at.strftime("%Y-%m-%d %H:%M") if r.run_at.strftime is defined
+                else r.run_at }} UTC over
+        {{ r.requests_total }} decisions.
+        {% if not r.drift_flags %}Nothing to report.{% endif %}
+      </span>
+    </div>
+    {% for flag in r.drift_flags %}
+    <div class="flag">
+      <span class="dot warn"></span><span>{{ flag }}</span>
+    </div>
+    {% endfor %}
+  {% else %}
+    <div class="empty">The nightly job has not run against this datastore yet.</div>
+  {% endif %}
+</div>
+
+{% if overview.agents %}
+<h2>Agents needing attention</h2>
+<div class="panel">
+  <table>
+    <thead><tr><th>Agent</th><th>Owner</th><th>Why</th><th class="right">Days since review</th></tr></thead>
+    <tbody>
+    {% for a in overview.agents %}
+      <tr>
+        <td>{{ a.display_name }}</td>
+        <td>{{ a.owner }}</td>
+        <td><span class="dot warn"></span> {{ a.reason }}</td>
+        <td class="right">{{ a.days_since_review if a.days_since_review is not none else "-" }}</td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endif %}
+
+<h2>Throughput</h2>
+<div class="panel" style="padding: 16px">
+  <table>
+    <thead>
+      <tr>
+        <th>Window</th><th class="right">Decisions</th><th class="right">Applied</th>
+        <th class="right">Rejected</th><th class="right">To a person</th>
+        <th class="right">Rules</th><th class="right">Cost</th>
+      </tr>
+    </thead>
+    <tbody>
+    {% for w in overview.windows %}
+      <tr>
+        <td>{{ w.label }}</td>
+        <td class="right">{{ w.total }}</td>
+        <td class="right">{{ w.applied }}</td>
+        <td class="right">{{ w.rejected }}</td>
+        <td class="right">{{ w.pending }}</td>
+        <td class="right">{{ "%.0f%%"|format(w.rules_share * 100) }}</td>
+        <td class="right">${{ "%.4f"|format(w.cost_usd) }}</td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+
+  {% set w = overview.windows[-1] %}
+  {% if w.total %}
+  <div class="bar" role="img"
+       aria-label="Over 30 days: {{ w.applied }} applied, {{ w.rejected }} rejected, {{ w.pending }} sent to a person">
+    <span style="width: {{ w.applied / w.total * 100 }}%; background: var(--good)"></span>
+    <span style="width: {{ w.rejected / w.total * 100 }}%; background: var(--critical)"></span>
+    <span style="width: {{ w.pending / w.total * 100 }}%; background: var(--blue)"></span>
+  </div>
+  <div class="legend">
+    <span><i style="background: var(--good)"></i>applied {{ w.applied }}</span>
+    <span><i style="background: var(--critical)"></i>rejected {{ w.rejected }}</span>
+    <span><i style="background: var(--blue)"></i>to a person {{ w.pending }}</span>
+    <span>over 30 days</span>
+  </div>
+  {% endif %}
+</div>
+
+<h2>Review queue</h2>
+<div class="panel">
+  {% if overview.queue %}
+  <table>
+    <thead>
+      <tr>
+        <th>Field</th><th>Change</th><th>Why the pipeline stopped</th>
+        <th class="right">Waiting</th><th></th>
+      </tr>
+    </thead>
+    <tbody>
+    {% for row in overview.queue %}
+      <tr data-request="{{ row.request_id }}">
+        <td>
+          <div class="mono">{{ row.field_path or row.kind }}</div>
+          <div class="s" style="color: var(--muted); font-size: 12px">
+            EPD {{ row.product_id }} &middot; {{ row.submitted_by }}
+          </div>
+        </td>
+        <td class="mono">
+          {% if row.new_value in (none, "null") %}
+          <span style="color: var(--muted)">whole record</span>
+          {% else %}
+          <span class="val-new">{{ row.new_value }}</span>
+          {% endif %}
+          {% if row.triage %}
+          <div><span class="pill">{{ row.triage }}{% if row.confidence %}
+            {{ "%.2f"|format(row.confidence) }}{% endif %}</span></div>
+          {% endif %}
+        </td>
+        <td style="max-width: 380px">
+          {{ row.decision_reason }}
+          {% if row.rationale %}
+          <div style="color: var(--ink-2); font-size: 13px; margin-top: 4px">
+            {{ row.rationale }}
+          </div>
+          {% endif %}
+        </td>
+        <td class="right">{{ row.hours_waiting }}h</td>
+        <td style="white-space: nowrap">
+          {% if static %}
+          <button class="approve" data-act="approve">Approve</button>
+          <button class="reject" data-act="reject">Reject</button>
+          {% else %}
+          <button class="approve" hx-post="/reviews/{{ row.request_id }}/approve"
+                  hx-target="body" hx-swap="outerHTML">Approve</button>
+          <button class="reject" hx-post="/reviews/{{ row.request_id }}/reject"
+                  hx-target="body" hx-swap="outerHTML">Reject</button>
+          {% endif %}
+        </td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+  {% if overview.queue_depth > overview.queue|length %}
+  <div class="empty">
+    Showing {{ overview.queue|length }} of {{ overview.queue_depth }}, oldest first.
+  </div>
+  {% endif %}
+  {% else %}
+  <div class="empty">Nothing waiting. Every change has been decided.</div>
+  {% endif %}
+</div>

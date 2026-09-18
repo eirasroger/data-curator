@@ -31,7 +31,7 @@ from google.cloud import pubsub_v1
 
 from domain import pipeline, reconcile
 from domain.changes import Action, ChangeKind, ChangeRequest, MessageType, ReviewDecision
-from domain.store import InsertError, get_store, to_change_request
+from domain.store import InsertError, get_store
 from domain.triage import get_triager
 
 TRIAGE_PROVIDER = os.environ.get("TRIAGE_PROVIDER", "stub")
@@ -180,41 +180,12 @@ def handle_change(req: ChangeRequest, delivery: int, started: float) -> Response
 
 def handle_review(review: ReviewDecision, delivery: int, started: float) -> Response:
     """Apply a person's verdict on a parked change."""
-    original = _store.get_request(review.request_id)
-    if original is None:
+    if not pipeline.apply_review(review, store=_store):
         log("ERROR", "review for an unknown request", request_id=review.request_id)
         return Response(status_code=400)
 
-    req = to_change_request(original)
-
-    from domain.changes import Decision
-
-    decision = Decision(
-        request_id=review.request_id,
-        action=Action.APPLIED if review.approve else Action.REJECTED,
-        reason=f"Reviewed by {review.reviewer}: "
-               f"{'approved' if review.approve else 'rejected'}."
-               + (f" {review.note}" if review.note else ""),
-    )
-
-    if review.approve:
-        record = _store.current_record(req.product_id)
-        if record is None:
-            return Response(status_code=400)
-        updated = pipeline.apply_decision(record, req, decision)
-        status = "expired" if req.kind is ChangeKind.EXPIRY else "active"
-        _store.save_version(
-            updated, req.product_id, int(record.get("_version", 1)) + 1,
-            req.request_id, status=status,
-        )
-
-    # event_type "reviewed", not "decided": the pipeline's original conclusion
-    # stays in the log untouched. Both answers are on the record.
-    _store.save_event(decision, req.product_id,
-                      event_type="reviewed", actor=review.reviewer)
-
     log("INFO", "review applied",
-        request_id=review.request_id, product_id=req.product_id,
+        request_id=review.request_id,
         reviewer=review.reviewer, approve=review.approve,
         total_latency_ms=round((time.monotonic() - started) * 1000, 1))
 

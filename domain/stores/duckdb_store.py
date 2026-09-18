@@ -84,6 +84,10 @@ class DuckDBStore:
     def review_queue(self, limit: int = 50) -> list[dict]:
         return self.query("SELECT * FROM review_queue LIMIT $limit", limit=limit)
 
+    def review_queue_depth(self) -> int:
+        rows = self.query("SELECT COUNT(*) AS n FROM review_queue")
+        return int(rows[0]["n"]) if rows else 0
+
     def get_request(self, request_id: str) -> dict | None:
         rows = self.query(
             "SELECT * FROM change_requests WHERE request_id = $request_id",
@@ -127,6 +131,7 @@ class DuckDBStore:
               count_if(action = 'pending_review') AS pending,
               count_if(model IS NOT NULL) AS model_calls,
               AVG(confidence) AS mean_confidence,
+              quantile_cont(latency_ms, 0.50) AS p50_latency_ms,
               quantile_cont(latency_ms, 0.95) AS p95_latency_ms,
               SUM(cost_usd) AS total_cost
             FROM change_events
@@ -146,6 +151,15 @@ class DuckDBStore:
     def epd_count(self) -> int:
         rows = self.query("SELECT COUNT(*) AS n FROM epd_current")
         return int(rows[0]["n"]) if rows else 0
+
+    def latest_reconciliation(self) -> dict | None:
+        rows = self.query(
+            "SELECT * FROM reconciliation_runs ORDER BY run_at DESC LIMIT 1"
+        )
+        return rows[0] if rows else None
+
+    def agents_needing_attention(self) -> list[dict]:
+        return self.query("SELECT * FROM agent_registry_attention")
 
     # -- writes --------------------------------------------------------------
 
