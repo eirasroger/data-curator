@@ -1,0 +1,1215 @@
+{
+  "run_at": "2026-09-18T16:26:17.251038+00:00",
+  "provider": "openai",
+  "model": "gpt-5-mini",
+  "seed": 20260918,
+  "cases": 150,
+  "mean_confidence_correct": 0.8596,
+  "mean_confidence_wrong": 0.8237,
+  "separation": 0.0359,
+  "wrong_called_implausible": 60,
+  "correct_called_implausible": 0,
+  "cost_usd": 0.144453,
+  "results": [
+    {
+      "shape": "unit_confusion",
+      "label": "wrong",
+      "field": "density",
+      "triage": "implausible",
+      "confidence": 0.9,
+      "rationale": "The stored density 450 kg/m3 is consistent with the stated 1.0 kg per m2 (implied thickness = 1/450 m \u2248 2.22 mm) and the material percentages that sum to ~100% for a 1 kg/m2 declared unit. The proposed 450000 kg/m3 would imply a thickness of 1/450000 m \u2248 2.2 \u03bcm, which is physically unreasonable for a wood construction element and contradicts the mass-per-area and composition data. Therefore the proposal is implausible."
+    },
+    {
+      "shape": "ambiguous_lifespan",
+      "label": "ambiguous",
+      "field": "lifespan",
+      "triage": "unclear",
+      "confidence": 0.25,
+      "rationale": "Lifespan (100 \u2192 95 years) is not cross-referenced elsewhere in the record (density 460 kg/m3 and 460 kg per m3 conversion, and A1\u2013A3 GWP components are internally consistent), so there's no internal evidence to verify which value is correct. The record doesn't show a transcription/decimal/unit mismatch or an obvious inconsistency, so we cannot determine whether this is a genuine correction or an error without the source EPD."
+    },
+    {
+      "shape": "uncheckable_decimal_slip",
+      "label": "correct",
+      "field": "density",
+      "triage": "decimal_slip",
+      "confidence": 0.9,
+      "rationale": "The EPD lists conversion ratio 2319.0 kg per 1 m3 while stored density is 23190.0 kg/m3 (an extra factor 10). Typical concrete density \u22482300 kg/m3, so changing 23190 \u2192 2319 fixes a misplaced decimal point and makes the record internally consistent."
+    },
+    {
+      "shape": "uncheckable_lifespan_fix",
+      "label": "correct",
+      "field": "lifespan",
+      "triage": "decimal_slip",
+      "confidence": 0.8,
+      "rationale": "The proposed change reduces lifespan by a factor of 10 (120 \u2192 12), consistent with an extra zero being entered. Nothing else in the record (mass 662.215 kg and volume 0.225 m3 yielding density ~2943 kg/m3; material percentages summing to 100%) conflicts with a 12-year service life, and the submitter cites the EPD text stating 12. This looks like a misplaced digit/decimal error rather than a unit conversion or substantive value change."
+    },
+    {
+      "shape": "unit_confusion",
+      "label": "wrong",
+      "field": "density",
+      "triage": "implausible",
+      "confidence": 0.9,
+      "rationale": "1450 kg/m3 is a plausible polymer density (\u22481.45 g/cm3). The proposed 1,450,000 kg/m3 is physically impossible for an organic/inorganic product (orders of magnitude denser than any known solid). The submitter\u2019s note about \u201ctonnes per cubic metre\u201d would at most imply ~1000 kg/m3, not 1.45\u00d710^6, so the proposal is incorrect."
+    },
+    {
+      "shape": "unpatterned_change",
+      "label": "wrong",
+      "field": "density",
+      "triage": "implausible",
+      "confidence": 0.86,
+      "rationale": "The record gives 1.0 kg per 1 m2. With density 450 kg/m3 that implies thickness = 1/450 m = 2.22 mm, plausible for a thin wooden element. Changing density to 1530 kg/m3 would imply thickness = 1/1530 m = 0.65 mm, and 1530 kg/m3 is unrealistically high for a wood product (well above typical wood densities). The stored density is internally consistent with the conversion ratio and material makeup, so the proposed increase is implausible."
+    },
+    {
+      "shape": "unit_confusion",
+      "label": "wrong",
+      "field": "density",
+      "triage": "implausible",
+      "confidence": 0.9,
+      "rationale": "The stored density 2319.0 kg/m3 matches the EPD\u2019s stated conversion ratio of 2319.0 kg per 1 m3, so the record is internally consistent. The proposed 2,319,000 kg/m3 contradicts that conversion and is physically unrealistic for concrete, so the proposal is implausible."
+    },
+    {
+      "shape": "ambiguous_lifespan",
+      "label": "ambiguous",
+      "field": "lifespan",
+      "triage": "unclear",
+      "confidence": 0.7,
+      "rationale": "Lifespan (40 \u2192 45 years) is not tied to any other fields in the record (density, thickness, mass/m2 and A1\u2013A3 GWP values are internally consistent: 1350 kg/m3 \u00d7 0.006 m = 8.1 kg/m2; gwp_fossil 7.71 + gwp_luluc 0.00366 + gwp_bio -0.65 \u2248 gwp_total 7.06). There\u2019s no internal evidence to confirm the correct service life, so the change cannot be classified without external documentation."
+    },
+    {
+      "shape": "unpatterned_change",
+      "label": "wrong",
+      "field": "density",
+      "triage": "unclear",
+      "confidence": 0.63,
+      "rationale": "There is no thickness or kg/m2 conversion to cross-check density (conversion ratio is 1 kg per 1 kg), so internal consistency cannot confirm which value is correct. The stored density (1010 kg/m3) is plausible for a liquid coating, while 3434 kg/m3 is unusually high but could be possible for a highly filled inorganic product; the record lacks external data or thickness to decide."
+    },
+    {
+      "shape": "uncheckable_decimal_slip",
+      "label": "correct",
+      "field": "density",
+      "triage": "decimal_slip",
+      "confidence": 0.87,
+      "rationale": "Stored density 10500 kg/m3 is 10\u00d7 too large for an organic polymer (product is 100% organics). Proposed 1050.0 kg/m3 is exactly one-tenth and matches typical polymer densities (~1.05 g/cm3), so this appears to be a misplaced decimal point."
+    },
+    {
+      "shape": "uncheckable_decimal_slip",
+      "label": "correct",
+      "field": "density",
+      "triage": "decimal_slip",
+      "confidence": 0.88,
+      "rationale": "The record lists density = 23250 kg/m3 but also states 2325.0 kg per 1 m3. The material percentages sum to ~100% (so total mass ~2325 kg/m3 is consistent). Changing 23250 \u2192 2325 is a single decimal-place fix that reconciles density with the stated per-m3 mass, so this is a misplaced-decimal error."
+    },
+    {
+      "shape": "uncheckable_lifespan_fix",
+      "label": "correct",
+      "field": "lifespan",
+      "triage": "transcription",
+      "confidence": 0.87,
+      "rationale": "The EPD text reportedly states a reference service life of 100 years while the record has 1000 \u2014 this looks like a digit-read error (extra zero) rather than a unit or physics issue. No other fields depend on lifespan, and the proposed 100 matches the source."
+    },
+    {
+      "shape": "uncheckable_lifespan_fix",
+      "label": "correct",
+      "field": "lifespan",
+      "triage": "genuine_correction",
+      "confidence": 0.9,
+      "rationale": "The proposal changes lifespan from 500 to 50 years to match the EPD text. This is not a decimal slip, unit conversion, or digit transcription issue and does not conflict with any other stored values (density, conversion ratio, GWP components, material percentages). Therefore it appears to be a correct factual correction to the recorded service life."
+    },
+    {
+      "shape": "small_adjustment",
+      "label": "wrong",
+      "field": "density",
+      "triage": "transcription",
+      "confidence": 0.56,
+      "rationale": "The change is simply a different set of digits for the same quantity (1050 \u2192 1071) and the submitter says the published table gives one more significant figure, indicating a reading/typing correction. There are no unit issues (conversion ratio remains 1 kg per 1 kg) and no internal consistency contradictions in the record to mark it implausible; thickness/kg\u00b7m\u207b\u00b2 data needed to fully verify but the edit looks like a transcription correction."
+    },
+    {
+      "shape": "small_adjustment",
+      "label": "wrong",
+      "field": "density",
+      "triage": "implausible",
+      "confidence": 0.9,
+      "rationale": "The record currently stores density = 2325.0 kg/m3 and the EPD conversion ratio = 2325.0 kg per 1 m3, which are consistent. The proposal to change density to 2371.5 kg/m3 would break that internal consistency (conversion ratio would then mismatch density). No other fields were adjusted to match 2371.5, so the proposed change appears incorrect relative to the stored EPD values."
+    },
+    {
+      "shape": "uncheckable_decimal_slip",
+      "label": "correct",
+      "field": "density",
+      "triage": "decimal_slip",
+      "confidence": 0.87,
+      "rationale": "The stored density 10100 kg/m3 is physically implausible for this product and looks like a misplaced decimal; 1010 kg/m3 is much more reasonable given a coating/organics\u2013inorganics mix (10% organics, 90% inorganics). Other fields (conversion 1 kg per 1 kg and GWP components: 1.69 + 0.000635 + 0.0166 = 1.707235 \u2248 gwp_total 1.71) are internally consistent, so the proposed value fixes a likely decimal slip."
+    },
+    {
+      "shape": "unit_confusion",
+      "label": "wrong",
+      "field": "density",
+      "triage": "implausible",
+      "confidence": 0.86,
+      "rationale": "Proposed density 1,040,000 kg/m3 is physically impossible for this product and inconsistent with the record. The stored density 1040 kg/m3 is realistic (~1.04 t/m3) and matches the EPD conversion (1.0 kg per 1 kg). The submitter\u2019s \u2018tonnes per cubic metre\u2019 comment would imply a factor of 1000 (i.e. ~1040 kg/m3 \u2192 1.04 t/m3), not a factor of 1000\u00d71000. Therefore the proposal is incorrect."
+    },
+    {
+      "shape": "small_adjustment",
+      "label": "wrong",
+      "field": "density",
+      "triage": "implausible",
+      "confidence": 0.82,
+      "rationale": "The record lists conversion ratios from the EPD as 2300 kg per 1 m3, which matches the currently stored density 2300.0 kg/m3. Changing density to 2346.0 would contradict the stated conversion ratio in the EPD (2300 kg/m3). Other internal checks (GWP components sum to ~245.803 \u2248 246 total, material fractions sum to 100%) support the stored value. Therefore the proposed change is implausible."
+    },
+    {
+      "shape": "uncheckable_lifespan_fix",
+      "label": "correct",
+      "field": "lifespan",
+      "triage": "transcription",
+      "confidence": 0.86,
+      "rationale": "The change is correcting an extra digit (500 \u2192 50), not a units or decimal-point issue; lifespan isn\u2019t used in the numeric cross-checks in the record, and 500 years is implausible for this product. The proposer states the EPD gives 50, so this appears to be a transcription error (an extra zero)."
+    },
+    {
+      "shape": "uncheckable_decimal_slip",
+      "label": "correct",
+      "field": "density",
+      "triage": "decimal_slip",
+      "confidence": 0.87,
+      "rationale": "10400 kg/m3 is implausibly high for a coating with 34% organics / 66% inorganics (typical coatings are near 1000\u20132000 kg/m3). The proposer\u2019s change moves the decimal one place (10400 \u2192 1040), which yields a physically reasonable density for this product, so this appears to be a misplaced decimal point correction."
+    },
+    {
+      "shape": "unit_confusion",
+      "label": "wrong",
+      "field": "density",
+      "triage": "implausible",
+      "confidence": 0.92,
+      "rationale": "The stored density 1400 kg/m3 matches the EPD conversion ratio \"1400.0 kg per 1 m3\". The proposed 1,400,000 kg/m3 would contradict that conversion and is physically unreasonable (1000\u00d7 too large). Also A1\u2013A3 GWP components sum to ~4.368, consistent with gwp_total 4.37, so the record is internally consistent \u2014 the proposal is incorrect."
+    },
+    {
+      "shape": "small_adjustment",
+      "label": "wrong",
+      "field": "density",
+      "triage": "transcription",
+      "confidence": 0.7,
+      "rationale": "The proposal simply replaces 1450 with 1479 (more significant figures) rather than shifting a decimal or changing units. Both densities are consistent with the stored conversion (2.0 kg/m2 implies thickness \u22482.0/1450=0.001379 m or \u22482.0/1479=0.001353 m), and A1\u2013A3 totals also balance, so this looks like correcting how the digits were transcribed from the published table rather than a unit error or implausible change."
+    },
+    {
+      "shape": "small_adjustment",
+      "label": "wrong",
+      "field": "density",
+      "triage": "implausible",
+      "confidence": 0.84,
+      "rationale": "The record\u2019s conversion ratio explicitly states 2377.0 kg per 1 m3, matching the stored density 2377.0 kg/m3. Changing density to 2424.54 would make it inconsistent with the stated conversion ratio (2377.0 kg/ m3) and with the material percentages that sum to 100% of that mass. No other fields (conversion ratio or material masses) were proposed to change, so the proposed density appears to contradict the rest of the record."
+    },
+    {
+      "shape": "uncheckable_decimal_slip",
+      "label": "correct",
+      "field": "density",
+      "triage": "decimal_slip",
+      "confidence": 0.95,
+      "rationale": "The EPD itself lists a conversion ratio of 2374.0 kg per 1 m3, and the material percentages sum to ~100% (total ~99.95%), so the stored density 23740.0 kg/m3 has an extra factor of ten. The proposed 2374.0 kg/m3 matches the conversion ratio and is physically reasonable for concrete."
+    },
+    {
+      "shape": "unit_confusion",
+      "label": "wrong",
+      "field": "density",
+      "triage": "implausible",
+      "confidence": 0.88,
+      "rationale": "The stored density 460 kg/m3 matches the EPD conversion ratio (460.0 kg per 1 m3). The proposed 460000 kg/m3 would contradict that conversion and is physically implausible (\u2248460 t/m3). Therefore the proposal is wrong; keep 460 kg/m3."
+    },
+    {
+      "shape": "unit_confusion",
+      "label": "wrong",
+      "field": "density",
+      "triage": "implausible",
+      "confidence": 0.9,
+      "rationale": "With density 1350 kg/m3 and thickness 0.006 m the mass is 1350\u00d70.006 = 8.1 kg/m2, matching the EPD conversion ratio (8.1 kg per m2) and the listed material percentages. The proposed 1,350,000 kg/m3 would give 1,350,000\u00d70.006 = 8100 kg/m2 which contradicts the stated 8.1 kg/m2 and the composition; therefore the proposal is implausible."
+    },
+    {
+      "shape": "unit_confusion",
+      "label": "wrong",
+      "field": "density",
+      "triage": "implausible",
+      "confidence": 0.9,
+      "rationale": "The proposed density 1,850,000 kg/m3 is physically impossible for a construction product (far denser than any known solid). The stored value 1850 kg/m3 is plausible given the material split (69% inorganics/fillers raising density). No other record fields suggest a units error; the submitter's 'tonnes per cubic metre' hypothesis would imply 1850 t/m3 which is nonsensical. Therefore the proposal is implausible."
+    },
+    {
+      "shape": "uncheckable_decimal_slip",
+      "label": "correct",
+      "field": "density",
+      "triage": "decimal_slip",
+      "confidence": 0.9,
+      "rationale": "Stored density 10500 kg/m3 (10.5 g/cm3) is physically unrealistic for a 100% organic polymer; 1050 kg/m3 (1.05 g/cm3) is typical. No other fields contradict changing by a factor of 10, so this appears to be a misplaced decimal point."
+    },
+    {
+      "shape": "small_adjustment",
+      "label": "wrong",
+      "field": "density",
+      "triage": "implausible",
+      "confidence": 0.86,
+      "rationale": "The record stores a conversion ratio of 2300.0 kg per 1 m3 which matches the current density 2300.0 kg/m3. The proposal to change density to 2346.0 would break that internal consistency (density no longer equals the stated 2300 kg/m3 conversion). Other fields (material percentages sum to 100%, A1\u2013A3 parts sum close to 246) are consistent, so changing density alone to 2346 without updating the conversion ratio is implausible."
+    },
+    {
+      "shape": "ambiguous_lifespan",
+      "label": "ambiguous",
+      "field": "lifespan",
+      "triage": "unclear",
+      "confidence": 0.46,
+      "rationale": "There are no other fields in the record that reference or depend on lifespan, and all internal checks (material % sums to 100%; gwp_total = gwp_fossil + gwp_luluc + gwp_bio \u2248 4.59) are consistent with the currently stored value of 14.5. The submitter\u2019s recollection alone is insufficient to determine whether 24.5 is a correct correction."
+    },
+    {
+      "shape": "unpatterned_change",
+      "label": "wrong",
+      "field": "density",
+      "triage": "implausible",
+      "confidence": 0.92,
+      "rationale": "The record\u2019s mass conversion ratio is 2377.0 kg per 1 m3, which matches the stored density 2377.0 kg/m3. The proposed 8081.8 kg/m3 contradicts that conversion ratio and is physically implausible for concrete (\u22482377 kg/m3 is reasonable; 8081.8 kg/m3 is close to steel). Therefore the proposal is incorrect."
+    },
+    {
+      "shape": "unpatterned_change",
+      "label": "wrong",
+      "field": "density",
+      "triage": "implausible",
+      "confidence": 0.87,
+      "rationale": "The EPD itself lists a conversion ratio of 2319.0 kg per 1 m3, which exactly matches the stored density 2319.0 kg/m3; material percentages sum to 100% so the record is self-consistent. Changing density to 6261.3 would contradict the EPD conversion ratio and would multiply all mass-based impacts by ~2.7, so the proposed value is implausible given the record."
+    },
+    {
+      "shape": "small_adjustment",
+      "label": "wrong",
+      "field": "density",
+      "triage": "implausible",
+      "confidence": 0.85,
+      "rationale": "Stored density (1350 kg/m3) matches the EPD conversion: 1350 kg/m3 * 0.006 m = 8.10 kg/m2, which equals the stated 8.1 kg/ m2. The proposed 1377 kg/m3 would give 1377 * 0.006 = 8.262 kg/m2, contradicting the EPD\u2019s listed conversion ratio and the material composition (which sums to 100% for the 8.1 kg/m2 basis). Therefore the proposal is inconsistent with the record and is implausible."
+    },
+    {
+      "shape": "uncheckable_lifespan_fix",
+      "label": "correct",
+      "field": "lifespan",
+      "triage": "decimal_slip",
+      "confidence": 0.9,
+      "rationale": "The proposed change reduces lifespan from 150.0 to 15.0 years \u2014 exactly a factor of 10, consistent with a misplaced decimal/extra zero. The submitter notes the EPD itself states 15 years; there are no other fields (mass, GWP sums) tied to lifespan that contradict this, so this appears to be a decimal-slippage correction."
+    },
+    {
+      "shape": "small_adjustment",
+      "label": "wrong",
+      "field": "density",
+      "triage": "implausible",
+      "confidence": 0.9,
+      "rationale": "The record currently has density = 2235.0 kg/m3 and the EPD conversion ratio also stated as 2235.0 kg per 1 m3, so the stored density is self-consistent. The proposed 2279.7 would make density inconsistent with the stated conversion ratio (2235.0) unless that conversion ratio is also changed. Because the stored value matches the internal conversion ratio, the proposal as given is implausible."
+    },
+    {
+      "shape": "ambiguous_lifespan",
+      "label": "ambiguous",
+      "field": "lifespan",
+      "triage": "unclear",
+      "confidence": 0.72,
+      "rationale": "Lifespan (declared service life) is not used in any internal calculations in the record (density, conversion ratios, and A1\u2013A3 GWP fields are consistent with each other), so there is no cross-check to confirm 100 vs 90 years. The submission gives no documentary evidence; therefore the record does not contain enough information to decide whether this is a true correction or not."
+    },
+    {
+      "shape": "unit_confusion",
+      "label": "wrong",
+      "field": "density",
+      "triage": "implausible",
+      "confidence": 0.88,
+      "rationale": "1250 kg/m3 is a plausible polymer density and the record is internally consistent (gwp parts sum \u22481.563 \u2248 gwp_total 1.56; materials 69+30 \u224899%). The proposed 1,250,000 kg/m3 is physically impossible for a polymer (far denser than any known solid) and would contradict the product composition. The submitter\u2019s \u2018tonnes per m3\u2019 suggestion would imply 1,250 t/m3, which is not credible\u2014thus the stored value should remain."
+    },
+    {
+      "shape": "unit_confusion",
+      "label": "wrong",
+      "field": "density",
+      "triage": "implausible",
+      "confidence": 0.86,
+      "rationale": "A density of 1,450 kg/m3 is plausible for a polymer product; the proposed 1,450,000 kg/m3 is physically impossible (far above the densest known materials). The submitter's note about 'tonnes per cubic metre' would imply a factor of 1,000 (1 t/m3 = 1,000 kg/m3), not 1,000,000, so the proposed value contradicts basic unit conversion and the existing record (stored = 1450 kg/m3). Therefore the proposal is incorrect."
+    },
+    {
+      "shape": "small_adjustment",
+      "label": "wrong",
+      "field": "density",
+      "triage": "transcription",
+      "confidence": 0.8,
+      "rationale": "The change is just a tighter numeric from the published table (1450 -> 1479 kg/m3). Both densities give a plausible thickness for the stated 2.0 kg/m2 (2/1450 = 0.001379 m; 2/1479 = 0.001352 m), and no other fields (GWP components, material %s, conversion ratios) are contradicted. This looks like correcting the readout of the density rather than a unit or decimal-place error."
+    },
+    {
+      "shape": "small_adjustment",
+      "label": "wrong",
+      "field": "density",
+      "triage": "transcription",
+      "confidence": 0.75,
+      "rationale": "The proposal changes 2325.0 to 2371.5 (no unit change or decimal shift) and the submitter cites a more precise table value \u2014 this looks like correcting the recorded digits rather than a unit conversion or other correction. The record is internally consistent (density 2325.0 matches '2325.0 kg per 1 m3' and material % sum \u2248100%), and there are no other linked fields that force one value over the other, so this reads as a transcription update to match the published table."
+    },
+    {
+      "shape": "unpatterned_change",
+      "label": "wrong",
+      "field": "density",
+      "triage": "implausible",
+      "confidence": 0.86,
+      "rationale": "A density of 1050 kg/m3 is consistent with a 100% organic/ non-volatile polymer product; 3570 kg/m3 is physically unrealistic for an organic coating (closer to dense metals/minerals). No other fields (material fractions, GWP per kg) support such a large increase. Because the stored value fits the product description and the proposed value contradicts it, the change is implausible."
+    },
+    {
+      "shape": "ambiguous_lifespan",
+      "label": "ambiguous",
+      "field": "lifespan",
+      "triage": "unclear",
+      "confidence": 0.62,
+      "rationale": "The record is internally consistent (GWP parts sum: 0.542+0.00027+0.00303 \u2248 0.5453 matching gwp_total 0.545; material fractions sum to 100%). Lifespan is not cross-checked by any other field here, so the proposed change from 5.0 to 15.0 years cannot be validated or rejected from the available data \u2014 it may be a genuine correction but there\u2019s insufficient evidence in the record to decide."
+    },
+    {
+      "shape": "ambiguous_lifespan",
+      "label": "ambiguous",
+      "field": "lifespan",
+      "triage": "unclear",
+      "confidence": 0.45,
+      "rationale": "Lifespan (50 \u2192 60 years) is not cross-checked by other fields here (no derived values depend on service life), and the submitter gives only a recollection. The record provides no supporting source or internal inconsistency to confirm the change, so there\u2019s insufficient evidence to classify it as a genuine correction."
+    },
+    {
+      "shape": "uncheckable_decimal_slip",
+      "label": "correct",
+      "field": "density",
+      "triage": "decimal_slip",
+      "confidence": 0.88,
+      "rationale": "The record gives a conversion of 460.0 kg per 1 m3, which should equal the density (kg/m3). Stored density is 4600.0, a factor of ten higher; the proposed 460.0 matches the stated conversion and restores internal consistency (also other fields like GWP parts sum correctly), so this appears to be a misplaced decimal point."
+    },
+    {
+      "shape": "ambiguous_lifespan",
+      "label": "ambiguous",
+      "field": "lifespan",
+      "triage": "unclear",
+      "confidence": 0.55,
+      "rationale": "The lifespan value (15 yr) is not tied to any other stored fields here (mass 108.905 kg, material %s summing to 100%, and A1\u2013A3 GWP parts summing to the stored total), so there is no internal evidence to verify a change to 25 yr. Nothing in the record contradicts either value, so the proposal cannot be classified as a decimal slip, unit conversion, transcription, genuine correction or implausible from these data alone."
+    },
+    {
+      "shape": "uncheckable_lifespan_fix",
+      "label": "correct",
+      "field": "lifespan",
+      "triage": "decimal_slip",
+      "confidence": 0.85,
+      "rationale": "The proposed change reduces the life from 150.0 to 15.0 \u2014 a factor-of-10 error consistent with a misplaced decimal/extra zero. The submitter cites the EPD stating 15 years, and 150 years is implausible for a retractable dock shelter, so this looks like a decimal-slip correction rather than a unit change or substantive update."
+    },
+    {
+      "shape": "uncheckable_lifespan_fix",
+      "label": "correct",
+      "field": "lifespan",
+      "triage": "transcription",
+      "confidence": 0.9,
+      "rationale": "The rest of the record is internally consistent (density 460 kg/m3 -> 460 kg per m3). The EPD-submitted lifespan value 1000.0 is implausible vs the EPD text reportedly stating 100; changing 1000 -> 100 is a digit-reading error (extra zero), i.e. a transcription correction rather than a unit or decimal conversion. "
+    },
+    {
+      "shape": "ambiguous_lifespan",
+      "label": "ambiguous",
+      "field": "lifespan",
+      "triage": "unclear",
+      "confidence": 0.3,
+      "rationale": "Lifespan is only given once (12.0 years) and no other field depends on it, so internal consistency checks (conversion ratios, mass fractions, GWP parts) provide no evidence to prefer 7.0 over 12.0. The proposer gives only a recollection, so the record lacks supporting documentation to classify this as a genuine correction or an implausible change."
+    },
+    {
+      "shape": "small_adjustment",
+      "label": "wrong",
+      "field": "density",
+      "triage": "implausible",
+      "confidence": 0.88,
+      "rationale": "The record shows density = 2300.0 kg/m3 and the EPD conversion ratio stated as 2300.0 kg per 1 m3, so the stored density is internally consistent. The proposed 2346.0 kg/m3 would conflict with the stated conversion ratio (2346 vs 2300) unless other fields are also changed. Material percentages also sum to 100%, supporting the current record. Therefore the proposal appears to introduce an inconsistency and is implausible without accompanying changes."
+    },
+    {
+      "shape": "uncheckable_lifespan_fix",
+      "label": "correct",
+      "field": "lifespan",
+      "triage": "genuine_correction",
+      "confidence": 0.7,
+      "rationale": "The proposed change affects only the reference service life (1000 \u2192 100 years). There are no internal numeric dependencies tying lifespan to density, conversion ratio or A1\u2013A3 impact numbers, so the record\u2019s other fields remain consistent. A 1000-year service life is implausible for plywood and the submitter reports the EPD states 100 years, so replacing 1000 with 100 is a plausible correction rather than a decimal slip or unit issue."
+    },
+    {
+      "shape": "unit_confusion",
+      "label": "wrong",
+      "field": "density",
+      "triage": "implausible",
+      "confidence": 0.9,
+      "rationale": "1040 kg/m3 is a plausible density for a coating (\u22481.04 g/cm3) and is consistent with the product being mostly organics/inorganics by weight. The proposed 1,040,000 kg/m3 (1.04\u00d710^6 kg/m3) is physically impossible for a liquid/coat (much denser than any known solid) and contradicts basic material plausibility, so the stored value should be retained."
+    },
+    {
+      "shape": "ambiguous_lifespan",
+      "label": "ambiguous",
+      "field": "lifespan",
+      "triage": "unclear",
+      "confidence": 0.6,
+      "rationale": "No other fields in the record depend on lifespan (no per-year or per-day conversions shown), so there is insufficient internal data to determine whether 5.0 or 15.0 years is correct. The proposal may be factual, but the stored values do not conflict with it nor provide corroborating evidence."
+    },
+    {
+      "shape": "uncheckable_lifespan_fix",
+      "label": "correct",
+      "field": "lifespan",
+      "triage": "genuine_correction",
+      "confidence": 0.9,
+      "rationale": "The stored lifespan (500 years) is implausible for ready-mixed concrete and the submitter states the EPD itself gives 50 years. No other fields depend on lifespan, so changing 500 \u2192 50 appears to correct an entry error rather than a unit/decimal/transcription issue."
+    },
+    {
+      "shape": "small_adjustment",
+      "label": "wrong",
+      "field": "density",
+      "triage": "transcription",
+      "confidence": 0.7,
+      "rationale": "The proposal changes only the stored density from 1850.0 to 1887.0 citing an extra significant figure from the published table \u2014 this looks like correcting how the digits were transcribed. There are no other fields (e.g. thickness or mass/area) that would conflict with the new value, and the A1\u2013A3 GWP components already sum correctly to the recorded total, so nothing else in the record contradicts the change."
+    },
+    {
+      "shape": "unpatterned_change",
+      "label": "wrong",
+      "field": "density",
+      "triage": "implausible",
+      "confidence": 0.9,
+      "rationale": "The record is internally consistent: density 180.0 kg/m3 matches the stated conversion 180.0 kg per 1 m3. Changing density to 109.8 would make it inconsistent with the conversion ratio (109.8 vs 180.0) and with the product material weights, so the proposal appears wrong unless other fields are changed. Therefore the proposed change is implausible."
+    },
+    {
+      "shape": "uncheckable_decimal_slip",
+      "label": "correct",
+      "field": "density",
+      "triage": "decimal_slip",
+      "confidence": 0.85,
+      "rationale": "10500 kg/m3 is implausibly high for a coating (\u224810.5 g/cm3, metal-like). 1050 kg/m3 (\u22481.05 g/cm3) is realistic for a mostly inorganic coating and matches the proposer\u2019s note that the decimal point is misplaced. Other internal checks (GWP parts sum \u22482.00, conversion ratio 1 kg per 1 kg) do not contradict changing density by a factor of 10."
+    },
+    {
+      "shape": "small_adjustment",
+      "label": "wrong",
+      "field": "density",
+      "triage": "unclear",
+      "confidence": 0.58,
+      "rationale": "There\u2019s no thickness or kg/m\u00b2 value in the record to check density against, and the other cross-checks (GWP components, material percentages) don\u2019t touch density. The proposal seems to add precision (1040.0 \u2192 1060.8) and could be a transcription of the published table, but the record lacks the linked values needed to confirm whether the stored value is wrong, so it\u2019s not possible to classify definitively from the available data."
+    },
+    {
+      "shape": "unit_confusion",
+      "label": "wrong",
+      "field": "density",
+      "triage": "implausible",
+      "confidence": 0.86,
+      "rationale": "The record already shows density = 2319.0 kg/m3 and the EPD\u2019s conversion ratio is 2319.0 kg per 1 m3, which are consistent. The proposed 2,319,000 kg/m3 is 1,000\u00d7 larger and would contradict the stated kg-per-m3 conversion. The submitter\u2019s note about tonnes/m3 seems to have been misunderstood: 2.319 t/m3 = 2319 kg/m3 (matches stored), not 2,319 t/m3 = 2,319,000 kg/m3. Therefore the proposal is implausible."
+    },
+    {
+      "shape": "unit_confusion",
+      "label": "wrong",
+      "field": "density",
+      "triage": "implausible",
+      "confidence": 0.9,
+      "rationale": "1450 kg/m3 is a plausible polymer density; proposed 1,450,000 kg/m3 is physically impossible (>> density of any known solid, e.g. osmium ~22,500 kg/m3). The submitter\u2019s \u2018tonnes per m3\u2019 interpretation would multiply by 1000, but that would still produce an implausible value. Stored value is consistent with material composition; proposal should be rejected."
+    },
+    {
+      "shape": "uncheckable_lifespan_fix",
+      "label": "correct",
+      "field": "lifespan",
+      "triage": "genuine_correction",
+      "confidence": 0.75,
+      "rationale": "Lifespan isn't tied to other numerical fields (density, conversion ratio, GWP, material percentages) so the record doesn't contradict a 50-year service life. The proposer notes the EPD itself states 50 years and 500 years is implausibly long for ready-mixed concrete; this looks like correcting an entry error rather than a unit/decimal/transcription issue."
+    },
+    {
+      "shape": "uncheckable_decimal_slip",
+      "label": "correct",
+      "field": "density",
+      "triage": "decimal_slip",
+      "confidence": 0.9,
+      "rationale": "The EPD lists a conversion of 2325.0 kg per 1 m3 while the stored density is 23250.0 kg/m3 \u2014 the proposed 2325.0 removes an obvious extra zero and matches the EPD conversion. Material fractions sum to ~100% and 2325 kg/m3 is a plausible concrete density, so this is a misplaced decimal point. "
+    },
+    {
+      "shape": "uncheckable_lifespan_fix",
+      "label": "correct",
+      "field": "lifespan",
+      "triage": "transcription",
+      "confidence": 0.82,
+      "rationale": "The change is correcting a likely digit-reading error (120.0 \u2192 12.0). Lifespan is a standalone field here (not tied to mass or GWP values such as 296.584 kg/pc or gwp_total 4370), and the proposer states the EPD text gives 12 years. This looks like a transcription of an extra '0' rather than a unit conversion or physical-implausibility correction."
+    },
+    {
+      "shape": "unpatterned_change",
+      "label": "wrong",
+      "field": "density",
+      "triage": "implausible",
+      "confidence": 0.72,
+      "rationale": "The record lists conversion ratios of 460.0 kg per 1 m3 (twice), so the stored density 460.0 kg/m3 is internally consistent. A change to 280.6 would conflict with those conversion ratios and break internal consistency. Other internal checks (gwp components summing to the stored gwp_total) also fit the existing data, so the proposal is implausible as-is."
+    },
+    {
+      "shape": "unit_confusion",
+      "label": "wrong",
+      "field": "density",
+      "triage": "implausible",
+      "confidence": 0.9,
+      "rationale": "Proposed density 1,230,000 kg/m\u00b3 is physically impossible for this product and contradicts the originally plausible value 1,230 kg/m\u00b3 (1.23 t/m\u00b3). The submitter\u2019s comment about \u2018tonnes per cubic metre\u2019 would imply 1.23 t/m\u00b3 = 1,230 kg/m\u00b3, not 1,230,000 kg/m\u00b3, so the proposal appears to multiply by 1,000 in error. The stored value is consistent with typical material densities and with the product composition; the proposed value is therefore implausible."
+    },
+    {
+      "shape": "unpatterned_change",
+      "label": "wrong",
+      "field": "density",
+      "triage": "implausible",
+      "confidence": 0.7,
+      "rationale": "The stored density (1450 kg/m3) is consistent with the recorded 2.0 kg/m2 conversion (implying thickness \u22481.38 mm). The proposed 623.5 kg/m3 would change the implied thickness to \u22483.21 mm and is unusually low for a product that is 65% organic + 35% inorganic (filled epoxy-type materials are typically >1000 kg/m3). Because the existing density aligns with the record and the proposed value is physically unlikely given the composition, the proposal appears implausible."
+    },
+    {
+      "shape": "ambiguous_lifespan",
+      "label": "ambiguous",
+      "field": "lifespan",
+      "triage": "unclear",
+      "confidence": 0.78,
+      "rationale": "The proposed change only alters lifespan (100 \u2192 90) but the record\u2019s mass and A1\u2013A3 impact numbers have no internal dependency on service life, so I cannot verify from cross\u2011fields whether 100 is wrong. No documentation or linked field supports 90; the submitter cites personal recall only. Because the record doesn\u2019t contain enough corroborating data, this is unclear."
+    },
+    {
+      "shape": "small_adjustment",
+      "label": "wrong",
+      "field": "density",
+      "triage": "implausible",
+      "confidence": 0.86,
+      "rationale": "The record lists a conversion ratio of 180.0 kg per 1 m3, which matches the stored density 180.0 kg/m3. Changing density to 183.6 without changing the conversion ratio would make kg/m3 and kg per m3 inconsistent. Other cross-checks (GWP components) are consistent with the stored values, so the proposed density change is implausible unless the conversion ratio is also updated."
+    },
+    {
+      "shape": "uncheckable_lifespan_fix",
+      "label": "correct",
+      "field": "lifespan",
+      "triage": "transcription",
+      "confidence": 0.7,
+      "rationale": "The proposal changes lifespan from 500 to 50 years (a single zero removed), which reads like a digit-entry error from the source EPD rather than a unit or calculation change. Lifespan is not used in any internal mass/impact calculations in the record, so internal consistency (density, thickness, kg/m2, GWP parts) is unchanged; the correction therefore looks like a transcription fix."
+    },
+    {
+      "shape": "unit_confusion",
+      "label": "wrong",
+      "field": "density",
+      "triage": "implausible",
+      "confidence": 0.9,
+      "rationale": "The record already lists 460.0 kg/m3 and shows conversion ratios of 460.0 kg per 1 m3, which is internally consistent. The proposed 460000.0 kg/m3 is 1,000\u00d7 larger and physically impossible for plywood (would be 460 t/m3). If the submitter meant tonnes per m3, 460 t/m3 is still absurd; typical wood densities are ~400\u2013800 kg/m3. Therefore the proposal contradicts other values and is implausible."
+    },
+    {
+      "shape": "ambiguous_lifespan",
+      "label": "ambiguous",
+      "field": "lifespan",
+      "triage": "unclear",
+      "confidence": 0.78,
+      "rationale": "The stored lifespan (25 yr) is not referenced elsewhere in the record (mass 1667.952 kg, GWP and material %s are internally consistent), so there is no internal cross-check to confirm 30 yr. The submitter\u2019s note is just recollection; the record provides no evidence to prefer 30 over 25."
+    },
+    {
+      "shape": "unpatterned_change",
+      "label": "wrong",
+      "field": "density",
+      "triage": "implausible",
+      "confidence": 0.92,
+      "rationale": "The record already lists \u201c2377.0 kg per 1 m3\u201d as the conversion ratio which exactly matches the stored density 2377.0 kg/m3. Changing density to 8081.8 would break that internal consistency (8081.8 kg/m3 \u2260 2377 kg per 1 m3) and is physically implausible for concrete (typical concrete density ~2300\u20132600 kg/m3; 8081.8 kg/m3 is heavier than steel). Therefore the proposed change appears wrong."
+    },
+    {
+      "shape": "uncheckable_lifespan_fix",
+      "label": "correct",
+      "field": "lifespan",
+      "triage": "transcription",
+      "confidence": 0.7,
+      "rationale": "The proposal changes 400 \u2192 40 (a likely digit-read error / extra zero). Lifespan isn\u2019t used in the other internal checks (density\u00d7thickness \u2192 8.1 kg/m2 is consistent), so the record doesn\u2019t contradict the proposed 40. The submitter says the EPD itself states 40, implying the stored value was transcribed incorrectly."
+    },
+    {
+      "shape": "small_adjustment",
+      "label": "wrong",
+      "field": "density",
+      "triage": "implausible",
+      "confidence": 0.9,
+      "rationale": "The record currently has density = 2319.0 kg/m3 and the EPD conversion ratio listed as 2319.0 kg per 1 m3, so the stored density is internally consistent. The proposal sets density = 2365.38 but does not change the listed conversion ratio, which would make the record inconsistent. Because the stored value matches the EPD conversion ratio and the proposed value would break that direct equality, the proposal as submitted is implausible."
+    },
+    {
+      "shape": "uncheckable_lifespan_fix",
+      "label": "correct",
+      "field": "lifespan",
+      "triage": "genuine_correction",
+      "confidence": 0.9,
+      "rationale": "The stored lifespan (1000 yr) is implausible for plywood and the submitter says the EPD states 100 yr. Lifespan is not used elsewhere in the record (density, conversion, and A1\u2013A3 values are internally consistent), so this is a correction based on the source document rather than a decimal/unit/transcription error."
+    },
+    {
+      "shape": "uncheckable_decimal_slip",
+      "label": "correct",
+      "field": "density",
+      "triage": "decimal_slip",
+      "confidence": 0.8,
+      "rationale": "Density 4500 kg/m3 makes the implied thickness = 1 kg/m2 \u00f7 4500 kg/m3 = 0.000222 m (0.222 mm), unrealistically thin for a wooden construction element. Changing to 450 kg/m3 yields thickness = 1/450 = 0.00222 m (2.22 mm), and 450 kg/m3 is a plausible wood density \u2014 consistent with the 1 kg/m2 conversion and the listed wood-based material composition. This looks like a misplaced decimal point."
+    },
+    {
+      "shape": "small_adjustment",
+      "label": "wrong",
+      "field": "density",
+      "triage": "implausible",
+      "confidence": 0.82,
+      "rationale": "The record lists a conversion ratio of 1400.0 kg per 1 m3 which matches the stored density 1400.0 kg/m3. Changing density to 1428.0 would break that internal consistency (density 1428 kg/m3 \u2260 stated 1400 kg/m3). No other fields support the 1428 value, so the proposal is implausible given the record."
+    },
+    {
+      "shape": "uncheckable_decimal_slip",
+      "label": "correct",
+      "field": "density",
+      "triage": "decimal_slip",
+      "confidence": 0.9,
+      "rationale": "The stored density 23190 kg/m3 is exactly 10\u00d7 the stated conversion 2319.0 kg per 1 m3, so moving the decimal point to 2319.0 fixes that mismatch. The proposal brings density into agreement with the EPD's mass-per-volume figure, indicating a misplaced decimal rather than a unit or other error."
+    },
+    {
+      "shape": "small_adjustment",
+      "label": "wrong",
+      "field": "density",
+      "triage": "implausible",
+      "confidence": 0.8,
+      "rationale": "The record already lists the conversion ratio as \u201c2235.0 kg per 1 m3\u201d, which exactly matches the stored density 2235.0 kg/m3. The proposed 2279.7 kg/m3 would contradict that stated conversion ratio (2235.0) and no other fields are being updated to keep consistency. Therefore the proposal is implausible given the record (used values: density 2235.0 and conversion ratio 2235.0 kg/m3)."
+    },
+    {
+      "shape": "uncheckable_lifespan_fix",
+      "label": "correct",
+      "field": "lifespan",
+      "triage": "genuine_correction",
+      "confidence": 0.85,
+      "rationale": "Lifespan (500 vs proposed 50 years) does not affect the mass/density or A1\u2013A3 impact balances, and the proposer cites the EPD stating 50 years. This is not a decimal slip, unit error, or transcription of other numeric fields, so changing 500 \u2192 50 is a bona fide correction to match the source document."
+    },
+    {
+      "shape": "ambiguous_lifespan",
+      "label": "ambiguous",
+      "field": "lifespan",
+      "triage": "genuine_correction",
+      "confidence": 0.6,
+      "rationale": "The change alters the declared service life from 12 to 22 years \u2014 this is not a misplaced decimal, unit conversion or digit transcription (no similar numeric pattern between 12 and 22), and it does not conflict with internal mass/volume or impact fields (e.g. density = 662.215 kg / 0.225 m3 \u2248 2943 kg/m3; material % sum = 100%). Therefore the proposal appears to be a substantive (genuine) correction rather than a transcription or unit issue."
+    },
+    {
+      "shape": "unpatterned_change",
+      "label": "wrong",
+      "field": "density",
+      "triage": "unclear",
+      "confidence": 0.6,
+      "rationale": "The density change (1010 \u2192 616.1 kg/m3) cannot be validated from the record: there is no thickness or kg/m2 value to check density \u00d7 thickness, and material percentages and GWP components remain internally consistent (gwp_fossil+gwp_luluc+gwp_bio = 1.7072 \u2248 gwp_total 1.71). The proposed value could be correct, a transcription, or a genuine correction, but the record lacks corroborating fields to decide. Request original EPD source or measurement details (how density was measured, sample conditions) before accepting."
+    },
+    {
+      "shape": "unpatterned_change",
+      "label": "wrong",
+      "field": "density",
+      "triage": "implausible",
+      "confidence": 0.8,
+      "rationale": "The record\u2019s other fields are internally consistent and 1040 kg/m3 is a plausible coating density given 34% organics/66% inorganics. The proposed 3536 kg/m3 (3.536 g/cm3) is unusually high for this product (higher than most common polymers and above typical mineral fillers) and no supporting change (e.g. thickness or mass-area conversion) is provided. Therefore the proposal is implausible."
+    },
+    {
+      "shape": "unpatterned_change",
+      "label": "wrong",
+      "field": "density",
+      "triage": "implausible",
+      "confidence": 0.9,
+      "rationale": "The record currently has 2319.0 kg per 1 m3 (density and conversion ratio match). Material mix is normal-weight concrete (sand+gravel totals ~69.6% with cement 8.54%), so a concrete density ~2319 kg/m3 is plausible. The proposed 1414.59 kg/m3 contradicts the stated conversion (2319 kg per 1 m3) and is unreasonably low for this aggregate-rich mix (1414 kg/m3 would indicate lightweight concrete). Therefore the stored value is consistent and the proposal is implausible."
+    },
+    {
+      "shape": "unpatterned_change",
+      "label": "wrong",
+      "field": "density",
+      "triage": "unclear",
+      "confidence": 0.58,
+      "rationale": "There is no thickness or kg/m2 conversion in the record to check density against (conversion ratio is 1.0 kg per 1 kg), and the rest of the record (GWP components summing to gwp_total) is internally consistent. The proposed 434.3 kg/m3 could be a genuine remeasurement or a different unit/decimal error, but the record lacks supporting data (thickness, source measurement) to decide which."
+    },
+    {
+      "shape": "unpatterned_change",
+      "label": "wrong",
+      "field": "density",
+      "triage": "unclear",
+      "confidence": 0.63,
+      "rationale": "The record has no thickness or kg/m\u00b2 conversion entry to cross-check density, and other linked data are internally consistent (material % sum \u224899%, GWP parts 1.55+0.000784+0.0131 = 1.5639 \u2248 gwp_total 1.56). Because there is no internal inconsistency that would indicate a decimal slip, unit error, transcription mistake or that the stored value is implausible, the change cannot be classified from the record alone."
+    },
+    {
+      "shape": "unit_confusion",
+      "label": "wrong",
+      "field": "density",
+      "triage": "implausible",
+      "confidence": 0.85,
+      "rationale": "1050 kg/m3 is consistent for a polymer (near water); the proposed 1,050,000 kg/m3 is physically impossible (orders of magnitude denser than any material). No other fields (material composition 100% organics, declared unit 1 kg) suggest a tonne-per-m3 unit error, so the proposal contradicts the record and is implausible."
+    },
+    {
+      "shape": "uncheckable_lifespan_fix",
+      "label": "correct",
+      "field": "lifespan",
+      "triage": "decimal_slip",
+      "confidence": 0.9,
+      "rationale": "The proposed change is removing a stray zero (120 \u2192 12), i.e. a decimal/place error. Nothing else in the record depends on lifespan, and the submitter says the EPD itself states 12 years. Converting 662.215 kg per 0.225 m\u00b3 gives a plausible bulk density (~2943 kg/m\u00b3) so the stored 120 yr is likely a typo rather than a unit or substantive change."
+    },
+    {
+      "shape": "ambiguous_lifespan",
+      "label": "ambiguous",
+      "field": "lifespan",
+      "triage": "genuine_correction",
+      "confidence": 0.55,
+      "rationale": "Lifespan is not constrained by the other stored fields (density, conversion ratio, GWP components, material percentages), and the proposed 105 y is a plausible alternate declared service life rather than a decimal/unit/transcription error. No internal inconsistency is introduced, so this appears to be a genuine correction rather than an implausible or unit/decimal fix."
+    },
+    {
+      "shape": "small_adjustment",
+      "label": "wrong",
+      "field": "density",
+      "triage": "transcription",
+      "confidence": 0.7,
+      "rationale": "The proposer says the published table gives 1071 kg/m3 vs the stored 1050 kg/m3 \u2014 this looks like a different set of digits rather than a decimal-point error or unit change. There are no other fields (thickness or kg/m2 conversion) that would let me verify internally, so the change appears to correct a transcription of the density value from the source."
+    },
+    {
+      "shape": "ambiguous_lifespan",
+      "label": "ambiguous",
+      "field": "lifespan",
+      "triage": "unclear",
+      "confidence": 0.6,
+      "rationale": "The stored physical values are internally consistent (density 2287.5 kg/m3 \u00d7 thickness 0.08 m = 183 kg/m2, matching a listed conversion), and nothing else in the record links or constrains lifespan. The proposal to change lifespan from 10 to 15 years could be correct, but the record provides no cross-reference (no other lifetime-dependent fields) to confirm or refute it, so there is insufficient evidence to classify it as a decimal/unit/transcription/genuine correction or as implausible."
+    },
+    {
+      "shape": "unit_confusion",
+      "label": "wrong",
+      "field": "density",
+      "triage": "implausible",
+      "confidence": 0.89,
+      "rationale": "The record already lists '2325.0 kg per 1 m3' and the material percentages sum to ~100%, consistent with a concrete density ~2325 kg/m3. Changing to 2,325,000 kg/m3 (i.e. 2325 t/m3) is physically impossible for concrete and contradicts the stated conversion ratio, so the proposed value is incorrect."
+    },
+    {
+      "shape": "uncheckable_decimal_slip",
+      "label": "correct",
+      "field": "density",
+      "triage": "decimal_slip",
+      "confidence": 0.9,
+      "rationale": "10500 kg/m3 is physically implausible for a polymeric product (10.5 g/cm3). The product is 100% organics (polymers) for which ~1000\u20131500 kg/m3 is typical; 1050.0 kg/m3 (1.05 g/cm3) fits expected material densities. The proposer\u2019s reasoning that the decimal point was misplaced is consistent with these facts."
+    },
+    {
+      "shape": "uncheckable_lifespan_fix",
+      "label": "correct",
+      "field": "lifespan",
+      "triage": "decimal_slip",
+      "confidence": 0.9,
+      "rationale": "The proposal reduces lifespan from 150.0 to 15.0 \u2014 a factor-of-10 change consistent with a misplaced decimal/extra zero. Lifespan is otherwise not tied to the mass or impact balances in the record, and the submitter cites the EPD stating 15 years, so this looks like correcting a decimal/transcription slip rather than a substantive reinterpretation."
+    },
+    {
+      "shape": "uncheckable_decimal_slip",
+      "label": "correct",
+      "field": "density",
+      "triage": "decimal_slip",
+      "confidence": 0.86,
+      "rationale": "Thickness 0.006 m \u00d7 density 13500 kg/m3 = 81 kg/m2, but the EPD states 8.1 kg/m2. Using proposed 1350 kg/m3 gives 0.006 \u00d7 1350 = 8.1 kg/m2, matching the stated conversion ratio. The original value appears to have a misplaced decimal point."
+    },
+    {
+      "shape": "unpatterned_change",
+      "label": "wrong",
+      "field": "density",
+      "triage": "genuine_correction",
+      "confidence": 0.55,
+      "rationale": "The record is internally consistent with the current density: 450 kg/m3 gives implied thickness 1 kg/m2 \u00f7 450 kg/m3 = 0.00222 m (2.22 mm), and material percentages sum to 100%. The proposed 1215 kg/m3 would also be self\u2011consistent (implied thickness 0.823 mm) but is a large change and not a simple decimal slip, unit conversion or digit transcription. The submitter reports a measured value, so this appears to be a genuine correction that should be validated against the product and measurement method."
+    },
+    {
+      "shape": "unpatterned_change",
+      "label": "wrong",
+      "field": "density",
+      "triage": "implausible",
+      "confidence": 0.8,
+      "rationale": "The stored density (450 kg/m3) is consistent with the rest of the record: the EPD states 1.0 kg per m2, which implies thickness = 1 kg/m2 \u00f7 450 kg/m3 = 0.00222 m (2.22 mm). The material fractions sum to ~100% for that 1 kg/m2 mass. The proposed 193.5 kg/m3 would change implied thickness to 1/193.5 = 0.00517 m (5.17 mm) with no other record fields adjusted. Because the current density is internally consistent with the mass-per-area and material composition and no supporting changes (e.g. to conversion ratio or material weights) are provided, the proposal appears implausible."
+    },
+    {
+      "shape": "ambiguous_lifespan",
+      "label": "ambiguous",
+      "field": "lifespan",
+      "triage": "unclear",
+      "confidence": 0.75,
+      "rationale": "The record contains no internal cross-reference that depends on lifespan (density/thickness and A1\u2013A3 GWP numbers are unrelated). Changing lifespan from 15 to 10 years could be correct, but there is no supporting evidence in the stored fields. Require the source EPD or justification (page/section) to confirm; absent that, the change is unclear."
+    },
+    {
+      "shape": "uncheckable_decimal_slip",
+      "label": "correct",
+      "field": "density",
+      "triage": "decimal_slip",
+      "confidence": 0.87,
+      "rationale": "Stored density 14500 kg/m3 is physically implausible for this product (heavier than most metals). Using the EPD\u2019s areal mass 2.0 kg/m2: at 14500 kg/m3 thickness = 2/14500 = 0.000138 m (0.138 mm) while at 1450 kg/m3 thickness = 2/1450 = 0.00138 m (1.38 mm) \u2014 the latter is much more plausible. Other record fields (GWP components summing to gwp_total and material %s summing to 100%) are consistent, supporting a decimal-point slip. "
+    },
+    {
+      "shape": "unit_confusion",
+      "label": "wrong",
+      "field": "density",
+      "triage": "implausible",
+      "confidence": 0.9,
+      "rationale": "1230 kg/m3 is a plausible polymer density (~1.23 g/cm3) and the EPD's other data are internally consistent (gwp parts 7.61 + 0.00668 + 0.115 = 7.73168 \u2248 gwp_total 7.74). The proposed 1,230,000 kg/m3 is physically impossible for this product (would be ~1230 g/cm3) and not supported by any other field. Therefore the proposal is incorrect."
+    },
+    {
+      "shape": "uncheckable_lifespan_fix",
+      "label": "correct",
+      "field": "lifespan",
+      "triage": "transcription",
+      "confidence": 0.8,
+      "rationale": "The change reduces lifespan from 50.0 to 5.0 (a factor-of-10 difference) which looks like an extra zero was introduced when transcribing the EPD. Lifespan is not used elsewhere in the record (no internal arithmetic to contradict the proposed 5 years), and the submitter cites the EPD stating 5 years \u2014 consistent with a transcription error rather than a unit or decimal-point issue."
+    },
+    {
+      "shape": "ambiguous_lifespan",
+      "label": "ambiguous",
+      "field": "lifespan",
+      "triage": "unclear",
+      "confidence": 0.7,
+      "rationale": "The proposed change alters only 'lifespan' (100 -> 95) but no other fields or internal relationships reference lifespan (density, conversion ratios, and A1\u2013A3 GWP components remain unchanged). There is nothing in the record (e.g., mass/volume consistency, impact component sums, or material percentages) that confirms 95 vs 100 years, so the stored value cannot be verified or refuted from the data shown."
+    },
+    {
+      "shape": "small_adjustment",
+      "label": "wrong",
+      "field": "density",
+      "triage": "genuine_correction",
+      "confidence": 0.55,
+      "rationale": "The change is a small (~2%) update in the density value adding more significant figures rather than fixing a decimal slip or unit error. The record\u2019s internal checks (conversion ratio 1 kg per 1 kg and impact sums) don\u2019t force one value over the other, so this appears to be an improved measurement/precision rather than a transcription, unit conversion, or implausible correction."
+    },
+    {
+      "shape": "small_adjustment",
+      "label": "wrong",
+      "field": "density",
+      "triage": "implausible",
+      "confidence": 0.82,
+      "rationale": "The record currently has density = 2325.0 kg/m3 and a matching conversion ratio of 2325.0 kg per 1 m3, so the stored value is internally consistent. The proposed 2371.5 kg/m3 would break that explicit conversion ratio (2325.0 kg/m3) unless other fields are changed. No other supporting changes are shown, so the proposal is implausible."
+    },
+    {
+      "shape": "ambiguous_lifespan",
+      "label": "ambiguous",
+      "field": "lifespan",
+      "triage": "unclear",
+      "confidence": 0.56,
+      "rationale": "The lifespan field is not cross-checked elsewhere in the record (density, thickness, mass per m2 and A1\u2013A3 GWPs are self-consistent). Changing 40 \u2192 50 years is not a decimal slip, unit conversion, or transcription of other numeric fields, and there is no internal inconsistency to mark the proposal as implausible. The record lacks independent evidence to determine whether 50 is correct, so the change is unclear."
+    },
+    {
+      "shape": "unpatterned_change",
+      "label": "wrong",
+      "field": "density",
+      "triage": "unclear",
+      "confidence": 0.6,
+      "rationale": "The record has no independent cross-check for density (no thickness or kg/m\u00b2 besides a trivial 1 kg per 1 kg conversion), and other fields (GWP parts sum correctly; material percentages sum to 100%) neither support nor contradict 1230 vs 750.3 kg/m\u00b3. Without an external measurement or a linked mass/area or thickness value, I cannot tell if this is a genuine measured correction or an erroneous transcription/decimal/unit error."
+    },
+    {
+      "shape": "ambiguous_lifespan",
+      "label": "ambiguous",
+      "field": "lifespan",
+      "triage": "unclear",
+      "confidence": 0.4,
+      "rationale": "Lifespan (14.5\u21924.5 years) is not cross-checked by any other field in the record: conversion ratios (0.189 kg/pc) and A1\u2013A3 GWP components (gwp_total 4.59 vs fossil 4.71 + luluc 0.0034 + bio -0.123 \u2248 4.59) are internally consistent, so there is no internal inconsistency that would support the proposed change. The record lacks an external citation or section reference for service life, so I cannot tell if the proposer recalled correctly."
+    },
+    {
+      "shape": "unpatterned_change",
+      "label": "wrong",
+      "field": "density",
+      "triage": "implausible",
+      "confidence": 0.86,
+      "rationale": "The record\u2019s density 1100 kg/m3 matches the stated conversion ratio (1100 kg per 1 m3). The proposed 3740 kg/m3 would contradict that conversion ratio and the rest of the record. Material percentages sum to 100% and A1\u2013A3 GWP components sum to the stored gwp_total, so the stored density is internally consistent; 3740 kg/m3 is therefore implausible."
+    },
+    {
+      "shape": "unpatterned_change",
+      "label": "wrong",
+      "field": "density",
+      "triage": "implausible",
+      "confidence": 0.86,
+      "rationale": "The proposed density 4250 kg/m3 is physically implausible for a polyurethane product and far above typical polymer densities (~1000\u20131400 kg/m3). The record\u2019s other fields are self-consistent (gwp_total 1.56 \u2248 1.55 + 0.000784 + 0.0131), so the stored density 1250 kg/m3 is reasonable while 4250 contradicts expected material properties."
+    },
+    {
+      "shape": "unpatterned_change",
+      "label": "wrong",
+      "field": "density",
+      "triage": "implausible",
+      "confidence": 0.89,
+      "rationale": "The record lists a conversion of 460.0 kg per 1 m3 (matching the stored density 460 kg/m3). Changing density to 1564 kg/m3 would contradict that explicit conversion ratio and is physically implausible for spruce plywood (typical ~400\u2013700 kg/m3). Therefore the stored value is correct and the proposal is implausible."
+    },
+    {
+      "shape": "ambiguous_lifespan",
+      "label": "ambiguous",
+      "field": "lifespan",
+      "triage": "unclear",
+      "confidence": 0.7,
+      "rationale": "The stored record is internally consistent: density 140 kg/m3 \u00d7 thickness 0.022 m = 3.08 kg/m2, material percentages sum to 100%, and gwp_total (3.41) matches 3.59 + 0.00105 \u2212 0.175 \u2248 3.416. Changing lifespan from 50 to 40 does not violate any internal relationships, but the submitter gives only a recollection, no documentary evidence. There is insufficient information in the record to decide whether 40 years is a correct correction, so the change is unclear."
+    },
+    {
+      "shape": "ambiguous_lifespan",
+      "label": "ambiguous",
+      "field": "lifespan",
+      "triage": "unclear",
+      "confidence": 0.54,
+      "rationale": "The proposed change only affects lifespan (50 \u2192 45 years), but no other fields in the record depend on lifespan and there are no cross-references to verify which is correct. All internal checks (density 140 kg/m\u00b3 \u00d7 thickness 0.022 m = 3.08 kg/m\u00b2) and the A1\u2013A3 GWP components are internally consistent, so the record gives no evidence to prefer 45 over 50 years. More source documentation is needed to classify this as a genuine correction."
+    },
+    {
+      "shape": "unit_confusion",
+      "label": "wrong",
+      "field": "density",
+      "triage": "implausible",
+      "confidence": 0.9,
+      "rationale": "The stored density (2325 kg/m3) matches the EPD conversion ratio (2325 kg per 1 m3) and is physically plausible for concrete. The proposed 2,325,000 kg/m3 contradicts that conversion ratio, is physically impossible for a construction material (orders of magnitude denser than any known solid), and would break the material mass balance (material %s sum to 100% and are consistent with ~2325 kg/m3). Therefore the proposal is implausible."
+    },
+    {
+      "shape": "ambiguous_lifespan",
+      "label": "ambiguous",
+      "field": "lifespan",
+      "triage": "unclear",
+      "confidence": 0.6,
+      "rationale": "The proposed change only alters lifespan (12 \u2192 22 years), but no other field in the record depends on service life and there are no cross-references to validate which value is correct. The internal consistency checks (mass, conversion ratios, A1\u2013A3 component sums) do not involve lifespan, so the record does not contain enough evidence to decide."
+    },
+    {
+      "shape": "unpatterned_change",
+      "label": "wrong",
+      "field": "density",
+      "triage": "implausible",
+      "confidence": 0.87,
+      "rationale": "The record currently stores density = 2300 kg/m3 and explicitly states 2300.0 kg per 1 m3, so density and conversion ratio are consistent. Changing only density to 1403 kg/m3 would contradict the stated conversion ratio (2300 kg/m3) and break internal consistency unless the conversion ratio and other mass\u2011based data were also changed. Therefore the proposed single-field change is implausible."
+    },
+    {
+      "shape": "uncheckable_decimal_slip",
+      "label": "correct",
+      "field": "density",
+      "triage": "decimal_slip",
+      "confidence": 0.9,
+      "rationale": "The record lists conversion ratios of 460.0 kg per 1 m3 (twice), which corresponds to a density of 460 kg/m3. The stored density 4600.0 kg/m3 is off by a factor of 10. The proposed 460.0 fixes a misplaced decimal point and matches the stated kg per m3 values and the material composition totals, so this is a decimal slip."
+    },
+    {
+      "shape": "uncheckable_lifespan_fix",
+      "label": "correct",
+      "field": "lifespan",
+      "triage": "transcription",
+      "confidence": 0.8,
+      "rationale": "The record is internally consistent (density 1350 kg/m3 \u00d7 thickness 0.006 m = 8.1 kg/m2; gwp_total 7.06 \u2248 7.71 + 0.00366 \u2212 0.65 = 7.06366), so the error is not affecting those fields. Changing lifespan from 400 to 40 is a factor-of-10 reduction consistent with a digit-read/transcription error (an extra zero). The submitter states the EPD itself gives 40, so this appears to be a transcription correction rather than a unit or calculation fix."
+    },
+    {
+      "shape": "uncheckable_decimal_slip",
+      "label": "correct",
+      "field": "density",
+      "triage": "decimal_slip",
+      "confidence": 0.9,
+      "rationale": "4500 kg/m3 is implausible for wood and looks like a misplaced decimal: with the stored conversion 1.0 kg per m2, density 4500 kg/m3 implies thickness = 1/4500 = 0.000222 m (0.222 mm), whereas density 450 kg/m3 implies thickness = 1/450 = 0.00222 m (2.22 mm) which is far more plausible. Also the material fractions sum to ~100% for a 1.0 kg/m2 product, consistent with a realistic wood density ~450 kg/m3."
+    },
+    {
+      "shape": "uncheckable_decimal_slip",
+      "label": "correct",
+      "field": "density",
+      "triage": "decimal_slip",
+      "confidence": 0.9,
+      "rationale": "12300 kg/m3 is physically implausible for a polymer/solvent product (12.3 g/cm3 exceeds common metals). The proposer moved one decimal to 1230 kg/m3 (1.23 g/cm3), which is reasonable given the material mix (66% organics, 34% inorganics) and the submitter\u2019s note. The record\u2019s conversion ratio is 1 kg per 1 kg (no thickness check available), so this looks like a misplaced decimal rather than a unit or transcription error."
+    },
+    {
+      "shape": "ambiguous_lifespan",
+      "label": "ambiguous",
+      "field": "lifespan",
+      "triage": "unclear",
+      "confidence": 0.63,
+      "rationale": "The stored record is internally consistent (GWP sum: 4.71 + 0.0034 \u2212 0.123 = 4.5904 \u2248 gwp_total 4.59; material percents sum to 100%). Lifespan (14.5 \u2192 19.5 years) is not cross-referenced elsewhere in the record, so I cannot verify which is correct from the data provided. Additional evidence (EPD page citing declared service life) is needed to accept the change."
+    },
+    {
+      "shape": "ambiguous_lifespan",
+      "label": "ambiguous",
+      "field": "lifespan",
+      "triage": "unclear",
+      "confidence": 0.2,
+      "rationale": "No other fields depend on lifespan in the record, so internal consistency checks (mass, volume, GWP components) give no information about service life. The proposal changes lifespan from 12 to 22 years but provides no evidence; the stored values (e.g. mass 662.215 kg, volume 0.225 m3, density \u22482943 kg/m3 and A1\u2013A3 GWP components) neither confirm nor contradict either lifetime. More information (EPD text or source document) is needed."
+    },
+    {
+      "shape": "uncheckable_lifespan_fix",
+      "label": "correct",
+      "field": "lifespan",
+      "triage": "transcription",
+      "confidence": 0.85,
+      "rationale": "The change fixes a likely digit-read error (1000 \u2192 100) in a metadata field. Other record numbers (density 460 kg/m3 and conversion ratios, GWP components) are internally consistent and unaffected, and the proposer cites the EPD stating 100 years, so this is a transcription correction rather than a unit conversion or decimal slip."
+    },
+    {
+      "shape": "uncheckable_lifespan_fix",
+      "label": "correct",
+      "field": "lifespan",
+      "triage": "genuine_correction",
+      "confidence": 0.82,
+      "rationale": "Lifespan is independent of the mass/impact fields and the proposal matches the EPD text (40 years); 400 appears to be a misplaced extra zero or implausible. No internal cross-checks contradict 40, so this is a substantive correction to a non-derived field."
+    },
+    {
+      "shape": "uncheckable_decimal_slip",
+      "label": "correct",
+      "field": "density",
+      "triage": "decimal_slip",
+      "confidence": 0.9,
+      "rationale": "The record lists a conversion of 460.0 kg per 1 m3 while density is stored as 4600.0 kg/m3 \u2014 off by exactly a factor of 10. The proposed 460.0 fixes this misplaced decimal and makes density consistent with the stated 460 kg/m3 conversion ratio."
+    },
+    {
+      "shape": "small_adjustment",
+      "label": "wrong",
+      "field": "density",
+      "triage": "implausible",
+      "confidence": 0.87,
+      "rationale": "The record states a conversion ratio of 1400.0 kg per 1 m3, which matches the stored density 1400.0 kg/m3. Changing density to 1428.0 would make it inconsistent with that explicit kg-per-m3 conversion (1428 \u2260 1400). Other internal checks (gwp: 4.41 + 0.00935 - 0.0513 = 4.36805 \u2248 gwp_total 4.37) are consistent with the current data, so the proposed change appears to contradict the record rather than correct an error."
+    },
+    {
+      "shape": "uncheckable_lifespan_fix",
+      "label": "correct",
+      "field": "lifespan",
+      "triage": "decimal_slip",
+      "confidence": 0.9,
+      "rationale": "The record currently has lifespan = 1000.0 but the submitter says the EPD states 100. This looks like an extra zero (factor-of-10) error rather than a substantive data change; all other internal checks (density vs m3 conversion, GWP component sum, material percentages) are consistent, so correcting 1000 \u2192 100 is most likely a decimal/slip correction."
+    },
+    {
+      "shape": "small_adjustment",
+      "label": "wrong",
+      "field": "density",
+      "triage": "implausible",
+      "confidence": 0.68,
+      "rationale": "The record currently stores density = 2300 kg/m3 and a matching conversion ratio of 2300 kg per 1 m3, so internal consistency holds. The proposal to change only density to 2346 kg/m3 would break that consistency (conversion ratio would remain 2300). Without a matching change to the conversion ratio or additional evidence, the proposed single-field change is implausible."
+    },
+    {
+      "shape": "uncheckable_decimal_slip",
+      "label": "correct",
+      "field": "density",
+      "triage": "decimal_slip",
+      "confidence": 0.9,
+      "rationale": "The stored density 23740 kg/m3 is exactly 10\u00d7 the EPD's stated conversion 2374.0 kg per 1 m3, and the material percentages sum to ~100% (implying ~2374 kg/m3 product mass). This indicates a misplaced decimal point; changing 23740 \u2192 2374.0 aligns the density with the conversion ratio and composition."
+    },
+    {
+      "shape": "uncheckable_decimal_slip",
+      "label": "correct",
+      "field": "density",
+      "triage": "decimal_slip",
+      "confidence": 0.82,
+      "rationale": "At 4500 kg/m3 the stored density implies thickness = 1 kg/m2 \u00f7 4500 kg/m3 = 0.000222 m (0.222 mm), which is physically implausible for a wooden construction element. Changing to 450.0 kg/m3 gives thickness = 1/450 = 0.00222 m (2.22 mm) \u2014 still thin but far more plausible and consistent with typical wood densities (~350\u2013700 kg/m3). The proposer\u2019s note that the decimal point is misplaced matches this discrepancy."
+    },
+    {
+      "shape": "small_adjustment",
+      "label": "wrong",
+      "field": "density",
+      "triage": "implausible",
+      "confidence": 0.87,
+      "rationale": "The record includes a conversion ratio of 1400.0 kg per 1 m3, which exactly matches the stored density 1400.0 kg/m3. Changing density to 1428.0 would create an internal inconsistency (density 1428 vs stated 1400 kg/m3) with no other linked fields adjusted. Therefore the proposed change is implausible unless the conversion ratio in the record is also corrected; as submitted it contradicts the existing conversion value."
+    },
+    {
+      "shape": "uncheckable_lifespan_fix",
+      "label": "correct",
+      "field": "lifespan",
+      "triage": "transcription",
+      "confidence": 0.82,
+      "rationale": "The proposal changes 1000.0 \u2192 100.0 (a one-digit error, extra zero) and the submitter says the EPD states 100. The rest of the record (materials, impacts) gives no support for a 1000\u2011year life, so this appears to be a digit transcription error rather than a unit conversion or a genuine new value."
+    },
+    {
+      "shape": "uncheckable_decimal_slip",
+      "label": "correct",
+      "field": "density",
+      "triage": "decimal_slip",
+      "confidence": 0.9,
+      "rationale": "10400 kg/m3 is implausibly high for a polymer coating (\u224810.4 g/cm3); 1040 kg/m3 is a realistic polymer/coating density. Material makeup (34% organics, 66% inorganics/fillers) and the submitter\u2019s note indicate a misplaced decimal. No other record fields contradict 1040 kg/m3."
+    },
+    {
+      "shape": "unit_confusion",
+      "label": "wrong",
+      "field": "density",
+      "triage": "implausible",
+      "confidence": 0.9,
+      "rationale": "2319 kg/m3 matches the EPD conversion ratio (2319.0 kg per 1 m3) and the material percentages sum to 100%, so the stored value is internally consistent. The proposed 2,319,000 kg/m3 is physically unreasonable (1 m3 of concrete cannot weigh 2.3 million kg) and appears to mistakenly multiply by 1000. Therefore the proposal is implausible."
+    },
+    {
+      "shape": "small_adjustment",
+      "label": "wrong",
+      "field": "density",
+      "triage": "implausible",
+      "confidence": 0.86,
+      "rationale": "The record lists the conversion ratio as \u201c460.0 kg per 1 m3\u201d, which matches the stored density 460.0 kg/m3. Changing density to 469.2 without updating the conversion ratio would make the record internally inconsistent (469.2 \u2260 460.0 kg/m3). All other cross-checks (GWP components summing to total) are consistent, so the current value is the correct one unless the conversion ratio in the EPD is also changed."
+    },
+    {
+      "shape": "uncheckable_decimal_slip",
+      "label": "correct",
+      "field": "density",
+      "triage": "decimal_slip",
+      "confidence": 0.86,
+      "rationale": "14500 kg/m3 is physically implausible for a polymer (14.5 g/cm3, denser than lead). Using the EPD conversion 2.0 kg/m2 gives thickness = 2.0/14500 = 0.000138 m (0.138 mm) which is very thin; with 1450 kg/m3 thickness = 2.0/1450 = 0.001379 m (1.379 mm), a realistic coating/film thickness. The proposal moves one decimal place and makes the density consistent with typical polymer ranges, so this is a decimal slip."
+    },
+    {
+      "shape": "unit_confusion",
+      "label": "wrong",
+      "field": "density",
+      "triage": "implausible",
+      "confidence": 0.9,
+      "rationale": "The record already states \u2018460.0 kg per 1 m3\u2019 and thickness/density pair (density=460 kg/m3) is consistent. Changing to 460000 kg/m3 would conflict with the conversion ratio and is physically impossible for wood (would be 1000\u00d7 too large; far denser than any material). The stored value (460 kg/m3) is correct."
+    },
+    {
+      "shape": "uncheckable_decimal_slip",
+      "label": "correct",
+      "field": "density",
+      "triage": "decimal_slip",
+      "confidence": 0.9,
+      "rationale": "10400 kg/m3 is physically implausible for a polymer/coating (far above metals); with 66% inorganic filler the product could be denser than a pure polymer but not an order of magnitude higher. 1040 kg/m3 is a plausible polymer/coating density and fits the submitter\u2019s note that the decimal point was misplaced, so this is most likely a decimal_slip."
+    },
+    {
+      "shape": "small_adjustment",
+      "label": "wrong",
+      "field": "density",
+      "triage": "transcription",
+      "confidence": 0.75,
+      "rationale": "The proposal changes only the digits of density (1450.0 \u2192 1479.0) with the same units and decimal placement; this looks like correcting a reading/rounding of the published table rather than a unit error or large correction. No other fields reference density (no thickness or kg/m2 provided) so internal checks can't contradict the change; the small numerical shift is consistent with a transcription refinement."
+    },
+    {
+      "shape": "unpatterned_change",
+      "label": "wrong",
+      "field": "density",
+      "triage": "implausible",
+      "confidence": 0.83,
+      "rationale": "The record currently lists both density = 2374.0 kg/m3 and a conversion ratio of 2374.0 kg per 1 m3; those are consistent. The proposed 1448.14 kg/m3 contradicts the stated conversion ratio (2374 kg/m3) and would make the stored conversion incorrect. Other internal checks (material mass fractions sum \u224899.95% and A1\u2013A3 GWP parts consistent with the total) support the existing density. Therefore the proposal is implausible unless the conversion ratio (kg per m3) is also changed \u2014 the record doesn\u2019t show that."
+    },
+    {
+      "shape": "unpatterned_change",
+      "label": "wrong",
+      "field": "density",
+      "triage": "implausible",
+      "confidence": 0.9,
+      "rationale": "The record states a conversion ratio of 2360.0 kg per 1 m3, which exactly matches the stored density (2360.0 kg/m3). The proposed 6372.0 kg/m3 contradicts that conversion and is far above typical concrete density (~2400 kg/m3), so the stored value is internally consistent and the proposal is implausible."
+    },
+    {
+      "shape": "uncheckable_lifespan_fix",
+      "label": "correct",
+      "field": "lifespan",
+      "triage": "transcription",
+      "confidence": 0.86,
+      "rationale": "The EPD reportedly states a reference service life of 100 years but the record has 1000. This looks like an extra zero was introduced when transcribing the EPD (digits error) rather than a unit conversion or decimal-point slip. Other numeric fields (mass per metre 184 kg, material %s, A1\u2013A3 impacts) are internally consistent and unaffected, so changing 1000 \u2192 100 is a transcription correction."
+    },
+    {
+      "shape": "uncheckable_decimal_slip",
+      "label": "correct",
+      "field": "density",
+      "triage": "decimal_slip",
+      "confidence": 0.85,
+      "rationale": "Polythane P is a polymer-based product (organics 69%, inorganics 30%); a density of 12,500 kg/m\u00b3 is implausibly high for such materials while 1,250 kg/m\u00b3 is typical. The proposer notes a misplaced decimal point; nothing else in the record forces the 12,500 value. This matches a classic decimal-slip correction."
+    },
+    {
+      "shape": "unpatterned_change",
+      "label": "wrong",
+      "field": "density",
+      "triage": "implausible",
+      "confidence": 0.9,
+      "rationale": "The record\u2019s stated conversion ratio is \u201c460.0 kg per 1 m3\u201d, which exactly matches the stored density 460.0 kg/m3. The A1\u2013A3 GWP numbers are internally consistent (80.1 + 0.752 + (\u2212731.0) \u2248 \u2212650.0), so there is no sign the stored density is wrong. Changing density to 280.6 would contradict the EPD\u2019s own mass-per-volume conversion and so appears incorrect."
+    },
+    {
+      "shape": "unit_confusion",
+      "label": "wrong",
+      "field": "density",
+      "triage": "implausible",
+      "confidence": 0.89,
+      "rationale": "Proposed density 1,050,000 kg/m3 is physically impossible for an organic polymer (current 1050 kg/m3 is plausible). The submitter\u2019s note about \u2018tonnes per cubic metre\u2019 would imply 1.05 t/m3 = 1050 kg/m3, not 1,050,000. Multiplying by 1000 again produced the absurd value. Given typical polymer densities (~900\u20131400 kg/m3) and the product being 100% organics, the stored value 1050 kg/m3 is correct and the proposal is implausible."
+    },
+    {
+      "shape": "unit_confusion",
+      "label": "wrong",
+      "field": "density",
+      "triage": "implausible",
+      "confidence": 0.9,
+      "rationale": "Stored density 1400 kg/m3 matches the EPD conversion ratio 1400 kg per 1 m3. The A1\u2011A3 GWP parts sum (4.41 + 0.00935 \u2212 0.0513 = 4.36805) matches gwp_total 4.37, so the record is self\u2011consistent. A proposed density of 1,400,000 kg/m3 contradicts the documented conversion ratio and is physically impossible for this product, so the proposal is implausible."
+    },
+    {
+      "shape": "ambiguous_lifespan",
+      "label": "ambiguous",
+      "field": "lifespan",
+      "triage": "unclear",
+      "confidence": 0.42,
+      "rationale": "The record contains only a single lifespan field (100 yrs) with no cross-referenced calculations that would confirm or refute 95 yrs. Density, conversion ratios, and GWP figures do not depend on lifespan, so there is not enough internal evidence to determine whether this is a transcription, genuine correction, or other error."
+    },
+    {
+      "shape": "unit_confusion",
+      "label": "wrong",
+      "field": "density",
+      "triage": "implausible",
+      "confidence": 0.9,
+      "rationale": "The proposed density (1,800,000 kg/m3) is 1000\u00d7 the stored value (1,800 kg/m3) and far above any realistic material (heavier than any known solid). The submitter's note about tonnes/m3 suggests a unit error, but 1 tonne/m3 = 1000 kg/m3, so the correct conversion would be 1,800,000 \u2192 1,800 kg/m3 or a proposal of 1,800,000 is nonsensical. The stored 1,800 kg/m3 is plausible for these materials, so the change is implausible."
+    },
+    {
+      "shape": "uncheckable_lifespan_fix",
+      "label": "correct",
+      "field": "lifespan",
+      "triage": "decimal_slip",
+      "confidence": 0.9,
+      "rationale": "The proposal changes 145.0 \u2192 14.5, i.e. a single-decimal-place shift. 145 years for this product is implausible and the submitter says the EPD states 14.5, so this looks like a misplaced decimal rather than a unit or transcription error."
+    },
+    {
+      "shape": "unpatterned_change",
+      "label": "wrong",
+      "field": "density",
+      "triage": "implausible",
+      "confidence": 0.92,
+      "rationale": "The record states a conversion ratio of 2300.0 kg per 1 m3, which exactly matches the stored density 2300.0 kg/m3. The proposed 7820.0 kg/m3 would contradict that conversion ratio (2300 kg/m3) and break internal consistency. Other fields (material percentages summing to ~100% and A1\u2011A3 GWPs summing to ~246) are consistent, so the stored density is likely correct."
+    },
+    {
+      "shape": "ambiguous_lifespan",
+      "label": "ambiguous",
+      "field": "lifespan",
+      "triage": "unclear",
+      "confidence": 0.45,
+      "rationale": "The record is internally consistent (thickness 0.1 m \u00d7 density 95 kg/m3 = 9.5 kg/m2; gwp_fossil 12.1 + gwp_luluc 0.00751 + gwp_bio -1.06 \u2248 gwp_total 11.0). Lifespan isn\u2019t constrained by those checks, so the proposed change from 50 to 40 years isn\u2019t verifiable from the record. More evidence (source page in the EPD or a certificate stating 40 years) is needed to treat this as a genuine correction."
+    },
+    {
+      "shape": "unit_confusion",
+      "label": "wrong",
+      "field": "density",
+      "triage": "implausible",
+      "confidence": 0.9,
+      "rationale": "The record already states '1400.0 kg per 1 m3' and '1.0 kg per 1 kg', which matches density = 1400 kg/m3. Changing to 1,400,000 kg/m3 would break that internal consistency (would require the m3 conversion to be 1,400,000 kg per m3). The proposer\u2019s 'tonnes per cubic metre' interpretation actually supports 1.4 t/m3 = 1400 kg/m3, so the stored value is correct."
+    }
+  ]
+}

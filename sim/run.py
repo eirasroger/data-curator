@@ -21,14 +21,23 @@ from __future__ import annotations
 import argparse
 import sys
 from collections import Counter
+from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime, timedelta
 from pathlib import Path
 
-from domain import pipeline
-from domain.changes import Action, ChangeKind
-from domain.store import get_store
-from domain.triage import get_triager
-from sim.generate import DEFAULT_SEED, generate
+ROOT_FOR_ENV = Path(__file__).resolve().parents[1]
+try:
+    from dotenv import load_dotenv
+
+    load_dotenv(ROOT_FOR_ENV / ".env")
+except ImportError:
+    pass
+
+from domain import pipeline  # noqa: E402
+from domain.changes import Action, ChangeKind  # noqa: E402
+from domain.store import get_store  # noqa: E402
+from domain.triage import get_triager  # noqa: E402
+from sim.generate import DEFAULT_SEED, generate  # noqa: E402
 
 ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_DB = ROOT / "sim.duckdb"
@@ -46,6 +55,9 @@ def main() -> int:
     ap.add_argument("--db", default=str(DEFAULT_DB))
     ap.add_argument("--replace", action="store_true",
                     help="delete the database file first")
+    ap.add_argument("--workers", type=int, default=0,
+                    help="parallel model calls; defaults to 16 for openai, 1 for "
+                         "the stub, which is instant and gains nothing")
     args = ap.parse_args()
 
     db = Path(args.db)
@@ -60,6 +72,7 @@ def main() -> int:
 
     triager = get_triager(args.provider, args.model)
     proposals = generate(args.count, args.days, seed=args.seed, drift=args.drift)
+    workers = args.workers or (16 if args.provider == "openai" else 1)
 
     if args.provider == "openai":
         print(f"About to send up to {len(proposals)} proposals to {args.model}.")
@@ -71,9 +84,21 @@ def main() -> int:
     model_calls = 0
     total_cost = 0.0
 
-    for i, proposal in enumerate(proposals, 1):
+    # Deciding is pure: it reads the record carried by the proposal, never the
+    # store, so the calls are independent and the slow one is a network round
+    # trip. Writes stay on this thread - one DuckDB connection, one writer, and
+    # the append-only order preserved.
+    def decide_one(proposal):
+        return pipeline.decide(proposal.record, proposal.request, triager)
+
+    if workers > 1:
+        with ThreadPoolExecutor(max_workers=workers) as pool:
+            outcomes = list(pool.map(decide_one, proposals))
+    else:
+        outcomes = [decide_one(p) for p in proposals]
+
+    for i, (proposal, outcome) in enumerate(zip(proposals, outcomes, strict=True), 1):
         request = proposal.request
-        outcome = pipeline.decide(proposal.record, request, triager)
         decision = outcome.decision
 
         store.save_request(request)

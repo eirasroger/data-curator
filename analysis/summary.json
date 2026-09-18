@@ -1,0 +1,118 @@
+{
+  "database": "sim_openai.duckdb",
+  "shapes": {
+    "uncdec": 152,
+    "badgwp": 165,
+    "decfix": 203,
+    "typeerr": 113,
+    "badreplace": 46,
+    "comprep": 146,
+    "material": 161,
+    "unpatt": 75,
+    "replace": 66,
+    "unitconf": 104,
+    "lifespan": 195,
+    "baddens": 166,
+    "smalladj": 139,
+    "badpath": 79,
+    "noop": 68,
+    "lifefix": 122
+  },
+  "rules_vs_model": {
+    "rules": 1052,
+    "model": 948,
+    "total": 2000,
+    "by_action": {
+      "applied": 565,
+      "rejected": 873,
+      "pending_review": 562
+    }
+  },
+  "calibration": {
+    "centres": [
+      0.25,
+      0.6,
+      0.75,
+      0.825,
+      0.875,
+      0.925,
+      0.975
+    ],
+    "rates": [
+      0.21052631578947367,
+      0.2647058823529412,
+      0.3673469387755102,
+      0.813953488372093,
+      0.9367088607594937,
+      1.0,
+      1.0
+    ],
+    "counts": [
+      19,
+      34,
+      49,
+      43,
+      79,
+      128,
+      6
+    ]
+  },
+  "rejections": {
+    "density": 166,
+    "impacts.gwp_total": 165,
+    "(replacement fails schema)": 46
+  },
+  "cost_latency": {
+    "calls": 948,
+    "p50_ms": 4432,
+    "p95_ms": 7863,
+    "total_cost": 0.86615325,
+    "mean_cost": 0.0009136637658227847
+  },
+  "drift": {
+    "stationary_mean": 0.4335933769017465,
+    "shifted_mean": 0.4441846915412361,
+    "stationary_max": 0.7,
+    "shifted_max": 0.8571428571428571
+  },
+  "floors": {
+    "table": [
+      [
+        0.95,
+        6,
+        0
+      ],
+      [
+        0.9,
+        134,
+        0
+      ],
+      [
+        0.85,
+        208,
+        5
+      ],
+      [
+        0.8,
+        243,
+        13
+      ],
+      [
+        0.75,
+        251,
+        28
+      ],
+      [
+        0.7,
+        261,
+        44
+      ],
+      [
+        0.6,
+        269,
+        59
+      ]
+    ],
+    "lowest_safe_floor": 0.9
+  }
+}

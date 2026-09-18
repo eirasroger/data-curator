@@ -44,3 +44,13 @@ jobs:
 
       - name: Tests
         run: pytest
+
+      # The committed figures are generated from a decision history that is not
+      # in the repo (it is gigabytes-adjacent and regenerable), so CI cannot
+      # rebuild them. It can prove the analysis still runs end to end, which is
+      # what breaks silently when a column is renamed.
+      - name: Analysis pipeline
+        run: |
+          python scripts/seed_local.py --db ci.duckdb --replace
+          python sim/run.py --db ci.duckdb --count 200 --days 14
+          python analysis/report.py --db ci.duckdb --drift-db ci.duckdb             --figures ci-figures --out ci-summary.json

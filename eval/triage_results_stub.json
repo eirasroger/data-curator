@@ -1,0 +1,1217 @@
+{
+  "run_at": "2026-09-18T16:27:50.059982+00:00",
+  "provider": "stub",
+  "model": "stub",
+  "seed": 20260918,
+  "cases": 150,
+  "mean_confidence_correct": 0.8,
+  "mean_confidence_wrong": 0.5833,
+  "separation": 0.2167,
+  "separation_offered": 0.2167,
+  "wrong_called_implausible": 0,
+  "correct_called_implausible": 0,
+  "safe_floors": [],
+  "cost_usd": 0.0,
+  "results": [
+    {
+      "shape": "unit_confusion",
+      "label": "wrong",
+      "field": "density",
+      "triage": "unit_conversion",
+      "confidence": 0.8,
+      "rationale": "Factor of 1000 suggests a kg / tonne mix-up."
+    },
+    {
+      "shape": "ambiguous_lifespan",
+      "label": "ambiguous",
+      "field": "lifespan",
+      "triage": "unclear",
+      "confidence": 0.35,
+      "rationale": "Change of 0.95x with no recognisable pattern."
+    },
+    {
+      "shape": "uncheckable_decimal_slip",
+      "label": "correct",
+      "field": "density",
+      "triage": "decimal_slip",
+      "confidence": 0.8,
+      "rationale": "Proposed value is one tenth the stored value."
+    },
+    {
+      "shape": "uncheckable_lifespan_fix",
+      "label": "correct",
+      "field": "lifespan",
+      "triage": "decimal_slip",
+      "confidence": 0.8,
+      "rationale": "Proposed value is one tenth the stored value."
+    },
+    {
+      "shape": "unit_confusion",
+      "label": "wrong",
+      "field": "density",
+      "triage": "unit_conversion",
+      "confidence": 0.8,
+      "rationale": "Factor of 1000 suggests a kg / tonne mix-up."
+    },
+    {
+      "shape": "unpatterned_change",
+      "label": "wrong",
+      "field": "density",
+      "triage": "unclear",
+      "confidence": 0.35,
+      "rationale": "Change of 3.4x with no recognisable pattern."
+    },
+    {
+      "shape": "unit_confusion",
+      "label": "wrong",
+      "field": "density",
+      "triage": "unit_conversion",
+      "confidence": 0.8,
+      "rationale": "Factor of 1000 suggests a kg / tonne mix-up."
+    },
+    {
+      "shape": "ambiguous_lifespan",
+      "label": "ambiguous",
+      "field": "lifespan",
+      "triage": "unclear",
+      "confidence": 0.35,
+      "rationale": "Change of 1.12x with no recognisable pattern."
+    },
+    {
+      "shape": "unpatterned_change",
+      "label": "wrong",
+      "field": "density",
+      "triage": "unclear",
+      "confidence": 0.35,
+      "rationale": "Change of 3.4x with no recognisable pattern."
+    },
+    {
+      "shape": "uncheckable_decimal_slip",
+      "label": "correct",
+      "field": "density",
+      "triage": "decimal_slip",
+      "confidence": 0.8,
+      "rationale": "Proposed value is one tenth the stored value."
+    },
+    {
+      "shape": "uncheckable_decimal_slip",
+      "label": "correct",
+      "field": "density",
+      "triage": "decimal_slip",
+      "confidence": 0.8,
+      "rationale": "Proposed value is one tenth the stored value."
+    },
+    {
+      "shape": "uncheckable_lifespan_fix",
+      "label": "correct",
+      "field": "lifespan",
+      "triage": "decimal_slip",
+      "confidence": 0.8,
+      "rationale": "Proposed value is one tenth the stored value."
+    },
+    {
+      "shape": "uncheckable_lifespan_fix",
+      "label": "correct",
+      "field": "lifespan",
+      "triage": "decimal_slip",
+      "confidence": 0.8,
+      "rationale": "Proposed value is one tenth the stored value."
+    },
+    {
+      "shape": "small_adjustment",
+      "label": "wrong",
+      "field": "density",
+      "triage": "genuine_correction",
+      "confidence": 0.6,
+      "rationale": "Small adjustment, consistent with re-reading a rounded figure."
+    },
+    {
+      "shape": "small_adjustment",
+      "label": "wrong",
+      "field": "density",
+      "triage": "genuine_correction",
+      "confidence": 0.6,
+      "rationale": "Small adjustment, consistent with re-reading a rounded figure."
+    },
+    {
+      "shape": "uncheckable_decimal_slip",
+      "label": "correct",
+      "field": "density",
+      "triage": "decimal_slip",
+      "confidence": 0.8,
+      "rationale": "Proposed value is one tenth the stored value."
+    },
+    {
+      "shape": "unit_confusion",
+      "label": "wrong",
+      "field": "density",
+      "triage": "unit_conversion",
+      "confidence": 0.8,
+      "rationale": "Factor of 1000 suggests a kg / tonne mix-up."
+    },
+    {
+      "shape": "small_adjustment",
+      "label": "wrong",
+      "field": "density",
+      "triage": "genuine_correction",
+      "confidence": 0.6,
+      "rationale": "Small adjustment, consistent with re-reading a rounded figure."
+    },
+    {
+      "shape": "uncheckable_lifespan_fix",
+      "label": "correct",
+      "field": "lifespan",
+      "triage": "decimal_slip",
+      "confidence": 0.8,
+      "rationale": "Proposed value is one tenth the stored value."
+    },
+    {
+      "shape": "uncheckable_decimal_slip",
+      "label": "correct",
+      "field": "density",
+      "triage": "decimal_slip",
+      "confidence": 0.8,
+      "rationale": "Proposed value is one tenth the stored value."
+    },
+    {
+      "shape": "unit_confusion",
+      "label": "wrong",
+      "field": "density",
+      "triage": "unit_conversion",
+      "confidence": 0.8,
+      "rationale": "Factor of 1000 suggests a kg / tonne mix-up."
+    },
+    {
+      "shape": "small_adjustment",
+      "label": "wrong",
+      "field": "density",
+      "triage": "genuine_correction",
+      "confidence": 0.6,
+      "rationale": "Small adjustment, consistent with re-reading a rounded figure."
+    },
+    {
+      "shape": "small_adjustment",
+      "label": "wrong",
+      "field": "density",
+      "triage": "genuine_correction",
+      "confidence": 0.6,
+      "rationale": "Small adjustment, consistent with re-reading a rounded figure."
+    },
+    {
+      "shape": "uncheckable_decimal_slip",
+      "label": "correct",
+      "field": "density",
+      "triage": "decimal_slip",
+      "confidence": 0.8,
+      "rationale": "Proposed value is one tenth the stored value."
+    },
+    {
+      "shape": "unit_confusion",
+      "label": "wrong",
+      "field": "density",
+      "triage": "unit_conversion",
+      "confidence": 0.8,
+      "rationale": "Factor of 1000 suggests a kg / tonne mix-up."
+    },
+    {
+      "shape": "unit_confusion",
+      "label": "wrong",
+      "field": "density",
+      "triage": "unit_conversion",
+      "confidence": 0.8,
+      "rationale": "Factor of 1000 suggests a kg / tonne mix-up."
+    },
+    {
+      "shape": "unit_confusion",
+      "label": "wrong",
+      "field": "density",
+      "triage": "unit_conversion",
+      "confidence": 0.8,
+      "rationale": "Factor of 1000 suggests a kg / tonne mix-up."
+    },
+    {
+      "shape": "uncheckable_decimal_slip",
+      "label": "correct",
+      "field": "density",
+      "triage": "decimal_slip",
+      "confidence": 0.8,
+      "rationale": "Proposed value is one tenth the stored value."
+    },
+    {
+      "shape": "small_adjustment",
+      "label": "wrong",
+      "field": "density",
+      "triage": "genuine_correction",
+      "confidence": 0.6,
+      "rationale": "Small adjustment, consistent with re-reading a rounded figure."
+    },
+    {
+      "shape": "ambiguous_lifespan",
+      "label": "ambiguous",
+      "field": "lifespan",
+      "triage": "unclear",
+      "confidence": 0.35,
+      "rationale": "Change of 1.69x with no recognisable pattern."
+    },
+    {
+      "shape": "unpatterned_change",
+      "label": "wrong",
+      "field": "density",
+      "triage": "unclear",
+      "confidence": 0.35,
+      "rationale": "Change of 3.4x with no recognisable pattern."
+    },
+    {
+      "shape": "unpatterned_change",
+      "label": "wrong",
+      "field": "density",
+      "triage": "unclear",
+      "confidence": 0.35,
+      "rationale": "Change of 2.7x with no recognisable pattern."
+    },
+    {
+      "shape": "small_adjustment",
+      "label": "wrong",
+      "field": "density",
+      "triage": "genuine_correction",
+      "confidence": 0.6,
+      "rationale": "Small adjustment, consistent with re-reading a rounded figure."
+    },
+    {
+      "shape": "uncheckable_lifespan_fix",
+      "label": "correct",
+      "field": "lifespan",
+      "triage": "decimal_slip",
+      "confidence": 0.8,
+      "rationale": "Proposed value is one tenth the stored value."
+    },
+    {
+      "shape": "small_adjustment",
+      "label": "wrong",
+      "field": "density",
+      "triage": "genuine_correction",
+      "confidence": 0.6,
+      "rationale": "Small adjustment, consistent with re-reading a rounded figure."
+    },
+    {
+      "shape": "ambiguous_lifespan",
+      "label": "ambiguous",
+      "field": "lifespan",
+      "triage": "unclear",
+      "confidence": 0.35,
+      "rationale": "Change of 0.9x with no recognisable pattern."
+    },
+    {
+      "shape": "unit_confusion",
+      "label": "wrong",
+      "field": "density",
+      "triage": "unit_conversion",
+      "confidence": 0.8,
+      "rationale": "Factor of 1000 suggests a kg / tonne mix-up."
+    },
+    {
+      "shape": "unit_confusion",
+      "label": "wrong",
+      "field": "density",
+      "triage": "unit_conversion",
+      "confidence": 0.8,
+      "rationale": "Factor of 1000 suggests a kg / tonne mix-up."
+    },
+    {
+      "shape": "small_adjustment",
+      "label": "wrong",
+      "field": "density",
+      "triage": "genuine_correction",
+      "confidence": 0.6,
+      "rationale": "Small adjustment, consistent with re-reading a rounded figure."
+    },
+    {
+      "shape": "small_adjustment",
+      "label": "wrong",
+      "field": "density",
+      "triage": "genuine_correction",
+      "confidence": 0.6,
+      "rationale": "Small adjustment, consistent with re-reading a rounded figure."
+    },
+    {
+      "shape": "unpatterned_change",
+      "label": "wrong",
+      "field": "density",
+      "triage": "unclear",
+      "confidence": 0.35,
+      "rationale": "Change of 3.4x with no recognisable pattern."
+    },
+    {
+      "shape": "ambiguous_lifespan",
+      "label": "ambiguous",
+      "field": "lifespan",
+      "triage": "unclear",
+      "confidence": 0.35,
+      "rationale": "Change of 3x with no recognisable pattern."
+    },
+    {
+      "shape": "ambiguous_lifespan",
+      "label": "ambiguous",
+      "field": "lifespan",
+      "triage": "unclear",
+      "confidence": 0.35,
+      "rationale": "Change of 1.2x with no recognisable pattern."
+    },
+    {
+      "shape": "uncheckable_decimal_slip",
+      "label": "correct",
+      "field": "density",
+      "triage": "decimal_slip",
+      "confidence": 0.8,
+      "rationale": "Proposed value is one tenth the stored value."
+    },
+    {
+      "shape": "ambiguous_lifespan",
+      "label": "ambiguous",
+      "field": "lifespan",
+      "triage": "unclear",
+      "confidence": 0.35,
+      "rationale": "Change of 1.67x with no recognisable pattern."
+    },
+    {
+      "shape": "uncheckable_lifespan_fix",
+      "label": "correct",
+      "field": "lifespan",
+      "triage": "decimal_slip",
+      "confidence": 0.8,
+      "rationale": "Proposed value is one tenth the stored value."
+    },
+    {
+      "shape": "uncheckable_lifespan_fix",
+      "label": "correct",
+      "field": "lifespan",
+      "triage": "decimal_slip",
+      "confidence": 0.8,
+      "rationale": "Proposed value is one tenth the stored value."
+    },
+    {
+      "shape": "ambiguous_lifespan",
+      "label": "ambiguous",
+      "field": "lifespan",
+      "triage": "unclear",
+      "confidence": 0.35,
+      "rationale": "Change of 0.583x with no recognisable pattern."
+    },
+    {
+      "shape": "small_adjustment",
+      "label": "wrong",
+      "field": "density",
+      "triage": "genuine_correction",
+      "confidence": 0.6,
+      "rationale": "Small adjustment, consistent with re-reading a rounded figure."
+    },
+    {
+      "shape": "uncheckable_lifespan_fix",
+      "label": "correct",
+      "field": "lifespan",
+      "triage": "decimal_slip",
+      "confidence": 0.8,
+      "rationale": "Proposed value is one tenth the stored value."
+    },
+    {
+      "shape": "unit_confusion",
+      "label": "wrong",
+      "field": "density",
+      "triage": "unit_conversion",
+      "confidence": 0.8,
+      "rationale": "Factor of 1000 suggests a kg / tonne mix-up."
+    },
+    {
+      "shape": "ambiguous_lifespan",
+      "label": "ambiguous",
+      "field": "lifespan",
+      "triage": "unclear",
+      "confidence": 0.35,
+      "rationale": "Change of 3x with no recognisable pattern."
+    },
+    {
+      "shape": "uncheckable_lifespan_fix",
+      "label": "correct",
+      "field": "lifespan",
+      "triage": "decimal_slip",
+      "confidence": 0.8,
+      "rationale": "Proposed value is one tenth the stored value."
+    },
+    {
+      "shape": "small_adjustment",
+      "label": "wrong",
+      "field": "density",
+      "triage": "genuine_correction",
+      "confidence": 0.6,
+      "rationale": "Small adjustment, consistent with re-reading a rounded figure."
+    },
+    {
+      "shape": "unpatterned_change",
+      "label": "wrong",
+      "field": "density",
+      "triage": "unclear",
+      "confidence": 0.35,
+      "rationale": "Change of 0.61x with no recognisable pattern."
+    },
+    {
+      "shape": "uncheckable_decimal_slip",
+      "label": "correct",
+      "field": "density",
+      "triage": "decimal_slip",
+      "confidence": 0.8,
+      "rationale": "Proposed value is one tenth the stored value."
+    },
+    {
+      "shape": "small_adjustment",
+      "label": "wrong",
+      "field": "density",
+      "triage": "genuine_correction",
+      "confidence": 0.6,
+      "rationale": "Small adjustment, consistent with re-reading a rounded figure."
+    },
+    {
+      "shape": "unit_confusion",
+      "label": "wrong",
+      "field": "density",
+      "triage": "unit_conversion",
+      "confidence": 0.8,
+      "rationale": "Factor of 1000 suggests a kg / tonne mix-up."
+    },
+    {
+      "shape": "unit_confusion",
+      "label": "wrong",
+      "field": "density",
+      "triage": "unit_conversion",
+      "confidence": 0.8,
+      "rationale": "Factor of 1000 suggests a kg / tonne mix-up."
+    },
+    {
+      "shape": "uncheckable_lifespan_fix",
+      "label": "correct",
+      "field": "lifespan",
+      "triage": "decimal_slip",
+      "confidence": 0.8,
+      "rationale": "Proposed value is one tenth the stored value."
+    },
+    {
+      "shape": "uncheckable_decimal_slip",
+      "label": "correct",
+      "field": "density",
+      "triage": "decimal_slip",
+      "confidence": 0.8,
+      "rationale": "Proposed value is one tenth the stored value."
+    },
+    {
+      "shape": "uncheckable_lifespan_fix",
+      "label": "correct",
+      "field": "lifespan",
+      "triage": "decimal_slip",
+      "confidence": 0.8,
+      "rationale": "Proposed value is one tenth the stored value."
+    },
+    {
+      "shape": "unpatterned_change",
+      "label": "wrong",
+      "field": "density",
+      "triage": "unclear",
+      "confidence": 0.35,
+      "rationale": "Change of 0.61x with no recognisable pattern."
+    },
+    {
+      "shape": "unit_confusion",
+      "label": "wrong",
+      "field": "density",
+      "triage": "unit_conversion",
+      "confidence": 0.8,
+      "rationale": "Factor of 1000 suggests a kg / tonne mix-up."
+    },
+    {
+      "shape": "unpatterned_change",
+      "label": "wrong",
+      "field": "density",
+      "triage": "unclear",
+      "confidence": 0.35,
+      "rationale": "Change of 0.43x with no recognisable pattern."
+    },
+    {
+      "shape": "ambiguous_lifespan",
+      "label": "ambiguous",
+      "field": "lifespan",
+      "triage": "unclear",
+      "confidence": 0.35,
+      "rationale": "Change of 0.9x with no recognisable pattern."
+    },
+    {
+      "shape": "small_adjustment",
+      "label": "wrong",
+      "field": "density",
+      "triage": "genuine_correction",
+      "confidence": 0.6,
+      "rationale": "Small adjustment, consistent with re-reading a rounded figure."
+    },
+    {
+      "shape": "uncheckable_lifespan_fix",
+      "label": "correct",
+      "field": "lifespan",
+      "triage": "decimal_slip",
+      "confidence": 0.8,
+      "rationale": "Proposed value is one tenth the stored value."
+    },
+    {
+      "shape": "unit_confusion",
+      "label": "wrong",
+      "field": "density",
+      "triage": "unit_conversion",
+      "confidence": 0.8,
+      "rationale": "Factor of 1000 suggests a kg / tonne mix-up."
+    },
+    {
+      "shape": "ambiguous_lifespan",
+      "label": "ambiguous",
+      "field": "lifespan",
+      "triage": "unclear",
+      "confidence": 0.35,
+      "rationale": "Change of 1.2x with no recognisable pattern."
+    },
+    {
+      "shape": "unpatterned_change",
+      "label": "wrong",
+      "field": "density",
+      "triage": "unclear",
+      "confidence": 0.35,
+      "rationale": "Change of 3.4x with no recognisable pattern."
+    },
+    {
+      "shape": "uncheckable_lifespan_fix",
+      "label": "correct",
+      "field": "lifespan",
+      "triage": "decimal_slip",
+      "confidence": 0.8,
+      "rationale": "Proposed value is one tenth the stored value."
+    },
+    {
+      "shape": "small_adjustment",
+      "label": "wrong",
+      "field": "density",
+      "triage": "genuine_correction",
+      "confidence": 0.6,
+      "rationale": "Small adjustment, consistent with re-reading a rounded figure."
+    },
+    {
+      "shape": "uncheckable_lifespan_fix",
+      "label": "correct",
+      "field": "lifespan",
+      "triage": "decimal_slip",
+      "confidence": 0.8,
+      "rationale": "Proposed value is one tenth the stored value."
+    },
+    {
+      "shape": "uncheckable_decimal_slip",
+      "label": "correct",
+      "field": "density",
+      "triage": "decimal_slip",
+      "confidence": 0.8,
+      "rationale": "Proposed value is one tenth the stored value."
+    },
+    {
+      "shape": "small_adjustment",
+      "label": "wrong",
+      "field": "density",
+      "triage": "genuine_correction",
+      "confidence": 0.6,
+      "rationale": "Small adjustment, consistent with re-reading a rounded figure."
+    },
+    {
+      "shape": "uncheckable_decimal_slip",
+      "label": "correct",
+      "field": "density",
+      "triage": "decimal_slip",
+      "confidence": 0.8,
+      "rationale": "Proposed value is one tenth the stored value."
+    },
+    {
+      "shape": "small_adjustment",
+      "label": "wrong",
+      "field": "density",
+      "triage": "genuine_correction",
+      "confidence": 0.6,
+      "rationale": "Small adjustment, consistent with re-reading a rounded figure."
+    },
+    {
+      "shape": "uncheckable_lifespan_fix",
+      "label": "correct",
+      "field": "lifespan",
+      "triage": "decimal_slip",
+      "confidence": 0.8,
+      "rationale": "Proposed value is one tenth the stored value."
+    },
+    {
+      "shape": "ambiguous_lifespan",
+      "label": "ambiguous",
+      "field": "lifespan",
+      "triage": "unclear",
+      "confidence": 0.35,
+      "rationale": "Change of 1.83x with no recognisable pattern."
+    },
+    {
+      "shape": "unpatterned_change",
+      "label": "wrong",
+      "field": "density",
+      "triage": "unclear",
+      "confidence": 0.35,
+      "rationale": "Change of 0.61x with no recognisable pattern."
+    },
+    {
+      "shape": "unpatterned_change",
+      "label": "wrong",
+      "field": "density",
+      "triage": "unclear",
+      "confidence": 0.35,
+      "rationale": "Change of 3.4x with no recognisable pattern."
+    },
+    {
+      "shape": "unpatterned_change",
+      "label": "wrong",
+      "field": "density",
+      "triage": "unclear",
+      "confidence": 0.35,
+      "rationale": "Change of 0.61x with no recognisable pattern."
+    },
+    {
+      "shape": "unpatterned_change",
+      "label": "wrong",
+      "field": "density",
+      "triage": "unclear",
+      "confidence": 0.35,
+      "rationale": "Change of 0.43x with no recognisable pattern."
+    },
+    {
+      "shape": "unpatterned_change",
+      "label": "wrong",
+      "field": "density",
+      "triage": "unclear",
+      "confidence": 0.35,
+      "rationale": "Change of 3.4x with no recognisable pattern."
+    },
+    {
+      "shape": "unit_confusion",
+      "label": "wrong",
+      "field": "density",
+      "triage": "unit_conversion",
+      "confidence": 0.8,
+      "rationale": "Factor of 1000 suggests a kg / tonne mix-up."
+    },
+    {
+      "shape": "uncheckable_lifespan_fix",
+      "label": "correct",
+      "field": "lifespan",
+      "triage": "decimal_slip",
+      "confidence": 0.8,
+      "rationale": "Proposed value is one tenth the stored value."
+    },
+    {
+      "shape": "ambiguous_lifespan",
+      "label": "ambiguous",
+      "field": "lifespan",
+      "triage": "genuine_correction",
+      "confidence": 0.6,
+      "rationale": "Small adjustment, consistent with re-reading a rounded figure."
+    },
+    {
+      "shape": "small_adjustment",
+      "label": "wrong",
+      "field": "density",
+      "triage": "genuine_correction",
+      "confidence": 0.6,
+      "rationale": "Small adjustment, consistent with re-reading a rounded figure."
+    },
+    {
+      "shape": "ambiguous_lifespan",
+      "label": "ambiguous",
+      "field": "lifespan",
+      "triage": "unclear",
+      "confidence": 0.35,
+      "rationale": "Change of 1.5x with no recognisable pattern."
+    },
+    {
+      "shape": "unit_confusion",
+      "label": "wrong",
+      "field": "density",
+      "triage": "unit_conversion",
+      "confidence": 0.8,
+      "rationale": "Factor of 1000 suggests a kg / tonne mix-up."
+    },
+    {
+      "shape": "uncheckable_decimal_slip",
+      "label": "correct",
+      "field": "density",
+      "triage": "decimal_slip",
+      "confidence": 0.8,
+      "rationale": "Proposed value is one tenth the stored value."
+    },
+    {
+      "shape": "uncheckable_lifespan_fix",
+      "label": "correct",
+      "field": "lifespan",
+      "triage": "decimal_slip",
+      "confidence": 0.8,
+      "rationale": "Proposed value is one tenth the stored value."
+    },
+    {
+      "shape": "uncheckable_decimal_slip",
+      "label": "correct",
+      "field": "density",
+      "triage": "decimal_slip",
+      "confidence": 0.8,
+      "rationale": "Proposed value is one tenth the stored value."
+    },
+    {
+      "shape": "unpatterned_change",
+      "label": "wrong",
+      "field": "density",
+      "triage": "unclear",
+      "confidence": 0.35,
+      "rationale": "Change of 2.7x with no recognisable pattern."
+    },
+    {
+      "shape": "unpatterned_change",
+      "label": "wrong",
+      "field": "density",
+      "triage": "unclear",
+      "confidence": 0.35,
+      "rationale": "Change of 0.43x with no recognisable pattern."
+    },
+    {
+      "shape": "ambiguous_lifespan",
+      "label": "ambiguous",
+      "field": "lifespan",
+      "triage": "unclear",
+      "confidence": 0.35,
+      "rationale": "Change of 0.667x with no recognisable pattern."
+    },
+    {
+      "shape": "uncheckable_decimal_slip",
+      "label": "correct",
+      "field": "density",
+      "triage": "decimal_slip",
+      "confidence": 0.8,
+      "rationale": "Proposed value is one tenth the stored value."
+    },
+    {
+      "shape": "unit_confusion",
+      "label": "wrong",
+      "field": "density",
+      "triage": "unit_conversion",
+      "confidence": 0.8,
+      "rationale": "Factor of 1000 suggests a kg / tonne mix-up."
+    },
+    {
+      "shape": "uncheckable_lifespan_fix",
+      "label": "correct",
+      "field": "lifespan",
+      "triage": "decimal_slip",
+      "confidence": 0.8,
+      "rationale": "Proposed value is one tenth the stored value."
+    },
+    {
+      "shape": "ambiguous_lifespan",
+      "label": "ambiguous",
+      "field": "lifespan",
+      "triage": "unclear",
+      "confidence": 0.35,
+      "rationale": "Change of 0.95x with no recognisable pattern."
+    },
+    {
+      "shape": "small_adjustment",
+      "label": "wrong",
+      "field": "density",
+      "triage": "genuine_correction",
+      "confidence": 0.6,
+      "rationale": "Small adjustment, consistent with re-reading a rounded figure."
+    },
+    {
+      "shape": "small_adjustment",
+      "label": "wrong",
+      "field": "density",
+      "triage": "genuine_correction",
+      "confidence": 0.6,
+      "rationale": "Small adjustment, consistent with re-reading a rounded figure."
+    },
+    {
+      "shape": "ambiguous_lifespan",
+      "label": "ambiguous",
+      "field": "lifespan",
+      "triage": "unclear",
+      "confidence": 0.35,
+      "rationale": "Change of 1.25x with no recognisable pattern."
+    },
+    {
+      "shape": "unpatterned_change",
+      "label": "wrong",
+      "field": "density",
+      "triage": "unclear",
+      "confidence": 0.35,
+      "rationale": "Change of 0.61x with no recognisable pattern."
+    },
+    {
+      "shape": "ambiguous_lifespan",
+      "label": "ambiguous",
+      "field": "lifespan",
+      "triage": "unclear",
+      "confidence": 0.35,
+      "rationale": "Change of 0.31x with no recognisable pattern."
+    },
+    {
+      "shape": "unpatterned_change",
+      "label": "wrong",
+      "field": "density",
+      "triage": "unclear",
+      "confidence": 0.35,
+      "rationale": "Change of 3.4x with no recognisable pattern."
+    },
+    {
+      "shape": "unpatterned_change",
+      "label": "wrong",
+      "field": "density",
+      "triage": "unclear",
+      "confidence": 0.35,
+      "rationale": "Change of 3.4x with no recognisable pattern."
+    },
+    {
+      "shape": "unpatterned_change",
+      "label": "wrong",
+      "field": "density",
+      "triage": "unclear",
+      "confidence": 0.35,
+      "rationale": "Change of 3.4x with no recognisable pattern."
+    },
+    {
+      "shape": "ambiguous_lifespan",
+      "label": "ambiguous",
+      "field": "lifespan",
+      "triage": "unclear",
+      "confidence": 0.35,
+      "rationale": "Change of 0.8x with no recognisable pattern."
+    },
+    {
+      "shape": "ambiguous_lifespan",
+      "label": "ambiguous",
+      "field": "lifespan",
+      "triage": "unclear",
+      "confidence": 0.35,
+      "rationale": "Change of 0.9x with no recognisable pattern."
+    },
+    {
+      "shape": "unit_confusion",
+      "label": "wrong",
+      "field": "density",
+      "triage": "unit_conversion",
+      "confidence": 0.8,
+      "rationale": "Factor of 1000 suggests a kg / tonne mix-up."
+    },
+    {
+      "shape": "ambiguous_lifespan",
+      "label": "ambiguous",
+      "field": "lifespan",
+      "triage": "unclear",
+      "confidence": 0.35,
+      "rationale": "Change of 1.83x with no recognisable pattern."
+    },
+    {
+      "shape": "unpatterned_change",
+      "label": "wrong",
+      "field": "density",
+      "triage": "unclear",
+      "confidence": 0.35,
+      "rationale": "Change of 0.61x with no recognisable pattern."
+    },
+    {
+      "shape": "uncheckable_decimal_slip",
+      "label": "correct",
+      "field": "density",
+      "triage": "decimal_slip",
+      "confidence": 0.8,
+      "rationale": "Proposed value is one tenth the stored value."
+    },
+    {
+      "shape": "uncheckable_lifespan_fix",
+      "label": "correct",
+      "field": "lifespan",
+      "triage": "decimal_slip",
+      "confidence": 0.8,
+      "rationale": "Proposed value is one tenth the stored value."
+    },
+    {
+      "shape": "uncheckable_decimal_slip",
+      "label": "correct",
+      "field": "density",
+      "triage": "decimal_slip",
+      "confidence": 0.8,
+      "rationale": "Proposed value is one tenth the stored value."
+    },
+    {
+      "shape": "uncheckable_decimal_slip",
+      "label": "correct",
+      "field": "density",
+      "triage": "decimal_slip",
+      "confidence": 0.8,
+      "rationale": "Proposed value is one tenth the stored value."
+    },
+    {
+      "shape": "ambiguous_lifespan",
+      "label": "ambiguous",
+      "field": "lifespan",
+      "triage": "unclear",
+      "confidence": 0.35,
+      "rationale": "Change of 1.34x with no recognisable pattern."
+    },
+    {
+      "shape": "ambiguous_lifespan",
+      "label": "ambiguous",
+      "field": "lifespan",
+      "triage": "unclear",
+      "confidence": 0.35,
+      "rationale": "Change of 1.83x with no recognisable pattern."
+    },
+    {
+      "shape": "uncheckable_lifespan_fix",
+      "label": "correct",
+      "field": "lifespan",
+      "triage": "decimal_slip",
+      "confidence": 0.8,
+      "rationale": "Proposed value is one tenth the stored value."
+    },
+    {
+      "shape": "uncheckable_lifespan_fix",
+      "label": "correct",
+      "field": "lifespan",
+      "triage": "decimal_slip",
+      "confidence": 0.8,
+      "rationale": "Proposed value is one tenth the stored value."
+    },
+    {
+      "shape": "uncheckable_decimal_slip",
+      "label": "correct",
+      "field": "density",
+      "triage": "decimal_slip",
+      "confidence": 0.8,
+      "rationale": "Proposed value is one tenth the stored value."
+    },
+    {
+      "shape": "small_adjustment",
+      "label": "wrong",
+      "field": "density",
+      "triage": "genuine_correction",
+      "confidence": 0.6,
+      "rationale": "Small adjustment, consistent with re-reading a rounded figure."
+    },
+    {
+      "shape": "uncheckable_lifespan_fix",
+      "label": "correct",
+      "field": "lifespan",
+      "triage": "decimal_slip",
+      "confidence": 0.8,
+      "rationale": "Proposed value is one tenth the stored value."
+    },
+    {
+      "shape": "small_adjustment",
+      "label": "wrong",
+      "field": "density",
+      "triage": "genuine_correction",
+      "confidence": 0.6,
+      "rationale": "Small adjustment, consistent with re-reading a rounded figure."
+    },
+    {
+      "shape": "uncheckable_decimal_slip",
+      "label": "correct",
+      "field": "density",
+      "triage": "decimal_slip",
+      "confidence": 0.8,
+      "rationale": "Proposed value is one tenth the stored value."
+    },
+    {
+      "shape": "uncheckable_decimal_slip",
+      "label": "correct",
+      "field": "density",
+      "triage": "decimal_slip",
+      "confidence": 0.8,
+      "rationale": "Proposed value is one tenth the stored value."
+    },
+    {
+      "shape": "small_adjustment",
+      "label": "wrong",
+      "field": "density",
+      "triage": "genuine_correction",
+      "confidence": 0.6,
+      "rationale": "Small adjustment, consistent with re-reading a rounded figure."
+    },
+    {
+      "shape": "uncheckable_lifespan_fix",
+      "label": "correct",
+      "field": "lifespan",
+      "triage": "decimal_slip",
+      "confidence": 0.8,
+      "rationale": "Proposed value is one tenth the stored value."
+    },
+    {
+      "shape": "uncheckable_decimal_slip",
+      "label": "correct",
+      "field": "density",
+      "triage": "decimal_slip",
+      "confidence": 0.8,
+      "rationale": "Proposed value is one tenth the stored value."
+    },
+    {
+      "shape": "unit_confusion",
+      "label": "wrong",
+      "field": "density",
+      "triage": "unit_conversion",
+      "confidence": 0.8,
+      "rationale": "Factor of 1000 suggests a kg / tonne mix-up."
+    },
+    {
+      "shape": "small_adjustment",
+      "label": "wrong",
+      "field": "density",
+      "triage": "genuine_correction",
+      "confidence": 0.6,
+      "rationale": "Small adjustment, consistent with re-reading a rounded figure."
+    },
+    {
+      "shape": "uncheckable_decimal_slip",
+      "label": "correct",
+      "field": "density",
+      "triage": "decimal_slip",
+      "confidence": 0.8,
+      "rationale": "Proposed value is one tenth the stored value."
+    },
+    {
+      "shape": "unit_confusion",
+      "label": "wrong",
+      "field": "density",
+      "triage": "unit_conversion",
+      "confidence": 0.8,
+      "rationale": "Factor of 1000 suggests a kg / tonne mix-up."
+    },
+    {
+      "shape": "uncheckable_decimal_slip",
+      "label": "correct",
+      "field": "density",
+      "triage": "decimal_slip",
+      "confidence": 0.8,
+      "rationale": "Proposed value is one tenth the stored value."
+    },
+    {
+      "shape": "small_adjustment",
+      "label": "wrong",
+      "field": "density",
+      "triage": "genuine_correction",
+      "confidence": 0.6,
+      "rationale": "Small adjustment, consistent with re-reading a rounded figure."
+    },
+    {
+      "shape": "unpatterned_change",
+      "label": "wrong",
+      "field": "density",
+      "triage": "unclear",
+      "confidence": 0.35,
+      "rationale": "Change of 0.61x with no recognisable pattern."
+    },
+    {
+      "shape": "unpatterned_change",
+      "label": "wrong",
+      "field": "density",
+      "triage": "unclear",
+      "confidence": 0.35,
+      "rationale": "Change of 2.7x with no recognisable pattern."
+    },
+    {
+      "shape": "uncheckable_lifespan_fix",
+      "label": "correct",
+      "field": "lifespan",
+      "triage": "decimal_slip",
+      "confidence": 0.8,
+      "rationale": "Proposed value is one tenth the stored value."
+    },
+    {
+      "shape": "uncheckable_decimal_slip",
+      "label": "correct",
+      "field": "density",
+      "triage": "decimal_slip",
+      "confidence": 0.8,
+      "rationale": "Proposed value is one tenth the stored value."
+    },
+    {
+      "shape": "unpatterned_change",
+      "label": "wrong",
+      "field": "density",
+      "triage": "unclear",
+      "confidence": 0.35,
+      "rationale": "Change of 0.61x with no recognisable pattern."
+    },
+    {
+      "shape": "unit_confusion",
+      "label": "wrong",
+      "field": "density",
+      "triage": "unit_conversion",
+      "confidence": 0.8,
+      "rationale": "Factor of 1000 suggests a kg / tonne mix-up."
+    },
+    {
+      "shape": "unit_confusion",
+      "label": "wrong",
+      "field": "density",
+      "triage": "unit_conversion",
+      "confidence": 0.8,
+      "rationale": "Factor of 1000 suggests a kg / tonne mix-up."
+    },
+    {
+      "shape": "ambiguous_lifespan",
+      "label": "ambiguous",
+      "field": "lifespan",
+      "triage": "unclear",
+      "confidence": 0.35,
+      "rationale": "Change of 0.95x with no recognisable pattern."
+    },
+    {
+      "shape": "unit_confusion",
+      "label": "wrong",
+      "field": "density",
+      "triage": "unit_conversion",
+      "confidence": 0.8,
+      "rationale": "Factor of 1000 suggests a kg / tonne mix-up."
+    },
+    {
+      "shape": "uncheckable_lifespan_fix",
+      "label": "correct",
+      "field": "lifespan",
+      "triage": "decimal_slip",
+      "confidence": 0.8,
+      "rationale": "Proposed value is one tenth the stored value."
+    },
+    {
+      "shape": "unpatterned_change",
+      "label": "wrong",
+      "field": "density",
+      "triage": "unclear",
+      "confidence": 0.35,
+      "rationale": "Change of 3.4x with no recognisable pattern."
+    },
+    {
+      "shape": "ambiguous_lifespan",
+      "label": "ambiguous",
+      "field": "lifespan",
+      "triage": "unclear",
+      "confidence": 0.35,
+      "rationale": "Change of 0.8x with no recognisable pattern."
+    },
+    {
+      "shape": "unit_confusion",
+      "label": "wrong",
+      "field": "density",
+      "triage": "unit_conversion",
+      "confidence": 0.8,
+      "rationale": "Factor of 1000 suggests a kg / tonne mix-up."
+    }
+  ]
+}

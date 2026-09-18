@@ -29,6 +29,7 @@ dev = [
     "duckdb==1.4.4",
     # duckdb needs it to hand a TIMESTAMPTZ back to Python.
     "pytz==2025.2",
+    "matplotlib==3.11.0",
     "ruff==0.15.4",
     "mypy==1.19.1",
 ]

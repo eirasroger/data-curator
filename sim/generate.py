@@ -229,6 +229,21 @@ class Generator:
             broken, "uncheckable_decimal_slip",
         )
 
+    def uncheckable_lifespan_fix(self) -> Proposal | None:
+        """A service life out by ten, put back. Nothing cross-checks lifespan."""
+        pid = self.rng.choice(self.lifespan)
+        rec = self.records[pid]
+        broken = corpus.corrupt(rec, {"lifespan": rec["lifespan"] * 10})
+        return Proposal(
+            self._request(
+                pid, "lifefix", self.rng.choice(REVIEWERS),
+                field_path="lifespan", new_value=rec["lifespan"],
+                reason=f"A reference service life of {rec['lifespan'] * 10:g} years "
+                       f"is not plausible; the EPD states {rec['lifespan']:g}.",
+            ),
+            broken, "uncheckable_lifespan_fix",
+        )
+
     def unit_confusion(self) -> Proposal | None:
         """A factor of a thousand, the shape of a kg / tonne mix-up."""
         pid = self.rng.choice(self.uncheckable)
@@ -304,6 +319,23 @@ class Generator:
         )
 
 
+# What a proposal of each shape actually IS, for anything that needs to score a
+# triager rather than just run one. Only shapes that survive screen() and reach
+# the model are listed; the rules settle the others before a model is asked.
+#
+#   correct    restores the value the record was corrupted away from
+#   wrong      the stored value is right and the proposal would damage it
+#   ambiguous  the record does not settle it; deferring is the right answer
+SHAPE_TRUTH: dict[str, str] = {
+    "uncheckable_decimal_slip": "correct",
+    "uncheckable_lifespan_fix": "correct",
+    "unit_confusion": "wrong",
+    "small_adjustment": "wrong",
+    "unpatterned_change": "wrong",
+    "ambiguous_lifespan": "ambiguous",
+}
+
+
 REVIEWERS = [
     "a.rossi", "b.martinez", "c.okafor", "d.novak", "e.lindqvist", "f.haddad",
 ]
@@ -324,6 +356,7 @@ BASE_MIX: dict[str, int] = {
     "replacement": 4,
     "malformed_replacement": 2,
     "uncheckable_decimal_slip": 9,
+    "uncheckable_lifespan_fix": 7,
     "unit_confusion": 6,
     "small_adjustment": 7,
     "unpatterned_change": 4,
@@ -344,6 +377,7 @@ DRIFT_MIX: dict[str, int] = {
     "replacement": 2,
     "malformed_replacement": 2,
     "uncheckable_decimal_slip": 2,
+    "uncheckable_lifespan_fix": 2,
     "unit_confusion": 2,
     "small_adjustment": 2,
     "unpatterned_change": 6,

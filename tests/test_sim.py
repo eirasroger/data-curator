@@ -146,3 +146,40 @@ def test_events_carry_the_time_they_were_given(all_records):
     )[0]
     assert (spread["hi"] - spread["lo"]) > timedelta(days=30)
     store.close()
+
+
+def test_every_labelled_shape_actually_reaches_the_model():
+    """The benchmark's whole premise.
+
+    SHAPE_TRUTH labels proposals so a triager can be scored on them. If a shape
+    were settled by screen() it would never reach a model, and scoring it would
+    measure the rules instead - flattering the model with cases it never saw.
+    """
+    import random
+
+    from domain import changes
+    from sim.generate import SHAPE_TRUTH
+
+    records = corpus.load_records()
+    gen = Generator(records, random.Random(11))
+
+    for shape in SHAPE_TRUTH:
+        reached = 0
+        for _ in range(30):
+            proposal = getattr(gen, shape)()
+            if proposal is None:
+                continue
+            if changes.screen(proposal.record, proposal.request) is None:
+                reached += 1
+        assert reached > 0, f"{shape} is always settled by the rules"
+
+
+def test_shape_truth_only_labels_shapes_that_exist():
+    from sim.generate import SHAPE_TRUTH
+
+    records = corpus.load_records()
+    import random
+
+    gen = Generator(records, random.Random(0))
+    for shape in SHAPE_TRUTH:
+        assert hasattr(gen, shape), f"SHAPE_TRUTH names a missing shape: {shape}"
