@@ -51,7 +51,7 @@ jobs:
       - name: Eval gate
         run: python eval/run_eval.py --min-accuracy 0.90
 
-      - uses: hashicorp/setup-terraform@v3
+      - uses: hashicorp/setup-terraform@v4
         with:
           terraform_version: 1.16.2
           terraform_wrapper: false
