@@ -9,9 +9,7 @@ description = "Change management for a corpus of Environmental Product Declarati
 readme = "README.md"
 requires-python = ">=3.12"
 
-# Pinned to the same versions as the per-service requirements.txt files, which
-# the Dockerfiles install from. Two sources for one dependency set is a real
-# cost, paid to keep the image layer cache working; they must not drift.
+# Keep in sync with services/*/requirements.txt, which the Dockerfiles use.
 dependencies = [
     "fastapi==0.141.1",
     "uvicorn[standard]==0.52.4",
@@ -50,20 +48,15 @@ extend-exclude = [".venv", "seed"]
 [tool.ruff.lint]
 select = ["E", "F", "I", "UP", "B"]
 
-# UP042 wants StrEnum. Rejected: `str(member)` returns the member name under
-# (str, Enum) and the value under StrEnum, and these enums are written to
-# BigQuery and to log lines.
+# UP042 (StrEnum) would change what str(member) returns in stored data and logs.
 ignore = ["UP042"]
 
 [tool.ruff.lint.per-file-ignores]
-# schema.py is a declaration, one field per line with the description the
-# extractor prompts on. Wrapping each Field() to four lines costs more than the
-# limit buys.
+# schema.py keeps one field per line.
 "domain/schema.py" = ["E501"]
 
 [tool.mypy]
-# domain/ only. The services are thin adapters over it and the scripts are
-# operational, so the rules are where type errors would actually cost something.
+# domain/ only; services and scripts are thin wrappers.
 files = ["domain"]
 python_version = "3.12"
 plugins = ["pydantic.mypy"]

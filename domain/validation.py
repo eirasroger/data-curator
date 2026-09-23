@@ -1,25 +1,11 @@
-"""
-Deterministic validation. No LLM anywhere in this file.
-
-Your validacion/ step asks a model to check arithmetic, and the prompt is full of
-pleading ("this will displease me", "you tend to say two indicators are reversed
-when they are not") because the model kept getting it wrong.
-
-Arithmetic is not a judgement call. Every check below is a plain assertion, and
-each one runs in microseconds for free. Save the model for the things that are
-genuinely fuzzy -- is this really the expiry date, is this really the production
-site -- and let code handle the rest.
-
-Each check returns Issue objects. An Issue is machine-readable on purpose: the
-repair node in graph.py feeds `field` and `detail` straight back to the model.
-"""
+"""Consistency checks on an EPD record. Each check returns a list of Issues."""
 
 from dataclasses import asdict, dataclass
 from typing import Literal
 
 Severity = Literal["error", "warning"]
 
-# gwp_total is a rounded sum of rounded parts, so demand closeness, not equality.
+# gwp_total is a sum of rounded parts, hence a tolerance.
 GWP_TOLERANCE = 0.05        # 5% relative
 PERCENT_TOLERANCE = 1.0     # absolute percentage points
 
@@ -40,11 +26,7 @@ def _close(a: float, b: float, rel: float) -> bool:
 
 
 def check_gwp(p: dict) -> list[Issue]:
-    """gwp_total should equal fossil + luluc + biogenic.
-
-    Note biogenic is frequently NEGATIVE (sequestered carbon), which is exactly
-    what the old LLM judge kept misreading as 'the values are swapped'.
-    """
+    """gwp_total should equal fossil + luluc + biogenic. Biogenic is often negative."""
     im = p.get("impacts") or {}
     total = im.get("gwp_total")
     parts = [im.get("gwp_fossil"), im.get("gwp_luluc"), im.get("gwp_bio")]
@@ -61,7 +43,7 @@ def check_gwp(p: dict) -> list[Issue]:
     return []
 
 
-# Substrings that mean an entry is packaging, not product material.
+# Name fragments that identify packaging.
 PACKAGING_TERMS = (
     "packag", "embalaje", "pallet", "palet", "wrap", "film", "carton", "cardboard",
     "crate", "strapping", "shrink",
@@ -69,22 +51,7 @@ PACKAGING_TERMS = (
 
 
 def check_composition(p: dict) -> list[Issue]:
-    """
-    Material percentages versus 100%.
-
-    ASYMMETRIC ON PURPOSE, and this took a fabricated answer to learn:
-
-    OVER 100% is a real arithmetic error -- percentages that sum above the whole
-    mean something was double counted or misread. Worth repairing.
-
-    UNDER 100% usually is not. EPDs state composition as ranges ("Basalt 55-60"),
-    and the midpoints of ranges do not sum to 100. They also routinely omit minor
-    constituents. Flagging this as an error told the model to close a gap that
-    should not be closed, and it obliged by inventing an 11% 'Packaging' entry
-    that appears nowhere in the source document.
-
-    So: under 100 is a warning, and warnings never trigger a repair.
-    """
+    """Over 100% is an error; under 100% is a warning, since range midpoints vary."""
     comp = (p.get("product_integrity") or {}).get("comp") or []
     vals = [c.get("percentage") for c in comp if c.get("percentage") is not None]
     if not vals:
@@ -111,12 +78,7 @@ def check_composition(p: dict) -> list[Issue]:
 
 
 def check_no_packaging(p: dict) -> list[Issue]:
-    """
-    Packaging must never appear in the product composition.
-
-    This exists because a repair cycle added one. A rule stated only in the prompt
-    is a request; a rule stated in the validator is enforced.
-    """
+    """Packaging must stay out of the product composition."""
     issues = []
     for c in (p.get("product_integrity") or {}).get("comp") or []:
         name = str(c.get("name") or "").casefold()
@@ -218,21 +180,8 @@ def check_lifespan(p: dict) -> list[Issue]:
     return []
 
 
-# ---------------------------------------------------------------------------
-# ADDED IN data-curator (not in the extractor). Worth porting back.
-#
-# The eval caught this the hard way. Deciding whether a proposed density is a
-# decimal slip or a mistake was left to the model, and on three of four records
-# it reasoned correctly - then on product 86 it called a wrong value a
-# decimal_slip at 0.90 confidence and the change was auto-applied.
-#
-# But this was never a judgement call. Density x thickness is the weight per
-# declared unit, and the EPD states that weight outright. It is arithmetic, so
-# it belongs here where it is exact and free, not in a prompt where it is
-# probabilistic and billed.
-# ---------------------------------------------------------------------------
-
-DENSITY_TOLERANCE = 0.05    # 5% relative, same spirit as GWP_TOLERANCE
+# Specific to data-curator; worth adding to the extractor.
+DENSITY_TOLERANCE = 0.05    # 5% relative
 
 
 def _declared_kg_per_unit(p: dict) -> float | None:
@@ -249,9 +198,7 @@ def _declared_kg_per_unit(p: dict) -> float | None:
 def check_density_thickness(p: dict) -> list[Issue]:
     """density (kg/m3) x thickness (m) should equal the declared kg per unit.
 
-    Only fires when all three are present and the declared unit is an area, so
-    the relationship actually holds. Silent otherwise - a missing figure is not
-    a contradiction.
+    Runs only when all three figures are present.
     """
     density, thickness = p.get("density"), p.get("thickness")
     declared = _declared_kg_per_unit(p)

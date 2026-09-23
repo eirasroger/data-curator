@@ -1,20 +1,6 @@
-"""Build the labelled set of change requests.
+"""Build the labelled eval cases from the real records. Writes eval/cases.json.
 
-These stand in for the real thing: people proposing corrections, manufacturers
-republishing, the calendar expiring records. Every case is derived from the
-actual 63 extracted EPDs, so the numbers are real even though the proposals are
-invented.
-
-Each case carries the answer we believe is correct. That makes this two things
-at once - the input the pipeline runs on, and the yardstick for whether the
-triage step is any good.
-
-A case may CORRUPT the record before proposing a change. That is how we get
-genuine corrections: break a value, then propose putting it back. Without that,
-every proposal against a correct record would be a bad proposal, and the set
-would only ever measure the system's ability to say no.
-
-Run:  python eval/generate_cases.py    ->  eval/cases.json
+A case can corrupt its record first, so restoring the value is a correct change.
 """
 
 from __future__ import annotations
@@ -127,8 +113,7 @@ for pid in WITH_COMP[:2]:
         reason="Adding the missing material.",
     )
 
-# Packaging must never enter the composition - a rule learned the hard way in
-# the extractor, and it holds for edits too.
+# Packaging must stay out of the composition.
 for pid in WITH_COMP[:2]:
     r = records[pid]
     first = next(c["name"] for c in r["product_integrity"]["comp"]
@@ -210,9 +195,7 @@ for pid in list(records)[:2]:
         "A new document supersedes the old one; that is never automatic.",
         kind="record_replacement", source="manufacturer_feed",
         submitted_by="feed-watcher",
-        # A replacement must satisfy EPDProduct - product_id and flag are
-        # required. An earlier version of this case omitted flag, which the
-        # schema check correctly began rejecting once it was wired up.
+        # product_id and flag are required by EPDProduct.
         replacement={"product_id": pid, "flag": records[pid].get("flag", 0),
                      "prod_name": records[pid].get("prod_name"),
                      "epd_code": records[pid].get("epd_code")},
@@ -260,8 +243,6 @@ for pid in [p for p in records if records[p].get("lifespan")][:4]:
         f"E_fix_lifespan_{pid}", "model_should_apply", pid, "applied",
         "Service life corrupted by a factor of ten; the proposal restores it.",
         # Any of these three is a fair reading of "500 years became 50".
-        # Pinning one and scoring exact-match measured my preference, not the
-        # model. Only "implausible" would change what the system does.
         expected_triage=["decimal_slip", "transcription", "genuine_correction"],
         corrupt={"lifespan": r["lifespan"] * 10},
         field_path="lifespan", new_value=r["lifespan"],
@@ -284,11 +265,7 @@ for pid in [p for p in records if records[p].get("lifespan")][4:8]:
         reason="I recall the declared service life being shorter.",
     )
 
-# These were originally labelled "ambiguous, defer to a person", on the
-# assumption that nothing in the record cross-checks thickness. That was wrong.
-# density (kg/m3) x thickness (m) = the stated kg per declared unit, so thickness
-# is pinned by the same relationship that pins density. The model pointed this
-# out by classifying them implausible; the label was the thing at fault.
+# Thickness is checkable: density x thickness must equal the declared kg per unit.
 for pid in CROSS_CHECKABLE[:3]:
     r = records[pid]
     case(

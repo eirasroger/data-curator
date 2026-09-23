@@ -1,41 +1,6 @@
-"""Does the triager's confidence mean anything?
+"""Measure whether the triager's confidence separates correct proposals from wrong ones.
 
-The main eval scores the pipeline end to end, and the rules settle most of it.
-That flatters the system and says nothing about the model. This scores the one
-thing the model is actually asked for, on the only cases it ever sees: those
-that survive `screen()`.
-
-The question is not "how often is it right". It is whether a high score and a
-low score describe different populations. A triager that returns 0.8 for a
-correct proposal and 0.8 for a wrong one is not uncertain - it is uninformative,
-and no confidence floor can rescue it. That is what SEPARATION measures:
-
-    separation = mean confidence on correct proposals
-               - mean confidence on wrong proposals
-
-Measured over ALL cases that figure is misleading, and the first version of this
-script was misled by it. Confidence is certainty about the CLASSIFICATION, not
-the probability that the proposal is good. A model that says "implausible, 0.95"
-is confidently rejecting, and counting that 0.95 as confidence-in-a-wrong-change
-drags the wrong-mean up and the separation towards zero - while the pipeline was
-never going to apply it, because `finalise()` rejects on the class.
-
-So the figure that matters is separation among the cases NOT called implausible:
-the ones actually offered for acceptance, where the floor is what decides. Both
-are printed; the conditioned one is the real answer.
-
-The other figure that matters is whether any floor exists that automates
-something without ever applying a wrong change - the table at the end answers
-that directly, and the unsafe column is the one that must be zero.
-
-Labels come from how each case was built: a proposal that restores a value the
-record was corrupted away from is correct, and one that moves a correct value to
-a wrong one is not. Ambiguous cases are labelled as such and scored separately,
-because for those the right answer is to defer.
-
-Run:
-    python eval/triage_bench.py                       # stub, free
-    python eval/triage_bench.py --provider openai     # costs money; see --count
+Usage: python eval/triage_bench.py [--provider openai] [--count N]
 """
 
 from __future__ import annotations
@@ -50,8 +15,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 
-# Local runs only; deployed services get their key from Secret Manager. See
-# domain/localenv.py for where the file lives and why it is not in the repo.
+# Loads the local API key, if there is one.
 from domain.localenv import load as _load_local_env  # noqa: E402
 
 _load_local_env()
@@ -70,7 +34,7 @@ FLOORS = [0.95, 0.90, 0.85, 0.80, 0.75, 0.70, 0.60]
 
 
 def build(count: int, seed: int) -> list[dict]:
-    """A balanced set of cases that actually reach the model."""
+    """A balanced set of cases that reach the model."""
     rng = random.Random(seed)
     records = corpus.load_records()
     gen = Generator(records, rng)
@@ -85,8 +49,7 @@ def build(count: int, seed: int) -> list[dict]:
             proposal = getattr(gen, shape)()
             if proposal is None:
                 continue
-            # Only keep what the rules do NOT settle. Anything screen() decides
-            # never reaches a model, so scoring it here would measure the rules.
+            # Keep only cases that screen() leaves open.
             if changes.screen(proposal.record, proposal.request) is not None:
                 continue
             cases.append({
@@ -136,8 +99,7 @@ def report(results: list[dict], cost: float, args) -> dict:
     print(f"separation, all cases                {separation:+.3f}"
           f"   <- misleading on its own; see below")
 
-    # How often is a wrong proposal actually called out as wrong? This is the
-    # single classification that lets the pipeline reject without a person.
+    # How often a wrong proposal is called implausible (and so auto-rejected).
     caught = sum(
         1 for r in results
         if r["label"] == "wrong" and r["triage"] == TriageClass.IMPLAUSIBLE.value
@@ -151,9 +113,7 @@ def report(results: list[dict], cost: float, args) -> dict:
     print(f"correct proposals called implausible {false_alarm}/{len(correct)}"
           f"   <- a correction silently thrown away")
 
-    # The figure that actually bears on the floor. A case the triager calls
-    # implausible is rejected on the class, so its confidence says nothing about
-    # whether a high score means a good change.
+    # Separation excluding "implausible", since those are rejected on the class.
     offered = [r for r in results if r["triage"] != TriageClass.IMPLAUSIBLE.value]
     off_ok = [r["confidence"] for r in offered if r["label"] == "correct"]
     off_bad = [r["confidence"] for r in offered if r["label"] == "wrong"]

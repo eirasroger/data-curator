@@ -1,11 +1,4 @@
-"""Tests for the nightly job, with a fake store.
-
-The job's whole value is what it notices, so the tests are about what it
-notices. A fake store means these run in milliseconds with no cloud and no
-credentials, and lets us construct situations - a review forgotten for two
-weeks, a night where the model lost its nerve - that would be tedious to arrange
-against real data.
-"""
+"""Tests for the nightly job, using a fake store."""
 
 from __future__ import annotations
 
@@ -15,13 +8,7 @@ from domain import reconcile
 
 
 class FakeStore:
-    """Returns whatever the test set up, one method at a time.
-
-    tests/test_store.py covers the real queries against a real database. What
-    these tests need is the ability to construct a situation - a review
-    forgotten for two weeks, a night where the model lost its nerve - so the
-    store is only a source of answers here.
-    """
+    """Returns canned answers; test_store.py covers the real queries."""
 
     def __init__(self, **results) -> None:
         self.results = results
@@ -63,7 +50,7 @@ def test_quiet_night_needs_no_attention():
 
 
 def test_expired_epd_raises_a_change_request():
-    """The job does not edit the record. It asks, like anyone else would."""
+    """Expiry is raised as a change request."""
     store = FakeStore(expiry=[
         {"product_id": 5, "epd_code": "S-P-01848", "prod_name": "FKD-S Product Range",
          "expiry_date": "2025-04-29", "expiry_state": "expired"},
@@ -81,7 +68,7 @@ def test_expired_epd_raises_a_change_request():
 
 
 def test_an_already_expired_record_is_not_raised_again():
-    """Without this the job would re-raise the same expiry every single night."""
+    """Records already marked expired are skipped."""
     store = FakeStore(
         expiry=[{"product_id": 5, "epd_code": "x", "prod_name": "y",
                  "expiry_date": "2025-04-29", "expiry_state": "expired"}],
@@ -114,7 +101,7 @@ def test_high_rejection_rate_is_flagged():
 
 
 def test_a_small_sample_is_not_treated_as_drift():
-    """Two rejections out of three is 67%, and means nothing."""
+    """Rates below the minimum sample size are ignored."""
     store = FakeStore(stats={"total": 3, "applied": 1, "rejected": 2, "pending": 0,
                              "model_calls": 1, "mean_confidence": 0.9,
                              "p95_latency_ms": 4000, "total_cost": 0.001})
@@ -123,7 +110,7 @@ def test_a_small_sample_is_not_treated_as_drift():
 
 
 def test_sagging_confidence_is_flagged():
-    """Drift that raises no errors: everything succeeds, the model is just unsure."""
+    """Low mean confidence is flagged."""
     store = FakeStore(stats={"total": 10, "applied": 2, "rejected": 1, "pending": 7,
                              "model_calls": 10, "mean_confidence": 0.41,
                              "p95_latency_ms": 6000, "total_cost": 0.009})

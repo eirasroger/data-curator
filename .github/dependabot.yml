@@ -1,14 +1,8 @@
-# Nothing here tells you a pinned dependency has a CVE, so this does.
-#
-# Grouped into one pull request per ecosystem per week. Ungrouped, seven pinned
-# packages across five files produce a stream of single-package PRs, and the
-# usual outcome is that they stop being read.
+# Weekly dependency updates, grouped into one PR per ecosystem.
 version: 2
 updates:
   - package-ecosystem: pip
-    # pyproject.toml and the four requirements.txt files pin the same versions
-    # deliberately, and the comment in pyproject.toml says they must not drift.
-    # Listing them together keeps one update in one PR, where that is visible.
+    # These files pin the same versions, so they update together.
     directories:
       - /
       - /services/api

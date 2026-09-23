@@ -1,12 +1,6 @@
-"""Start the operator page locally and open it.
+"""Start the dashboard locally on a DuckDB file and open it in the browser.
 
-One command, no credentials, no cloud. Seeds the database if it is empty so a
-first run lands on a page with something on it rather than an empty queue.
-
-Run:
-    python scripts/dashboard.py                      # the simulated history
-    python scripts/dashboard.py --db local.duckdb    # whatever you have seeded
-    python scripts/dashboard.py --no-browser
+Usage: python scripts/dashboard.py [--db local.duckdb] [--no-browser]
 """
 
 from __future__ import annotations
@@ -42,7 +36,7 @@ def main() -> int:
     print(f"reading {db.name}")
 
     if not args.no_browser:
-        # After a delay, so the browser does not beat uvicorn to the port.
+        # Delay so uvicorn is listening first.
         threading.Timer(1.5, lambda: webbrowser.open(url)).start()
 
     return subprocess.call(

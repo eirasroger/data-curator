@@ -1,14 +1,4 @@
-"""The BigQuery implementation. Production.
-
-Writes go through the streaming insert API (`insert_rows_json`). Two things
-follow from that and both suit us:
-
-  - Rows are queryable within seconds, which is what makes `already_decided`
-    work at all.
-  - Rows in the streaming buffer cannot be UPDATEd or DELETEd for a while
-    afterwards. For an append-only design that is not a limitation, it is the
-    rule being enforced by the platform.
-"""
+"""BigQuery store, used in production. Writes use streaming inserts."""
 
 from __future__ import annotations
 
@@ -34,8 +24,7 @@ class BigQueryStore:
 
     @property
     def client(self) -> bigquery.Client:
-        # Built on first use. Constructing it at import time would make this
-        # module unimportable without credentials, including under test.
+        # Lazy, so the module imports without credentials.
         if self._client is None:
             self._client = bigquery.Client(project=self.project)
         return self._client
@@ -44,12 +33,7 @@ class BigQueryStore:
         return f"{self.project}.{self.dataset}.{name}"
 
     def query(self, sql: str, **params: Any) -> list[dict]:
-        """Run a parameterised query.
-
-        Always parameterised, never f-strings: a product_id arriving from an
-        HTTP path segment is untrusted input, and string-building it into SQL is
-        how injection happens.
-        """
+        """Run a parameterised query. Values always go in as parameters."""
         job_config = bigquery.QueryJobConfig(
             query_parameters=[_param(k, v) for k, v in params.items()]
         )
@@ -73,13 +57,7 @@ class BigQueryStore:
         return record
 
     def already_decided(self, request_id: str) -> bool:
-        """Has the pipeline already ruled on this request?
-
-        Pub/Sub guarantees at-least-once delivery, so the same message can and
-        will arrive twice - after a redeploy, after a timeout, after a retry
-        that succeeded on the far side. Without this check a duplicate would
-        write a second decision and, worse, apply the change a second time.
-        """
+        """Whether this request was already decided. Pub/Sub can redeliver."""
         rows = self.query(
             f"SELECT 1 FROM `{self.table('change_events')}` "
             f"WHERE request_id = @request_id AND event_type = 'decided' LIMIT 1",
@@ -164,8 +142,6 @@ class BigQueryStore:
         return int(rows[0]["n"]) if rows else 0
 
     def latest_reconciliation(self) -> dict | None:
-        # One row per night, so this is the cheapest read in the system and the
-        # reason the dashboard never scans change_events for drift state.
         rows = self.query(
             f"SELECT * FROM `{self.table('reconciliation_runs')}` "
             f"ORDER BY run_at DESC LIMIT 1"
@@ -185,7 +161,7 @@ class BigQueryStore:
             raise InsertError(f"{table}: {errors}")
 
     def save_request(self, request: Any) -> None:
-        """The proposal, exactly as submitted. Never modified afterwards."""
+        """Store the proposal as submitted."""
         self._insert("change_requests", [request_row(request)])
 
     def save_event(
@@ -213,7 +189,7 @@ class BigQueryStore:
         change_request_id: str | None,
         status: str = "active",
     ) -> None:
-        """A new version of an EPD. Never an update of the old one."""
+        """Append a new version of an EPD."""
         self._insert("epd_records", [
             version_row(record, product_id, version, change_request_id, status)
         ])

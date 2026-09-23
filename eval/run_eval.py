@@ -1,26 +1,6 @@
-"""Score the decision pipeline against the labelled cases.
+"""Score the pipeline against the labelled cases. Any unsafe auto-apply fails the run.
 
-Three figures, because one hides the interesting part.
-
-END TO END is how often the pipeline reached the labelled outcome. On its own
-it flatters the system: the rules settle roughly three quarters of these cases
-for free, so the headline mostly measures arithmetic that cannot be wrong.
-
-RULES ONLY and MODEL LAYER split that. The first is the cases `screen()`
-settled without asking anything; the second is the cases that survived it and
-reached a triager. Only the second changes when the provider changes, and it is
-the only one worth comparing between a stub and a paid model.
-
-UNSAFE is how often a change was APPLIED that should have been rejected or sent
-to a person. It is not on the same scale as the others. A change wrongly parked
-costs somebody five minutes; a change wrongly applied corrupts a published
-figure other people go on to quote. A run with 95% accuracy and one unsafe
-error is worse than one with 85% and none, which is why this exits non-zero on
-any unsafe count regardless of accuracy.
-
-Run:
-    python eval/run_eval.py                      # stub, free, no network
-    python eval/run_eval.py --provider openai    # calls the API, costs money
+Usage: python eval/run_eval.py [--provider openai]
 """
 
 from __future__ import annotations
@@ -34,8 +14,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 
-# Local runs only; deployed services get their key from Secret Manager. See
-# domain/localenv.py for where the file lives and why it is not in the repo.
+# Loads the local API key, if there is one.
 from domain.localenv import load as _load_local_env  # noqa: E402
 
 _load_local_env()
@@ -59,9 +38,7 @@ def load_record(records: dict, case: dict) -> dict:
 
 
 def main() -> int:
-    # Model rationales contain characters cp1252 cannot encode (arrows, the
-    # multiplication sign). Cloud Run is UTF-8 and never sees this; a local
-    # Windows console crashes on it mid-run.
+    # Rationales can contain characters a Windows console cannot encode.
     try:
         sys.stdout.reconfigure(encoding="utf-8", errors="replace")
     except (AttributeError, ValueError):
@@ -92,7 +69,7 @@ def main() -> int:
     latencies: list[int] = []
     per_category: dict[str, list[bool]] = defaultdict(list)
     failures: list[str] = []
-    # Split by who actually decided, so the model layer can be scored alone.
+    # Scored separately for rules and model.
     rules_hits = rules_total = 0
     model_hits = model_total = 0
 
@@ -123,14 +100,12 @@ def main() -> int:
 
         want_triage = case.get("expected_triage")
         if want_triage and outcome.decision.triage:
-            # A list means several classifications are equally defensible. Only
-            # "implausible" changes what the system does with the request; the
-            # rest are context for whoever reviews it.
+            # A list means several classifications are acceptable.
             accepted = want_triage if isinstance(want_triage, list) else [want_triage]
             triage_total += 1
             triage_hits += outcome.decision.triage.value in accepted
 
-        # The error that actually hurts: applied when it should not have been.
+        # Unsafe: applied when it should have been rejected or reviewed.
         if got == Action.APPLIED.value and want != Action.APPLIED.value:
             unsafe.append({"case": case["case_id"], "wanted": want,
                            "reason": outcome.decision.reason})
@@ -224,9 +199,7 @@ def main() -> int:
         for f in failures:
             print(f)
 
-    # Two gates, and they are not the same kind of thing. Unsafe must be zero
-    # whatever the accuracy. Accuracy has a floor rather than a target, because
-    # a regression matters and the exact figure does not.
+    # Two gates: zero unsafe outcomes, and accuracy at or above the floor.
     failed = False
     if unsafe:
         failed = True

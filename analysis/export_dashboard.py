@@ -1,15 +1,6 @@
-"""Freeze the operator page into one self-contained HTML file for GitHub Pages.
+"""Render the dashboard templates to a static docs/index.html for GitHub Pages.
 
-The point of this file is what it does NOT do: it renders the same Jinja
-templates the live service renders, from the same `metrics.overview()`. There is
-no second implementation of the dashboard, so the public demo cannot drift away
-from the thing it is demonstrating. The only difference is the `static` flag,
-which swaps HTMX calls for browser-local ones and prints a banner saying so.
-
-Writes docs/index.html, which is what GitHub Pages serves from the main branch.
-
-Run:
-    python analysis/export_dashboard.py --db sim_openai.duckdb
+Usage: python analysis/export_dashboard.py --db sim_openai.duckdb
 """
 
 from __future__ import annotations
@@ -57,8 +48,7 @@ def main() -> int:
     out = Path(args.out)
     out.parent.mkdir(parents=True, exist_ok=True)
     out.write_text(html, encoding="utf-8")
-    # GitHub Pages runs incoming files through Jekyll, which ignores paths
-    # beginning with an underscore and would drop any partials added later.
+    # Disables Jekyll, which would drop files starting with an underscore.
     (out.parent / ".nojekyll").touch()
     print(f"wrote {out.relative_to(ROOT)} ({len(html) // 1024} KB)")
 

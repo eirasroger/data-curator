@@ -1,11 +1,4 @@
-"""The DuckDB implementation. Local runs, tests, and the analysis.
-
-Same tables and views as BigQuery, same method contract, no credentials and no
-network. What differs is only dialect, and it is confined to this file.
-
-Append-only is a promise made by this code rather than by the platform: nothing
-in DuckDB prevents an UPDATE, so the protection is that no method issues one.
-"""
+"""DuckDB store, for local runs, tests and analysis. Same tables and views as BigQuery."""
 
 from __future__ import annotations
 
@@ -23,8 +16,7 @@ from ..store import InsertError, event_row, request_row, version_row
 ROOT = Path(__file__).resolve().parents[2]
 SCHEMA = ROOT / "sql" / "local" / "schema.sql"
 
-# Where seed_local.py puts the database, so seeding and then running needs no
-# configuration. Tests pass ":memory:" explicitly.
+# Same default as seed_local.py.
 DEFAULT_PATH = os.environ.get("DUCKDB_PATH", str(ROOT / "local.duckdb"))
 
 
@@ -46,12 +38,7 @@ class DuckDBStore:
             self._conn = None
 
     def query(self, sql: str, **params: Any) -> list[dict]:
-        """Run a parameterised query.
-
-        Always parameterised, never f-strings: a product_id arriving from an
-        HTTP path segment is untrusted input, and string-building it into SQL is
-        how injection happens.
-        """
+        """Run a parameterised query. Values always go in as parameters."""
         cur = self.conn.execute(sql, params) if params else self.conn.execute(sql)
         if cur.description is None:
             return []
@@ -120,8 +107,7 @@ class DuckDBStore:
         }
 
     def decision_stats(self, window_start: datetime) -> dict:
-        # count_if and quantile_cont in place of BigQuery's COUNTIF and
-        # APPROX_QUANTILES(...)[OFFSET(95)].
+        # DuckDB equivalents of BigQuery's COUNTIF and APPROX_QUANTILES.
         rows = self.query(
             """
             SELECT
@@ -191,8 +177,7 @@ class DuckDBStore:
             decision, product_id, event_id, event_type, actor, triage_outcome,
             occurred_at,
         )
-        # The BigQuery table has the model columns whether or not they are sent;
-        # an INSERT has to name every column it is not supplying.
+        # The INSERT needs every column, including unused model fields.
         row.setdefault("model", None)
         row.setdefault("prompt_tokens", None)
         row.setdefault("completion_tokens", None)

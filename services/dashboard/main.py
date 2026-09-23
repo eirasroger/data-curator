@@ -1,15 +1,6 @@
-"""The operator page: what needs a person, and what the pipeline has been doing.
+"""Operator dashboard: review queue, throughput and the latest nightly check.
 
-Read-mostly. The one thing it writes is a review decision, and it writes that
-the same way a person with curl would - by publishing to the existing review
-path, not by touching the datastore. This service holds no write permission on
-BigQuery and does not need any.
-
-There are no timers on this page. Nothing it shows changes on a timescale that
-would justify one: reconciliation writes one row a night, the agent registry
-changes when an eval is run, and proposals arrive a few times a day. Every panel
-states the age of what it shows instead, and the queue updates when you act on
-it, because that is the only moment it has a reason to.
+Reviews are published to the queue; the service has read-only database access.
 """
 
 from __future__ import annotations
@@ -81,16 +72,7 @@ def health() -> dict:
 
 
 def submit_review(request_id: str, approve: bool, note: str) -> None:
-    """Hand the verdict on, by whichever route this deployment has.
-
-    With a topic configured, publish: the worker owns applying a review, this
-    service holds no write permission on the datastore, and a decision taken
-    here produces exactly the same events as one taken with curl.
-
-    Without one - a local run against DuckDB, where there is no Pub/Sub and no
-    worker - apply it in process. Same function the worker calls, so the two
-    routes cannot disagree about what a review means.
-    """
+    """Publish the verdict, or apply it directly in a local run with no Pub/Sub."""
     review = ReviewDecision(
         request_id=request_id, reviewer=REVIEWER, approve=approve, note=note
     )
@@ -126,7 +108,5 @@ def reject(request: Request, request_id: str, note: str = "") -> HTMLResponse:
 
 @app.get("/healthz")
 def healthz() -> RedirectResponse:
-    # Google's front end intercepts /healthz on Cloud Run and answers with an
-    # HTML 404 before the request reaches the container. Kept as a redirect so
-    # anyone who tries it locally is pointed at the endpoint that works.
+    # Cloud Run intercepts /healthz, so point callers at /health.
     return RedirectResponse("/health")

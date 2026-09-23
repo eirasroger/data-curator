@@ -1,12 +1,6 @@
-"""What a datastore has to be able to do, and how to get one.
+"""The datastore interface and shared row builders. Implementations are in `stores/`.
 
-The protocol is named methods, not a `query(sql)` escape hatch. BigQuery and
-DuckDB do not share a dialect - backticked table names and `@param` placeholders
-are both parse errors in DuckDB - so any caller holding raw SQL is a caller
-locked to one backend.
-
-Implementations live in `domain/stores/`. Same arrangement as `Triager` and
-`domain/providers/`.
+Callers use named methods only, since BigQuery and DuckDB SQL dialects differ.
 """
 
 from __future__ import annotations
@@ -24,7 +18,7 @@ def now_iso() -> str:
 
 
 class InsertError(RuntimeError):
-    """A write was rejected. Never swallowed - the caller must nack."""
+    """A write was rejected. The caller must nack the message."""
 
 
 class Store(Protocol):
@@ -89,11 +83,7 @@ class Store(Protocol):
 
 
 def to_change_request(row: dict) -> Any:
-    """Rebuild a ChangeRequest from its stored row.
-
-    Both backends store JSON columns as text and timestamps as datetimes, so
-    this is shared rather than written twice.
-    """
+    """Rebuild a ChangeRequest from its stored row."""
     from .changes import ChangeRequest
 
     def unjson(value: Any) -> Any:
@@ -111,8 +101,7 @@ def to_change_request(row: dict) -> Any:
         kind=row["kind"],
         source=row["source"],
         submitted_by=row["submitted_by"],
-        # A TIMESTAMP column comes back as a datetime, but a replayed or
-        # hand-inserted row can carry a string.
+        # Usually a datetime, but hand-inserted rows can hold a string.
         submitted_at=(
             submitted.isoformat() if isinstance(submitted, datetime) else str(submitted)
         ),
@@ -124,7 +113,7 @@ def to_change_request(row: dict) -> Any:
 
 
 def request_row(request: Any) -> dict[str, Any]:
-    """The change_requests row. Identical for both backends."""
+    """The change_requests row."""
     return {
         "request_id": request.request_id,
         "product_id": request.product_id,
@@ -133,8 +122,7 @@ def request_row(request: Any) -> dict[str, Any]:
         "submitted_by": request.submitted_by,
         "submitted_at": request.submitted_at,
         "field_path": request.field_path,
-        # JSON columns take a JSON-encoded string, which lets one column hold a
-        # number, a string or null without three columns.
+        # JSON-encoded, so one column can hold any value type.
         "new_value": json.dumps(request.new_value),
         "replacement": (
             json.dumps(request.replacement) if request.replacement else None
@@ -152,11 +140,7 @@ def event_row(
     triage_outcome: Any,
     occurred_at: str = "",
 ) -> dict[str, Any]:
-    """The change_events row. Identical for both backends.
-
-    `occurred_at` defaults to now. It is only ever passed by a backfill, which
-    is replaying decisions that carry their own timestamps.
-    """
+    """The change_events row. `occurred_at` defaults to now; the simulator sets it."""
     row: dict[str, Any] = {
         "event_id": event_id,
         "request_id": decision.request_id,
@@ -172,8 +156,7 @@ def event_row(
         "confidence": decision.confidence,
         "rationale": decision.rationale,
     }
-    # Absent model fields are meaningful: they say the rules settled this
-    # without spending anything.
+    # Model fields stay empty when the rules decided alone.
     if triage_outcome is not None:
         row.update({
             "model": triage_outcome.model,
@@ -192,7 +175,7 @@ def version_row(
     change_request_id: str | None,
     status: str,
 ) -> dict[str, Any]:
-    """The epd_records row. Identical for both backends."""
+    """The epd_records row."""
     clean = {k: v for k, v in record.items() if not k.startswith("_")}
     impacts = clean.get("impacts") or {}
     return {
@@ -219,11 +202,7 @@ def version_row(
 
 
 def get_store(backend: str = "", **kwargs: Any) -> Store:
-    """Build a store by name. Unknown names fail loudly rather than defaulting.
-
-    Defaulting on a typo would mean a deployment quietly writing to the wrong
-    place, or reading an empty local file and reporting no EPDs at all.
-    """
+    """Build a store by name. Unknown names raise."""
     backend = backend or DEFAULT_BACKEND
     if backend == "bigquery":
         from .stores.bigquery_store import BigQueryStore

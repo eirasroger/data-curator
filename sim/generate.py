@@ -1,19 +1,6 @@
-"""Proposals at volume, for a decision history worth analysing.
+"""Generate change proposals at volume from the real records.
 
-The eval has 54 hand-labelled cases and answers "is the pipeline right?". This
-answers a different question: "what does the pipeline do over months of
-traffic?" - how often the rules settle things, how the model's confidence is
-distributed, what a decision costs. Fifty-four cases cannot show that.
-
-Every proposal is built from a real record by the same trick the eval uses:
-corrupt a value and propose the original back, or propose something the record
-contradicts. What is invented is the arrival of proposals, not the EPDs.
-
-The mix is stationary by default - the same blend of proposal kinds throughout
-the window. That matters: if a drift chart bends, it bent because the pipeline
-changed its behaviour, not because the input was rigged to bend it. `--drift`
-deliberately shifts the mix in the last third, which is how to check that the
-nightly job's drift detector actually fires.
+The mix stays constant unless `drift=True`, which worsens it in the last third.
 """
 
 from __future__ import annotations
@@ -27,8 +14,7 @@ from domain.changes import ChangeKind, ChangeRequest, Source
 
 from . import corpus
 
-# Changing this changes every generated history. It is committed so a run is
-# reproducible; a run nobody can reproduce is an anecdote.
+# Fixed so runs are reproducible.
 DEFAULT_SEED = 20260918
 
 
@@ -67,9 +53,7 @@ class Generator:
         return ChangeRequest(**{**defaults, **kw})
 
     # -- proposal shapes -----------------------------------------------------
-    #
-    # Each returns a Proposal or None when the chosen record cannot carry that
-    # shape. The caller retries with another record.
+    # Each returns None when the record cannot carry that shape.
 
     def decimal_slip_fix(self) -> Proposal | None:
         """A density out by a factor of ten, corrected back."""
@@ -211,9 +195,7 @@ class Generator:
             rec, "ambiguous_lifespan",
         )
 
-    # The four below land on records with no conversion ratio, so no rule can
-    # settle them and every one reaches the model. Without these the rules
-    # absorb all the arithmetic and the model layer is never exercised.
+    # The four below use records the rules cannot check, so they reach the LLM.
 
     def uncheckable_decimal_slip(self) -> Proposal | None:
         """A density out by ten, on a record with nothing to check it against."""
@@ -319,13 +301,8 @@ class Generator:
         )
 
 
-# What a proposal of each shape actually IS, for anything that needs to score a
-# triager rather than just run one. Only shapes that survive screen() and reach
-# the model are listed; the rules settle the others before a model is asked.
-#
-#   correct    restores the value the record was corrupted away from
-#   wrong      the stored value is right and the proposal would damage it
-#   ambiguous  the record does not settle it; deferring is the right answer
+# Ground truth for shapes that reach the LLM. "ambiguous" means a person
+# should decide.
 SHAPE_TRUTH: dict[str, str] = {
     "uncheckable_decimal_slip": "correct",
     "uncheckable_lifespan_fix": "correct",
@@ -340,9 +317,7 @@ REVIEWERS = [
     "a.rossi", "b.martinez", "c.okafor", "d.novak", "e.lindqvist", "f.haddad",
 ]
 
-# How often each shape appears. Weighted so most traffic is ordinary corrections
-# and mistakes, with republications and malformed feeds as the long tail - which
-# is what a change queue for a document corpus actually looks like.
+# Relative frequency of each shape.
 BASE_MIX: dict[str, int] = {
     "decimal_slip_fix": 10,
     "bad_density": 9,
@@ -362,8 +337,7 @@ BASE_MIX: dict[str, int] = {
     "unpatterned_change": 4,
 }
 
-# The last third of a --drift run. More rejections, fewer clean corrections:
-# the shape of a feed that has started sending rubbish.
+# Mix for the last third of a drift run: more bad proposals.
 DRIFT_MIX: dict[str, int] = {
     "decimal_slip_fix": 2,
     "bad_density": 28,
@@ -391,11 +365,7 @@ def generate(
     drift: bool = False,
     end: datetime | None = None,
 ) -> list[Proposal]:
-    """`count` proposals, spread over the `days` ending at `end`.
-
-    Returned in time order, because that is the order they would have arrived
-    and the order the analysis reads them in.
-    """
+    """`count` proposals over the `days` ending at `end`, in time order."""
     rng = random.Random(seed)
     records = corpus.load_records()
     gen = Generator(records, rng)
@@ -404,8 +374,7 @@ def generate(
     start = end - timedelta(days=days)
     span = (end - start).total_seconds()
 
-    # Arrival times first, then sorted, so a proposal's shape cannot depend on
-    # when it lands - which would be drift smuggled in through the back door.
+    # Times are drawn separately, so shape is independent of arrival time.
     times = sorted(start + timedelta(seconds=rng.uniform(0, span)) for _ in range(count))
     drift_from = start + timedelta(days=days * 2 / 3)
 
@@ -415,7 +384,7 @@ def generate(
         names = list(mix)
         weights = [mix[n] for n in names]
 
-        # A shape can decline a record it cannot use; try a few before moving on.
+        # Retry a few times when a shape declines the chosen record.
         for _ in range(10):
             name = rng.choices(names, weights=weights, k=1)[0]
             proposal = getattr(gen, name)()

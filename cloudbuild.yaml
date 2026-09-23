@@ -1,6 +1,4 @@
-# Builds one service image. Which one is chosen by the _SERVICE substitution,
-# so both services share this file instead of having a copy each.
-#
+# Builds the service image named by _SERVICE:
 #   gcloud builds submit --config cloudbuild.yaml \
 #     --substitutions=_SERVICE=api,_IMAGE=europe-west1-docker.pkg.dev/.../api:latest
 steps:

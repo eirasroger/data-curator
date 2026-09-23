@@ -1,9 +1,4 @@
-"""Tests for the webhook receiver as an HTTP endpoint.
-
-test_webhooks.py covers the signature arithmetic. This covers the service around
-it: what reaches Pub/Sub, what status codes go back, and what an unverified
-caller is told.
-"""
+"""Tests for the webhook service: status codes and what reaches Pub/Sub."""
 
 from __future__ import annotations
 
@@ -21,10 +16,7 @@ SECRET = "whsec_test"
 
 @pytest.fixture(scope="module")
 def service(monkeypatch_session=None):
-    """Import the service with its environment in place.
-
-    Configuration is read at import time, so it has to be set first.
-    """
+    """Import the service after setting its environment, which is read at import."""
     import os
 
     os.environ["GCP_PROJECT"] = "test-project"
@@ -167,7 +159,7 @@ def test_unknown_source_is_401(client, publisher):
 
 
 def test_rejection_reveals_nothing(client):
-    """A stranger must not learn whether the signature or the clock was wrong."""
+    """Rejections give no reason to the caller."""
     response = post(client, payload(), secret="wrong")
     assert response.content in (b"", b"null")
 
@@ -175,7 +167,7 @@ def test_rejection_reveals_nothing(client):
 # --- authenticated but wrong ------------------------------------------------
 
 def test_a_payload_that_is_not_an_epd_is_422(client, publisher):
-    """Signed correctly, so the sender is known and can be told what is wrong."""
+    """An authenticated sender gets a descriptive 422."""
     body = json.dumps({"record": {"prod_name": "missing required fields"}}).encode()
     response = post(client, body)
     assert response.status_code == 422
@@ -191,7 +183,7 @@ def test_missing_record_key_is_422(client, publisher):
 # --- downstream failure -----------------------------------------------------
 
 def test_publish_failure_is_503(client, service, monkeypatch):
-    """5xx makes the sender retry. A 2xx here would lose the event."""
+    """A failed publish returns 503 so the sender retries."""
     monkeypatch.setattr(service, "_publisher",
                         FakePublisher(error=RuntimeError("pubsub down")))
     assert post(client, payload()).status_code == 503

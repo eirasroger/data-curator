@@ -1,16 +1,6 @@
 #!/usr/bin/env bash
-# Build both images, deploy both services, and wire Pub/Sub to the worker.
-# Idempotent - safe to re-run. Run `terraform -chdir=infra apply` first:
-# it creates the topics, dataset, identities and secrets this assumes.
-#
-# COST
-#   Cloud Build   free tier 2,500 build-minutes/month; each build here is ~1-2.
-#   Artifact Reg. free tier 0.5 GB. Two images at ~250 MB would exceed that
-#                 after a few revisions, so a cleanup policy below keeps only
-#                 the newest 3 of each. Without it this is the one line item
-#                 that would quietly start costing pennies.
-#   Cloud Run     free tier 2M requests + 180k vCPU-seconds/month. Both services
-#                 scale to zero, so an idle deployment costs nothing at all.
+# Build and deploy the services and connect Pub/Sub to the worker. Safe to re-run.
+# Run `terraform -chdir=infra apply` first.
 set -euo pipefail
 
 cd "$(dirname "$0")/.."
@@ -19,9 +9,7 @@ cd "$(dirname "$0")/.."
 REPO="${REPO:-curator}"
 REGISTRY="$REGION-docker.pkg.dev/$PROJECT/$REPO"
 
-# The webhook receiver is the only service reachable without a Google identity,
-# and Google Cloud has no hard spending cap. Opt in with --with-webhook, or use
-# scripts/webhook_demo.sh, which deletes it again on exit.
+# The public webhook is opt-in: pass --with-webhook, or use scripts/webhook_demo.sh.
 WITH_WEBHOOK=0
 for arg in "$@"; do
   case "$arg" in
@@ -39,8 +27,7 @@ gcloud artifacts repositories create "$REPO" \
   --description="data-curator service images" 2>/dev/null \
   && echo "  created $REPO" || echo "  exists  $REPO"
 
-# Keep only the newest few images. Every deploy pushes a new one, and old ones
-# are never read again - they just accumulate against the free tier.
+# Keep the newest 3 images to stay within the free storage tier.
 cat > /tmp/cleanup-policy.json <<'JSON'
 [
   {
@@ -74,12 +61,7 @@ for svc in $services_to_build; do
 done
 
 # --- Deploy ------------------------------------------------------------------
-# --max-instances is a spending guard, not a performance setting. Without it a
-# retry storm or a runaway loop can scale to hundreds of instances, each one
-# making model calls. Three is far more than this needs.
-#
-# --no-allow-unauthenticated: neither service is open to the internet. The API
-# is called with an identity token; the worker only by Pub/Sub.
+# --max-instances caps spending. Both services require a Google identity.
 say "Deploying api"
 gcloud run deploy curator-api \
   --image="$REGISTRY/api:latest" \
@@ -94,13 +76,7 @@ echo "  $API_URL"
 
 if [ "$WITH_WEBHOOK" = 1 ]; then
 say "Deploying webhook receiver"
-# --allow-unauthenticated, and it is the only service with that flag.
-#
-# A webhook sender is an external system with no Google identity, so IAM cannot
-# gate this endpoint. The HMAC signature is the access control, which is why
-# this service is separate: Cloud Run authentication applies per service and not
-# per path, so hosting the webhook on curator-api would expose /changes,
-# /reviews and /epd to the internet as well.
+# The only public service; the HMAC signature is its access control.
 gcloud run deploy curator-webhook --image="$REGISTRY/webhook:latest" --region="$REGION" --service-account="$(sa_email curator-webhook)" --set-env-vars="GCP_PROJECT=$PROJECT,PUBSUB_TOPIC=$TOPIC" --set-secrets="WEBHOOK_SECRET_MANUFACTURER=webhook-secret-manufacturer:latest" --allow-unauthenticated --max-instances=3 --memory=512Mi --timeout=30s --quiet >/dev/null
 WEBHOOK_URL="$(gcloud run services describe curator-webhook --region="$REGION" --format='value(status.url)')"
 echo "  $WEBHOOK_URL  (public)"
@@ -110,9 +86,7 @@ say "Skipping webhook receiver (--with-webhook to deploy it)"
 fi
 
 say "Deploying worker"
-# The key is mounted from Secret Manager at start-up, using the worker's own
-# identity. It is never in the image, the repo, or a --set-env-vars flag, and
-# rotating it means adding a secret version, not rebuilding anything.
+# The API key is mounted from Secret Manager; rotate it by adding a version.
 gcloud run deploy curator-worker \
   --image="$REGISTRY/worker:latest" \
   --region="$REGION" \
@@ -127,27 +101,18 @@ echo "  $WORKER_URL"
 
 # --- Permissions that need a deployed service --------------------------------
 say "IAM for the deployed services"
-# Pub/Sub does not get to call the worker just because it knows the URL. It
-# signs each push with an OIDC token for this identity, and Cloud Run checks it.
+# Pub/Sub pushes with an OIDC token for this identity.
 gcloud run services add-iam-policy-binding curator-worker \
   --region="$REGION" \
   --member="serviceAccount:$(sa_email curator-pubsub)" \
   --role="roles/run.invoker" --quiet >/dev/null
 echo "  curator-pubsub -> run.invoker on curator-worker"
 
-# Dataset access and jobUser are terraform's now (infra/bigquery.tf and
-# infra/iam.tf). Granting them here too would mean two owners of one
-# binding and a plan that never settles.
+# BigQuery access is granted in infra/bigquery.tf and infra/iam.tf.
 
 # --- The push subscription ---------------------------------------------------
-# --ack-deadline=60, not the 10s default. The eval measured the model at 4.6s
-# median and 7.7s at p95, and BigQuery writes come after that. At 10s Pub/Sub
-# would start redelivering messages the worker was still successfully
-# processing - which looks like random duplicate work and is miserable to debug.
-#
-# --max-delivery-attempts=5 then dead-letter: a message that has failed five
-# times is not going to succeed on the sixth, and each attempt costs a model
-# call.
+# 60s ack deadline covers a slow model call (p95 about 8s) plus writes.
+# After 5 failed attempts a message goes to the dead-letter topic.
 say "Pub/Sub push subscription"
 PUSH_ARGS=(
   --topic="$TOPIC"
@@ -173,8 +138,7 @@ else
   echo "  created $SUBSCRIPTION"
 fi
 
-# Dead-lettering is done by Google's Pub/Sub service agent, which needs to be
-# able to acknowledge the original message as well as publish the copy.
+# The Pub/Sub service agent needs subscriber rights to dead-letter messages.
 PROJECT_NUMBER="$(gcloud projects describe "$PROJECT" --format='value(projectNumber)')"
 gcloud pubsub subscriptions add-iam-policy-binding "$SUBSCRIPTION" \
   --member="serviceAccount:service-$PROJECT_NUMBER@gcp-sa-pubsub.iam.gserviceaccount.com" \

@@ -1,19 +1,6 @@
-"""Drive generated proposals through the real pipeline and store the results.
+"""Run generated proposals through the real pipeline into a DuckDB file.
 
-The decisions this writes are genuine. `pipeline.decide()` is the same function
-the worker calls on a live message, the records are the real corpus, and the
-validation arithmetic is the real arithmetic. Only the arrival of the proposals
-is invented.
-
-That is the whole point: `reconcile.py` looks for drift and has never had a
-history to look at, and there is no way to ask whether the confidence floor is
-set right without a few thousand decisions to look at.
-
-Run:
-    python sim/run.py                       # 2000 proposals over 90 days, free
-    python sim/run.py --count 500 --drift   # shift the mix late, to test the
-                                            # nightly job's drift detector
-    python sim/run.py --provider openai --count 200   # costs money, see below
+Usage: python sim/run.py [--count N] [--drift] [--provider openai]
 """
 
 from __future__ import annotations
@@ -25,8 +12,7 @@ from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime, timedelta
 from pathlib import Path
 
-# Local runs only; deployed services get their key from Secret Manager. See
-# domain/localenv.py for where the file lives and why it is not in the repo.
+# Loads the local API key, if there is one.
 from domain.localenv import load as _load_local_env  # noqa: E402
 
 _load_local_env()
@@ -82,10 +68,7 @@ def main() -> int:
     model_calls = 0
     total_cost = 0.0
 
-    # Deciding is pure: it reads the record carried by the proposal, never the
-    # store, so the calls are independent and the slow one is a network round
-    # trip. Writes stay on this thread - one DuckDB connection, one writer, and
-    # the append-only order preserved.
+    # Decisions run in parallel; writes stay on this thread (one DuckDB writer).
     def decide_one(proposal):
         return pipeline.decide(proposal.record, proposal.request, triager)
 
@@ -100,8 +83,7 @@ def main() -> int:
         decision = outcome.decision
 
         store.save_request(request)
-        # The decision lands shortly after the proposal, not now. Without this
-        # every event would share one timestamp and the window would be a spike.
+        # Timestamp the decision just after its simulated submission.
         decided_at = datetime.fromisoformat(request.submitted_at) + timedelta(
             milliseconds=max(outcome.latency_ms, 1)
         )
@@ -129,9 +111,7 @@ def main() -> int:
         if i % 250 == 0:
             print(f"  {i}/{len(proposals)} decided")
 
-    # A 90-day history in which the nightly job never ran is not a history the
-    # system could actually have produced, and it leaves the dashboard's drift
-    # panel empty. Expiry requests are settled by rule, so this costs nothing.
+    # Run the nightly job once, so the dashboard has a reconciliation to show.
     expiries: list = []
 
     def publish_expiry(request):

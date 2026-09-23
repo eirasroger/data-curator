@@ -1,4 +1,4 @@
-# Keep the build context small and keep secrets out of the image entirely.
+# Keep the build context small and secrets out of images.
 .venv/
 .git/
 .env

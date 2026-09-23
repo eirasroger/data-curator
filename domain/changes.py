@@ -1,11 +1,4 @@
-"""What a "change to an EPD" is, and what the rules say should happen to it.
-
-There is no LLM in this file and no network call. Everything here is plain
-Python that runs in microseconds, which means the rules can be tested
-exhaustively and for free. That is deliberate, and it follows the rule already
-established in validation.py: code decides what code can decide, and the model
-is only asked the questions that are genuinely a matter of judgement.
-"""
+"""Change requests, decisions, and the rules that decide them. No LLM calls here."""
 
 from __future__ import annotations
 
@@ -22,17 +15,15 @@ from .schema import EPDProduct
 
 
 class ChangeKind(str, Enum):
-    """The three ways an EPD record can need to change."""
-
-    FIELD_UPDATE = "field_update"                # someone corrected one value
+    FIELD_UPDATE = "field_update"                # one value corrected
     RECORD_REPLACEMENT = "record_replacement"    # manufacturer published a new EPD
-    EXPIRY = "expiry"                            # the calendar did it; nobody acted
+    EXPIRY = "expiry"                            # validity date passed
 
 
 class Source(str, Enum):
-    HUMAN = "human"                              # a person reading the record
-    MANUFACTURER_FEED = "manufacturer_feed"      # a new EPD arrived
-    SCHEDULER = "scheduler"                      # the nightly job noticed something
+    HUMAN = "human"
+    MANUFACTURER_FEED = "manufacturer_feed"
+    SCHEDULER = "scheduler"                      # the nightly job
 
 
 class Action(str, Enum):
@@ -42,24 +33,22 @@ class Action(str, Enum):
 
 
 class TriageClass(str, Enum):
-    """What kind of change this appears to be. Only the model assigns these."""
+    """The LLM's classification of a change."""
 
-    DECIMAL_SLIP = "decimal_slip"                # 245 -> 24.5, a misplaced point
-    UNIT_CONVERSION = "unit_conversion"          # value was in tonnes, should be kg
-    TRANSCRIPTION = "transcription"              # digits read wrong off the PDF
-    GENUINE_CORRECTION = "genuine_correction"    # plainly a better value
-    IMPLAUSIBLE = "implausible"                  # nothing about this makes sense
-    UNCLEAR = "unclear"                          # the model does not know
+    DECIMAL_SLIP = "decimal_slip"                # 245 -> 24.5
+    UNIT_CONVERSION = "unit_conversion"          # tonnes vs kg
+    TRANSCRIPTION = "transcription"              # digits misread from the PDF
+    GENUINE_CORRECTION = "genuine_correction"
+    IMPLAUSIBLE = "implausible"
+    UNCLEAR = "unclear"
 
 
-# Fields whose numbers end up quoted in someone else's report. A wrong value here
-# propagates outside the system and cannot be quietly walked back, so no amount
-# of model confidence is allowed to auto-apply one. A person signs off, always.
+# Published figures that others quote. Changes to these always go to a person.
 MATERIAL_FIELDS = {
-    "date",              # expiry: governs whether the EPD may be cited at all
-    "epd_code",          # the registration number identifies the document
+    "date",
+    "epd_code",
     "prod_man",
-    "reference_unit",    # changes the meaning of every number attached to it
+    "reference_unit",
     "impacts.gwp_total",
     "impacts.gwp_fossil",
     "impacts.gwp_luluc",
@@ -69,29 +58,18 @@ MATERIAL_FIELDS = {
 }
 
 
-# Below this, the model's answer is advice attached to a review rather than a
-# decision. 0.90, not the 0.85 this shipped with: measured over 948 real model
-# calls, 0.85 auto-applied 208 correct changes and 5 wrong ones, and 0.90
-# auto-applied 134 with none wrong. The 74 that move to review cost somebody a
-# few minutes each; the 5 corrupt published figures other people go on to
-# quote. The README's analysis section has the table.
-#
-# An earlier 150-case benchmark reported 0.85 as safe. It was not wrong about
-# what it saw - it was too small to find a 2% failure rate in the 0.85-0.90
-# band. Thresholds need the bigger run.
+# Raised from 0.85, which auto-applied 5 wrong changes in a 2000-proposal run.
 CONFIDENCE_FLOOR = 0.90
 
 
 class ChangeRequest(BaseModel):
-    """One proposal to change one EPD. Immutable once submitted."""
+    """One proposal to change one EPD."""
 
     request_id: str
     product_id: int
     kind: ChangeKind
     source: Source
-    # Capped because both go into the model prompt. Real ones are a line or
-    # two; anything near these limits is a mistake or someone stuffing tokens
-    # they do not pay for.
+    # Length caps because both fields go into the LLM prompt.
     submitted_by: str = Field(max_length=200)
     submitted_at: str = Field(
         default_factory=lambda: datetime.now(UTC).isoformat()
@@ -107,7 +85,7 @@ class ChangeRequest(BaseModel):
     )
     new_value: Any = None
 
-    # RECORD_REPLACEMENT only: the whole new record
+    # RECORD_REPLACEMENT only
     replacement: dict | None = None
 
     reason: str = Field(
@@ -116,18 +94,17 @@ class ChangeRequest(BaseModel):
 
 
 class Decision(BaseModel):
-    """What the system concluded about a change request."""
+    """The outcome for one change request."""
 
     request_id: str
     action: Action
     decided_at: str = Field(
         default_factory=lambda: datetime.now(UTC).isoformat()
     )
-    # Which rule produced this outcome, in words a person can read.
     reason: str
-    # Deterministic findings: validation errors the change would introduce.
+    # Validation errors the change would introduce.
     blocking_issues: list[str] = Field(default_factory=list)
-    # Model output, only present when the model was actually consulted.
+    # Set only when the LLM was consulted.
     triage: TriageClass | None = None
     confidence: float | None = None
     rationale: str | None = None
@@ -148,10 +125,7 @@ class PathError(ValueError):
 def _walk(record: dict, path: str) -> tuple[Any, str, Any]:
     """Resolve a dotted path to (container, key, current value).
 
-    Returning the container and key rather than just the value is what lets the
-    caller write back to it. `comp[Basalt]` selects the entry in the list whose
-    `name` is "Basalt" - EPD sub-objects are identified by name, not position,
-    because positions shift whenever the extractor re-runs.
+    `comp[Basalt]` selects list entries by name, since positions can shift.
     """
     container: Any = record
     key: str = ""
@@ -204,12 +178,7 @@ def read_field(record: dict, path: str) -> Any:
 
 
 def apply_field_update(record: dict, path: str, new_value: Any) -> dict:
-    """Return a COPY of the record with one field changed.
-
-    A copy, not an edit in place: the caller needs to validate the hypothetical
-    result before deciding whether to keep it, and must still hold the original
-    if the answer turns out to be no.
-    """
+    """Return a copy of the record with one field changed."""
     updated = copy.deepcopy(record)
     container, key, _ = _walk(updated, path)
     container[key] = new_value
@@ -228,19 +197,12 @@ def _error_fingerprints(record: dict) -> set[str]:
 
 
 def new_validation_errors(before: dict, after: dict) -> list[str]:
-    """Validation errors the change would INTRODUCE.
-
-    Comparing before against after, rather than just checking `after`, matters:
-    plenty of these records already carry warnings and the odd error. A change
-    should be judged on whether it makes things worse, not on whether it leaves
-    the record perfect - otherwise no change to an already-imperfect record
-    could ever be accepted.
-    """
+    """Errors the change would introduce. Existing errors are ignored."""
     return sorted(_error_fingerprints(after) - _error_fingerprints(before))
 
 
 def fixed_validation_errors(before: dict, after: dict) -> list[str]:
-    """Validation errors the change would REMOVE."""
+    """Errors the change would remove."""
     return sorted(_error_fingerprints(before) - _error_fingerprints(after))
 
 
@@ -249,16 +211,8 @@ def is_material(path: str) -> bool:
 
 
 def screen(record: dict, request: ChangeRequest) -> Decision | None:
-    """Decide without the model, if the rules already settle it.
-
-    Returns a Decision when the answer is certain, or None when the request
-    survives to the point where judgement is actually required. Every request
-    passes through here first, so the model is never asked something a rule
-    could have answered - which is both cheaper and more reliable.
-    """
+    """Decide by rule alone. Returns None when the LLM is needed."""
     if request.kind is ChangeKind.EXPIRY:
-        # The nightly job produced this by reading a date. There is no judgement
-        # to make and nothing to second-guess.
         return Decision(
             request_id=request.request_id,
             action=Action.APPLIED,
@@ -272,10 +226,6 @@ def screen(record: dict, request: ChangeRequest) -> Decision | None:
                 action=Action.REJECTED,
                 reason="Replacement requested but no replacement record supplied.",
             )
-        # A replacement is a whole document, so it has to BE a whole document.
-        # EPDProduct is the same model the extractor produces, so validating
-        # here means a malformed replacement is refused at the door rather than
-        # discovered later by something that tried to read a missing field.
         try:
             EPDProduct.model_validate(request.replacement)
         except Exception as exc:  # noqa: BLE001 - pydantic ValidationError
@@ -286,8 +236,7 @@ def screen(record: dict, request: ChangeRequest) -> Decision | None:
                 blocking_issues=[str(exc).splitlines()[0][:300]],
             )
 
-        # A valid new document still always gets human eyes. It is not a
-        # correction to a number, it is a different document superseding one.
+        # A new document supersedes the record, so a person always reviews it.
         return Decision(
             request_id=request.request_id,
             action=Action.PENDING_REVIEW,
@@ -320,8 +269,7 @@ def screen(record: dict, request: ChangeRequest) -> Decision | None:
         )
 
     if old_value is not None and type(old_value) is not type(request.new_value):
-        # A number must stay a number. This catches "9,5" arriving as a string
-        # from a form, which would silently poison every later calculation.
+        # Catches values like "9,5" arriving as a string from a form.
         return Decision(
             request_id=request.request_id,
             action=Action.REJECTED,
@@ -347,9 +295,7 @@ def screen(record: dict, request: ChangeRequest) -> Decision | None:
 
     repaired = fixed_validation_errors(record, after)
     if repaired and not is_material(request.field_path):
-        # The record contradicted itself, this change resolves it, and the field
-        # is not one people quote. That is about as close to certain as a change
-        # gets, and asking a model would add cost and doubt, not accuracy.
+        # Fixes an existing inconsistency on an ordinary field: safe to apply.
         return Decision(
             request_id=request.request_id,
             action=Action.APPLIED,
@@ -357,7 +303,7 @@ def screen(record: dict, request: ChangeRequest) -> Decision | None:
             old_value=old_value,
         )
 
-    return None  # genuinely needs judgement
+    return None
 
 
 def finalise(
@@ -368,12 +314,7 @@ def finalise(
     rationale: str,
     confidence_floor: float = CONFIDENCE_FLOOR,
 ) -> Decision:
-    """Turn the model's opinion into an outcome, under rules the model cannot bend.
-
-    The model classifies and scores. It does not decide. The three rules below
-    are the decision, and they live here in code so they can be read, argued
-    with and tested - rather than inside a prompt where nobody can see them.
-    """
+    """Turn the LLM's classification into an outcome."""
     base = dict(
         request_id=request.request_id,
         triage=triage,
@@ -382,16 +323,7 @@ def finalise(
         old_value=old_value,
     )
 
-    # ORDER MATTERS, and getting it wrong here was caught by the eval.
-    #
-    # The material-field rule has to come FIRST. If the implausible check runs
-    # first, an "implausible" verdict lets the model reject a published figure
-    # on its own - which is the same authority we just said it must not have.
-    # A wrongly rejected correction is not harmless: the error it was trying to
-    # fix stays in the data, and the person who reported it is told nothing.
-    #
-    # So for these fields the model's opinion is advice attached to a review,
-    # never a verdict.
+    # Must come first, so an "implausible" verdict cannot reject a published figure.
     if is_material(request.field_path or ""):
         return Decision(
             action=Action.PENDING_REVIEW,
@@ -425,11 +357,7 @@ def finalise(
 
 
 def is_expired(record: dict, on: date | None = None) -> bool:
-    """Whether the EPD's validity has lapsed.
-
-    `date` in these records is the EXPIRY date, not the publication date - see
-    the field description in schema.py.
-    """
+    """Whether the EPD's expiry date (the `date` field) has passed."""
     raw = record.get("date")
     if not raw:
         return False
@@ -440,12 +368,7 @@ def is_expired(record: dict, on: date | None = None) -> bool:
 
 
 class ReviewDecision(BaseModel):
-    """A person's verdict on a request the pipeline parked.
-
-    This does not overwrite what the pipeline concluded - it is appended to the
-    same request's history as a second event. Both answers stay on the record:
-    what the machine decided, and what the human decided afterwards.
-    """
+    """A person's verdict on a parked request. Recorded beside the original decision."""
 
     request_id: str
     reviewer: str = Field(description="who made this call; a person, not a service")
@@ -454,7 +377,7 @@ class ReviewDecision(BaseModel):
 
 
 class MessageType(str, Enum):
-    """What a Pub/Sub message carries. The worker branches on this."""
+    """What a Pub/Sub message carries."""
 
     CHANGE_REQUEST = "change_request"
     REVIEW = "review"

@@ -1,10 +1,4 @@
-"""The proposal simulator.
-
-What matters about generated data is that it is reproducible and that it is not
-secretly rigged. A history nobody can regenerate is an anecdote, and a
-stationary mix that quietly shifts over time would manufacture the drift the
-analysis is meant to look for.
-"""
+"""Tests for the proposal simulator: reproducibility and a steady mix."""
 
 from __future__ import annotations
 
@@ -50,7 +44,7 @@ def test_proposals_arrive_in_order_and_inside_the_window():
 
 
 def test_every_shape_in_the_mix_can_actually_be_built():
-    """A weight pointing at a method that always declines is a silent hole."""
+    """Every weighted shape produces proposals."""
     records = corpus.load_records()
     import random
 
@@ -68,11 +62,7 @@ def test_proposals_are_built_from_real_records():
 
 
 def test_the_default_mix_does_not_move_over_time():
-    """The stationary run has to be genuinely stationary.
-
-    If the blend of proposal shapes shifted on its own, any drift the analysis
-    found would be drift that was planted.
-    """
+    """Without `drift`, the proposal mix stays constant over time."""
     proposals = generate(3000, 90, seed=42, end=END)
     third = len(proposals) // 3
     first = Counter(p.generator for p in proposals[:third])
@@ -123,11 +113,7 @@ def test_a_run_writes_one_event_per_proposal(all_records):
 
 
 def test_events_carry_the_time_they_were_given(all_records):
-    """The backfill timestamp has to reach the database.
-
-    Without it every event in a generated history shares one timestamp, and the
-    whole window collapses into a spike.
-    """
+    """Simulated timestamps are stored on each event."""
     store = get_store("duckdb", path=":memory:")
     for rec in all_records:
         store.save_version(rec, rec["product_id"], 1, None, "active")
@@ -149,12 +135,7 @@ def test_events_carry_the_time_they_were_given(all_records):
 
 
 def test_every_labelled_shape_actually_reaches_the_model():
-    """The benchmark's whole premise.
-
-    SHAPE_TRUTH labels proposals so a triager can be scored on them. If a shape
-    were settled by screen() it would never reach a model, and scoring it would
-    measure the rules instead - flattering the model with cases it never saw.
-    """
+    """Every shape in SHAPE_TRUTH gets past screen() and reaches the model."""
     import random
 
     from domain import changes

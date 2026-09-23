@@ -3,13 +3,8 @@
 # project = "data-curator-507614"
 # region  = "europe-west1"
 
-# Keep an explicit dataset OWNER grant that predates terraform. Without this
-# the access list - which terraform treats as authoritative - drops it on the
-# next apply. A project owner keeps OWNER through projectOwners either way, so
-# this only matters if you want the named entry preserved.
+# Extra dataset owners. Project owners already have access.
 # dataset_owners = ["you@example.com"]
 
-# Set after the worker is deployed, to create the nightly scheduler job:
-#   terraform apply -var worker_url="$(gcloud run services describe \
-#     curator-worker --region=europe-west1 --format='value(status.url)')"
+# Set after deploying the worker to create the nightly job.
 # worker_url = ""

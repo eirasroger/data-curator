@@ -1,9 +1,4 @@
-# One identity per service, each holding only what that service needs.
-#
-# A single shared account would mean the public webhook receiver - the least
-# trusted thing here, since anyone can send it a request - also held BigQuery
-# write access. Splitting them means compromising the front door does not hand
-# over the store.
+# One service account per service, each with only the permissions it needs.
 
 locals {
   service_accounts = {
@@ -29,14 +24,7 @@ locals {
 }
 
 # --- publishing to the changes topic ----------------------------------------
-#
-# api       submits what a reviewer proposes.
-# webhook   submits what a manufacturer republished.
-# worker    publishes too, which is easy to miss: the nightly job raises expiry
-#           requests onto the same topic rather than editing records directly,
-#           and that is what gives an expiry the same audit trail as any other
-#           change. Without it, the first record to actually expire fails 403.
-# dashboard submits a person's verdict on a parked change.
+# The worker publishes too: the nightly job queues expiry requests.
 resource "google_pubsub_topic_iam_member" "publishers" {
   for_each = toset(["api", "webhook", "worker", "dashboard"])
   topic    = google_pubsub_topic.changes.name
@@ -45,12 +33,7 @@ resource "google_pubsub_topic_iam_member" "publishers" {
 }
 
 # --- BigQuery ---------------------------------------------------------------
-#
-# Dataset-level access is granted in bigquery.tf through the dataset's own
-# access blocks, not here: `bq add-iam-policy-binding` on a dataset returns
-# "This feature requires allowlisting" on an ordinary project, and the access
-# list is the portable route. Running a query additionally needs jobUser at the
-# project level, which is what these grant.
+# Dataset access is in bigquery.tf. Running queries also needs jobUser.
 resource "google_project_iam_member" "job_user" {
   for_each = toset(["worker", "api", "scheduler", "dashboard"])
   project  = var.project
@@ -67,9 +50,7 @@ resource "google_secret_manager_secret_iam_member" "worker_reads_openai_key" {
 }
 
 resource "google_secret_manager_secret_iam_member" "webhook_reads_signing_secrets" {
-  # Keyed off the variable, not off the secret resource. Using the resource as
-  # the for_each map makes the KEYS unknown until apply, and terraform refuses
-  # to plan that - it cannot tell how many instances it is about to manage.
+  # Keyed on the variable so the keys are known at plan time.
   for_each = toset(var.webhook_sources)
 
   secret_id = google_secret_manager_secret.webhook[each.value].secret_id

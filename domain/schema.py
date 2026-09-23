@@ -1,14 +1,6 @@
-"""
-Pydantic schema for EPD extraction.
+"""EPD record schema, shared with the extraction project.
 
-This replaces the "please output JSON shaped like this" half of
-estructuracion/system_prompt.txt. Every Field(description=...) below is text the
-model actually sees -- LangChain converts this whole module into a JSON Schema and
-hands it to OpenAI, which then *cannot* return a differently-shaped object.
-
-Design constraint worth knowing: OpenAI strict structured output forbids
-open-ended dicts. The original prompt used dynamic keys ("data_Knauf KON13",
-"kg - m2", "corr"). Those become lists-with-a-name-field here.
+Field descriptions double as extraction instructions for that project's LLM.
 """
 
 from enum import Enum
@@ -16,8 +8,7 @@ from enum import Enum
 from pydantic import BaseModel, Field
 
 # --------------------------------------------------------------------------
-# Enums: these become JSON Schema `enum`, so the model literally cannot
-# return a value outside the list. Cheaper and stronger than prompting for it.
+# Enums
 # --------------------------------------------------------------------------
 
 class Quality(str, Enum):
@@ -66,12 +57,7 @@ class RecycledContent(BaseModel):
 
 
 class Circularity(BaseModel):
-    """
-    Circular sourcing + end-of-life routes, per material.
-
-    Use name='product' ONLY when the EPD gives no material-specific breakdown.
-    All fields except `orig` should sum to 100 for each material.
-    """
+    """Circular sourcing and end-of-life routes per material. All but `orig` sum to 100."""
     name: str = Field(description="Material name matching comp, or 'product' if only product-level data exists.")
     orig: float | None = Field(None, ge=0, le=100, description="Share from circular/recycled sources, %. Independent of the end-of-life fields.")
     reuse: float | None = Field(None, ge=0, le=100, description="Directly reused without significant processing, %.")
@@ -98,18 +84,7 @@ class ProductIntegrity(BaseModel):
 
 
 class ConversionRatio(BaseModel):
-    """
-    One explicit conversion factor stated in the EPD.
-
-    Replaces the old dynamic-key dict ("kg - m2": 4). NEVER calculate these --
-    only record factors the EPD states outright.
-
-    The field names encode the direction on purpose. An earlier version used
-    from_unit/to_unit/value with the direction explained in prose, and the model
-    returned the reciprocal (0.11 instead of 9.5) on some runs. A model reads a
-    field NAME far more reliably than a sentence describing it: if a field can be
-    read two ways, name it so it cannot.
-    """
+    """A conversion factor stated in the EPD. Field names spell out the direction."""
     measured_unit: str = Field(description="The unit being measured OUT, e.g. 'kg'.")
     per_unit: str = Field(description="The unit measured PER, e.g. 'm2', 'l', 'item', 'piece', 'm3'.")
     measured_units_per_one_per_unit: float = Field(
@@ -156,18 +131,13 @@ class EnvironmentalImpacts(BaseModel):
 
 
 class VariantImpacts(BaseModel):
-    """
-    Per-variant impact table. Replaces the old "data_<variant name>" dynamic keys.
-
-    Populate ONLY when the EPD prints a separate impacts table per variant.
-    If the EPD gives only correction factors, use `correction_factors` instead.
-    """
+    """Impact table for one variant, when the EPD prints one per variant."""
     variant: str = Field(description="Variant name, matching a name in `variants`.")
     impacts: EnvironmentalImpacts
 
 
 # --------------------------------------------------------------------------
-# Root object -- this is what with_structured_output() returns
+# Root object
 # --------------------------------------------------------------------------
 
 class EPDProduct(BaseModel):

@@ -1,13 +1,4 @@
-"""Facts about the extracted EPDs, and how to break one on purpose.
-
-Shared by `eval/generate_cases.py` and `sim/generate.py`. Both need to know
-which records can be cross-checked against themselves, and both build proposals
-by corrupting a value and proposing the original back. Written twice, the two
-would drift, and the eval would stop measuring what the simulator produces.
-
-Nothing here invents an EPD. The records are the real ones; only the proposals
-built on top of them are invented.
-"""
+"""Record helpers shared by the eval case generator and the simulator."""
 
 from __future__ import annotations
 
@@ -25,11 +16,7 @@ def load_records() -> dict[int, dict]:
 
 
 def kg_per_unit(rec: dict) -> float | None:
-    """The declared kg per reference unit, if the EPD states one.
-
-    This is the number density x thickness has to reproduce, and it is what
-    makes a proposed density checkable without asking anybody.
-    """
+    """The declared kg per reference unit, if the EPD states one."""
     unit = rec.get("reference_unit")
     for r in rec.get("conversion_ratios") or []:
         if r.get("measured_unit") == "kg" and r.get("per_unit") == unit:
@@ -46,12 +33,7 @@ def cross_checkable(records: dict[int, dict]) -> list[int]:
 
 
 def not_cross_checkable(records: dict[int, dict]) -> list[int]:
-    """Records with a density but no ratio to check it against.
-
-    A change here cannot be settled by arithmetic, so it reaches the model.
-    Without these the rules absorb every numeric proposal and the model layer
-    is never exercised at all.
-    """
+    """Records with a density but no ratio to check it against. Changes reach the LLM."""
     checkable = set(cross_checkable(records))
     return [
         pid for pid, r in records.items()
@@ -89,13 +71,7 @@ def percentages(rec: dict) -> list[dict]:
 
 
 def corrupt(record: dict, changes_to_apply: dict[str, Any]) -> dict:
-    """A copy of the record with values deliberately broken.
-
-    This is how a genuine correction is represented: break a value, then propose
-    putting it back. Without it every proposal against a correct record would be
-    a bad proposal, and the set would only measure the system's ability to say
-    no.
-    """
+    """A copy of the record with values broken, so restoring them is a correct change."""
     from domain import changes
 
     result = copy.deepcopy(record)

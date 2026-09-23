@@ -1,8 +1,5 @@
-# Shared settings. Source this, don't run it:  . scripts/gcp_env.sh
-#
-# The bq CLI is a Python program, and under Git Bash on Windows it fails with
-# "python3.14: command not found" because it cannot resolve an interpreter on
-# its own. The Cloud SDK ships one; point at it explicitly. Harmless elsewhere.
+# Shared settings. Source it: . scripts/gcp_env.sh
+# On Git Bash for Windows, bq needs the Cloud SDK's bundled Python.
 if [ -z "${CLOUDSDK_PYTHON:-}" ] && command -v gcloud >/dev/null 2>&1; then
   _sdk_root="$(dirname "$(dirname "$(command -v gcloud)")")"
   _bundled="$_sdk_root/platform/bundledpython/python.exe"
@@ -17,8 +14,8 @@ if [ -z "${CLOUDSDK_PYTHON:-}" ] && command -v gcloud >/dev/null 2>&1; then
 fi
 
 export PROJECT="${PROJECT:-data-curator-507614}"
-export REGION="${REGION:-europe-west1}"       # Belgium: closest EU region with everything we need
-export BQ_LOCATION="${BQ_LOCATION:-EU}"       # keep the data in the EU
+export REGION="${REGION:-europe-west1}"
+export BQ_LOCATION="${BQ_LOCATION:-EU}"
 export DATASET="${DATASET:-curator}"
 export TOPIC="${TOPIC:-epd-changes}"
 export DLQ_TOPIC="${DLQ_TOPIC:-epd-changes-dlq}"

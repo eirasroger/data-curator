@@ -1,13 +1,6 @@
-"""Load the extracted EPDs into a local DuckDB file as version 1 of each record.
+"""Load the EPDs into a local DuckDB file as version 1 of each record.
 
-The local counterpart of seed_bigquery.py, and the first thing to run for a
-local setup. Every record lands as version 1 with no originating change request,
-and as 'active' regardless of its date - so the nightly job discovers an expiry
-and raises it through the pipeline, instead of the seed quietly asserting it.
-
-Run:
-    python scripts/seed_local.py               # refuses if rows already exist
-    python scripts/seed_local.py --replace     # delete the file and reload
+Usage: python scripts/seed_local.py [--db PATH] [--replace]
 """
 
 from __future__ import annotations

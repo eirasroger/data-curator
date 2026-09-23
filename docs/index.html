@@ -7,8 +7,7 @@
 <title>data-curator - operator</title>
 
 <style>
-  /* Colours are the validated data-viz palette: categorical slots 1-2 for
-     identity, the status four only where the colour means a state. */
+  /* Status colours are used only where colour means a state. */
   :root {
     --surface: #fcfcfb; --raised: #ffffff; --line: #e6e5e1;
     --ink: #0b0b0b; --ink-2: #52514e; --muted: #8a8983;
@@ -61,7 +60,7 @@
   .flag { display: flex; gap: 8px; align-items: baseline; padding: 8px 0;
           border-bottom: 1px solid var(--line); }
   .flag:last-child { border-bottom: none; }
-  /* Status never travels on colour alone - each carries its own glyph. */
+  /* Each status also has a glyph, so colour is never the only signal. */
   .dot::before { font-size: 13px; }
   .dot.ok::before    { content: "\25cf"; color: var(--good); }
   .dot.warn::before  { content: "\25b2"; color: var(--serious); }
@@ -1541,16 +1540,13 @@
 
 
 <script>
-// The static demo keeps your clicks in the browser so the page behaves like the
-// real one. Nothing leaves the tab, and a reload with storage cleared restores
-// the snapshot.
+// Static demo: reviews are kept in localStorage; clear it to restore the snapshot.
 (function () {
   var KEY = "curator-demo-reviewed";
   var done = {};
   try { done = JSON.parse(localStorage.getItem(KEY) || "{}"); } catch (e) { done = {}; }
 
-  // The queue is longer than the page of it shown here, so the count has to
-  // come off the real total rather than off the visible rows.
+  // Count from the full queue total, which exceeds the visible rows.
   var el = document.getElementById("queue-depth");
   var total = el ? parseInt(el.dataset.total, 10) : 0;
   function depth() {

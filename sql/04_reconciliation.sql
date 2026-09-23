@@ -1,12 +1,4 @@
--- One row per nightly run.
---
--- The job answers two different questions, and they fail differently:
---   Did anything BREAK?  Requests that errored, messages in the dead-letter
---                        queue, reviews nobody has touched in a week.
---   Did anything DRIFT?  The pipeline still succeeds, but its behaviour has
---                        moved - more rejections than usual, confidence sagging,
---                        cost per decision climbing. Drift raises no errors,
---                        which is exactly why something has to go looking.
+-- One row per nightly run: expiries, throughput, drift flags and overdue reviews.
 
 CREATE TABLE IF NOT EXISTS `curator.reconciliation_runs`
 (

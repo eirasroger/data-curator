@@ -1,17 +1,5 @@
--- DuckDB port of sql/*.sql, for running without Google Cloud.
---
--- Differences from the BigQuery DDL, all of them forced:
---   PARTITION BY / CLUSTER BY are BigQuery storage directives and have no
---     DuckDB equivalent. They affect cost and speed there, nothing here.
---   OPTIONS(description=...) is BigQuery syntax. The column comments live in
---     sql/*.sql, which stays the reference.
---   INT64/FLOAT64/BOOL become BIGINT/DOUBLE/BOOLEAN.
---   ARRAY<STRING> becomes VARCHAR[].
---   NUMERIC becomes DECIMAL(18, 9).
---
--- Append-only is enforced by the code here, not by the platform. BigQuery gets
--- it for free from the streaming buffer; nothing stops an UPDATE in DuckDB, so
--- the only protection is that no method issues one.
+-- DuckDB version of sql/*.sql for local runs. Same tables and views, with
+-- DuckDB types and no partitioning, clustering or column descriptions.
 
 CREATE TABLE IF NOT EXISTS epd_records
 (

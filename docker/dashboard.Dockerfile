@@ -1,4 +1,4 @@
-# Built from the REPOSITORY ROOT, like the others, so it can COPY domain/.
+# Built from the repository root; see docker/api.Dockerfile.
 FROM python:3.12-slim
 
 ENV PYTHONUNBUFFERED=1 \

@@ -1,15 +1,6 @@
 #!/usr/bin/env bash
-# Remove the running services. Data and secrets are kept.
-#
-# Cloud Run scales to zero and costs nothing idle, so this is not strictly
-# necessary. It exists so the project can be left with no reachable endpoints,
-# in particular the public webhook receiver, when nobody is working on it.
-#
-# scripts/deploy.sh brings everything back.
-#
-#   bash scripts/teardown.sh          # services and scheduler
-#   bash scripts/teardown.sh --images # also delete the built images
-#   bash scripts/teardown.sh --data   # also drop the BigQuery dataset
+# Remove the services, scheduler and push subscription; keep data and secrets.
+# Usage: bash scripts/teardown.sh [--images] [--data]
 set -euo pipefail
 
 cd "$(dirname "$0")/.."
@@ -30,8 +21,7 @@ say "Scheduler"
 gcloud scheduler jobs delete curator-reconcile --location="$REGION" --quiet >/dev/null 2>&1 \
   && echo "  deleted curator-reconcile" || echo "  absent  curator-reconcile"
 
-# The push subscription points at a service that no longer exists, so it would
-# retry against a dead endpoint until every message dead-letters.
+# The subscription would otherwise push to a deleted service.
 say "Push subscription"
 gcloud pubsub subscriptions delete "$SUBSCRIPTION" --quiet >/dev/null 2>&1 \
   && echo "  deleted $SUBSCRIPTION" || echo "  absent  $SUBSCRIPTION"

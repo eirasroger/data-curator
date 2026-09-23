@@ -1,12 +1,4 @@
-"""What the operator page shows, assembled from the store.
-
-Composed from methods the `Store` protocol already had rather than new SQL, so
-both backends serve the dashboard without either one growing a second dialect.
-
-Every block carries the window it covers and the moment it was read. A page that
-cannot say how old its numbers are invites someone to treat last night's
-reconciliation as this minute's state.
-"""
+"""The dashboard's data, built from `Store` methods so both backends support it."""
 
 from __future__ import annotations
 
@@ -14,9 +6,7 @@ from dataclasses import dataclass, field
 from datetime import UTC, datetime, timedelta
 from typing import Any
 
-# A change waiting longer than this is not in progress, it is forgotten. Same
-# figure the nightly job uses; imported rather than repeated would be circular,
-# so it is asserted equal in the tests instead.
+# Must match reconcile.REVIEW_SLA_DAYS; a test checks this.
 REVIEW_SLA_DAYS = 7
 
 
@@ -53,7 +43,7 @@ class Overview:
     as_of: datetime
     windows: list[Window] = field(default_factory=list)
     queue: list[dict] = field(default_factory=list)
-    # The whole queue, not the page of it being shown.
+    # Full queue size; `queue` holds one page.
     queue_depth: int = 0
     overdue: int = 0
     reconciliation: dict | None = None
@@ -98,11 +88,7 @@ def _window(store: Any, label: str, since: datetime) -> Window:
 
 
 def overview(store: Any, now: datetime | None = None, queue_limit: int = 50) -> Overview:
-    """Everything the dashboard renders, in one pass over the store.
-
-    The clock is injectable for the same reason it is in reconcile.run(): a page
-    that can only be tested by waiting until tomorrow is a page nobody tests.
-    """
+    """Everything the dashboard renders. The clock is injectable for tests."""
     now = now or datetime.now(UTC)
 
     queue = store.review_queue(limit=queue_limit)

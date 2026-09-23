@@ -1,9 +1,4 @@
-"""The operator page, and the numbers behind it.
-
-The page is where a person actually decides something, so the tests are about
-the loop closing: what it shows, what a click does to the datastore, and that
-the public snapshot cannot quietly stop matching the real thing.
-"""
+"""Tests for the dashboard: metrics, review actions and the static export."""
 
 from __future__ import annotations
 
@@ -53,7 +48,7 @@ def park_one(store, request_id: str = "req-1") -> ChangeRequest:
 # ---------------------------------------------------------------------------
 
 def test_the_sla_matches_the_nightly_job():
-    """Two places name the same number; if they drift the page lies."""
+    """The dashboard and the nightly job use the same review SLA."""
     assert metrics.REVIEW_SLA_DAYS == reconcile.REVIEW_SLA_DAYS
 
 
@@ -131,8 +126,7 @@ def test_the_page_shows_a_parked_change(client, store):
     r = c.get("/")
     assert "epd_code" in r.text
     assert "EPD-NEW-0001" in r.text
-    # The pipeline's own reason has to be on screen - a queue that does not say
-    # why something stopped is asking a person to re-derive it.
+    # The pipeline's reason is shown with each queued item.
     assert "published figure" in r.text
 
 
@@ -157,8 +151,7 @@ def test_approving_applies_the_change_and_logs_who_did_it(client, store):
         "WHERE request_id = $rid ORDER BY occurred_at",
         rid=request.request_id,
     )
-    # Both answers stay on the record: what the pipeline concluded, and what
-    # the person decided afterwards.
+    # Both the pipeline's decision and the review are recorded.
     assert [e["event_type"] for e in events] == ["decided", "reviewed"]
     assert events[0]["action"] == "pending_review"
     assert events[1]["action"] == "applied"
@@ -183,11 +176,7 @@ def test_a_review_for_an_unknown_request_does_not_crash_the_page(client):
 
 
 def test_a_second_approval_does_not_write_a_second_version(client, store):
-    """Pub/Sub delivers at least once, so the same verdict arrives twice.
-
-    The first approval applies the change. The second used to apply it again
-    and leave a version nobody asked for.
-    """
+    """A duplicate approval applies the change only once."""
     c, _ = client
     request = park_one(store)
     before = store.current_record(6)["_version"]
@@ -207,19 +196,13 @@ def test_a_second_approval_does_not_write_a_second_version(client, store):
 
 
 def test_approving_a_rejected_change_does_not_apply_it(client, store):
-    """The rules said no. A review must not be a way around that.
-
-    screen() rejects a change that would break the record's internal
-    consistency, but the rejected request stays in change_requests. An approval
-    arriving afterwards used to apply it without re-validating anything.
-    """
+    """An approval cannot apply a change the rules already rejected."""
     c, _ = client
     record = store.current_record(6)
     request = ChangeRequest(
         request_id="req-rejected", product_id=6, kind=ChangeKind.FIELD_UPDATE,
         source=Source.HUMAN, submitted_by="tester",
-        # density and thickness cross-check against the conversion ratio, so a
-        # density this wrong breaks the record's own arithmetic.
+        # This density contradicts thickness and the conversion ratio.
         field_path="density", new_value=999999.0,
         reason="Read it off a different datasheet.",
     )
@@ -236,7 +219,7 @@ def test_approving_a_rejected_change_does_not_apply_it(client, store):
 
 
 def test_a_review_outcome_says_which_case_it_was(store):
-    """The worker branches on this, so the distinctions have to hold."""
+    """Each review outcome maps to a distinct result."""
     from domain.changes import ReviewDecision
     from domain.pipeline import ReviewOutcome
 
@@ -258,11 +241,7 @@ def test_a_review_outcome_says_which_case_it_was(store):
 # ---------------------------------------------------------------------------
 
 def test_the_static_export_renders_the_same_templates(store, tmp_path):
-    """The demo and the real page must come from one set of templates.
-
-    If the export grew its own copy, the public page would slowly stop being a
-    demonstration of this system and start being a drawing of one.
-    """
+    """The static export renders the same templates as the live dashboard."""
     from jinja2 import Environment, FileSystemLoader, select_autoescape
 
     park_one(store)
@@ -279,7 +258,7 @@ def test_the_static_export_renders_the_same_templates(store, tmp_path):
 
     assert "Demo snapshot" in html
     assert "epd_code" in html
-    # Nothing in the snapshot may reach for a server that is not there.
+    # The static page makes no server calls.
     assert "hx-post" not in html
     assert "htmx" not in html
     assert 'data-act="approve"' in html
@@ -299,6 +278,6 @@ def test_overdue_counts_only_what_is_actually_old(store):
     assert o.queue_depth == 1
     assert o.overdue == 0  # submitted seconds ago
 
-    # Looked at from far enough in the future, the same change is overdue.
+    # Viewed 30 days later, the change is still queued.
     later = datetime.now(UTC) + timedelta(days=30)
     assert metrics.overview(store, now=later).queue_depth == 1

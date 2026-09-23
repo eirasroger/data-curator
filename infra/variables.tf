@@ -7,7 +7,7 @@ variable "project" {
 variable "region" {
   description = "Cloud Run, Scheduler and Artifact Registry region."
   type        = string
-  default     = "europe-west1" # Belgium: nearest EU region with everything needed
+  default     = "europe-west1"
 }
 
 variable "bq_location" {
@@ -29,11 +29,7 @@ variable "topic" {
 }
 
 variable "webhook_sources" {
-  description = <<-EOT
-    Manufacturer feeds that may post signed republications. One signing secret
-    per source, so a leaked key compromises one sender and revoking a sender is
-    one secret version.
-  EOT
+  description = "Manufacturer feeds allowed to post to the webhook. One signing secret each."
   type        = list(string)
   default     = ["manufacturer"]
 }
@@ -50,22 +46,13 @@ variable "reconcile_timezone" {
 }
 
 variable "worker_url" {
-  description = <<-EOT
-    The deployed worker's base URL, which the scheduler posts to. Empty until
-    the service exists, and the scheduler job is skipped while it is empty:
-    Cloud Run revisions are build artifacts and belong to deploy.sh, not to
-    state, so terraform cannot know this until after a deploy.
-  EOT
+  description = "The deployed worker's URL. The scheduler job is created once this is set."
   type        = string
   default     = ""
 }
 
 variable "dataset_owners" {
-  description = <<-EOT
-    Extra people granted OWNER on the dataset by email. Project owners already
-    hold it through the projectOwners group, so this is normally empty; set it
-    only to keep an explicit grant that predates terraform.
-  EOT
+  description = "Extra dataset owners by email. Project owners already have access."
   type        = list(string)
   default     = []
 }

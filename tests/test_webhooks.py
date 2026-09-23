@@ -1,7 +1,4 @@
-"""Tests for webhook signature verification.
-
-Every case here is an attack that has worked on somebody's real endpoint.
-"""
+"""Tests for webhook signature verification."""
 
 from __future__ import annotations
 
@@ -52,8 +49,7 @@ def test_a_single_flipped_byte_is_rejected():
 
 
 def test_a_replayed_request_expires():
-    """Captured requests stay correctly signed forever. The timestamp is what
-    stops them working."""
+    """An old timestamp is rejected, which stops replays."""
     body = b'{"epd_code": "S-P-05317"}'
     sig, ts = signed(body, at=NOW)
 
@@ -66,8 +62,7 @@ def test_a_replayed_request_expires():
 
 
 def test_a_timestamp_from_the_future_is_rejected():
-    """Otherwise a forger sets the timestamp far ahead and buys an unlimited
-    replay window."""
+    """A timestamp far in the future is rejected."""
     body = b"{}"
     sig, ts = signed(body, at=NOW + 86400)
     ok, reason = webhooks.verify(SECRET, body, sig, ts, now=NOW)
@@ -91,8 +86,7 @@ def test_unparseable_timestamp_is_rejected():
 
 
 def test_an_unconfigured_source_is_rejected():
-    """An unknown source must fail closed. An empty secret would otherwise
-    verify against a signature computed with an empty secret."""
+    """An empty secret rejects every request."""
     body = b"{}"
     sig, ts = signed(body, secret="")
     ok, reason = webhooks.verify("", body, sig, ts, now=NOW)
@@ -101,8 +95,7 @@ def test_an_unconfigured_source_is_rejected():
 
 
 def test_the_timestamp_is_part_of_what_is_signed():
-    """Moving the timestamp without re-signing must invalidate the request,
-    otherwise the expiry check is trivially bypassed."""
+    """Changing the timestamp without re-signing invalidates the request."""
     body = b'{"epd_code": "S-P-05317"}'
     sig, _ = signed(body, at=NOW - 3600)
     ok, reason = webhooks.verify(SECRET, body, sig, str(int(NOW)), now=NOW)
@@ -111,11 +104,8 @@ def test_the_timestamp_is_part_of_what_is_signed():
 
 
 def test_signing_hashes_raw_bytes_not_reserialised_json():
-    """The classic failure: parse, re-serialise, hash. json.dumps reorders keys
-    and changes spacing, so the digest stops matching."""
-    # Compact, as a sender would transmit it. json.dumps re-inserts spaces
-    # after ':' and ',' by default, so the bytes differ even though the object
-    # is identical.
+    """Re-serialised JSON fails verification; only the raw bytes match."""
+    # Compact bytes; json.dumps would add spaces and change the digest.
     body = b'{"b":2,"a":1}'
     reserialised = json.dumps(json.loads(body)).encode()
     assert body != reserialised, "setup: the two encodings must differ"
@@ -130,7 +120,7 @@ def test_signature_is_stable_for_the_same_input():
 
 
 def test_verification_works_against_the_real_clock():
-    """Guards against the default max_age or time source being wrong."""
+    """A fresh request passes with the default max_age and clock."""
     body = b'{"live": true}'
     ts = str(int(time.time()))
     sig = webhooks.sign(SECRET, ts, body)

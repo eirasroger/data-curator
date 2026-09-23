@@ -1,9 +1,6 @@
 #!/usr/bin/env bash
-# Push real change requests through the deployed system and watch what happens.
-#
-# Neither service is public, so every call carries an identity token minted from
-# your gcloud login. Cloud Run checks it before the request reaches the
-# container.
+# Send real change requests to the deployed API and follow them through.
+# Calls use an identity token from your gcloud login.
 set -euo pipefail
 
 cd "$(dirname "$0")/.."
@@ -31,8 +28,7 @@ submit() {
 }
 
 wait_for() {
-  # The API answers before the work is done - that is what the queue is for.
-  # So poll until the worker has written a decision.
+  # The API replies before the worker decides, so poll for the decision.
   local id="$1" action
   for _ in $(seq 1 30); do
     action="$(api GET "/changes/$id" 2>/dev/null | "$PY" scripts/_smoke_fmt.py action || true)"
@@ -49,9 +45,7 @@ say "API health"
 api GET /health; echo
 
 say "1. A change the rules reject on their own"
-# density 95 -> 9.5 on product 6. 95 kg/m3 x 0.1 m = 9.5 kg/m2, exactly the
-# conversion ratio the EPD declares, so the stored value is right and the
-# proposal is wrong. check_density_thickness settles it. No model is consulted.
+# 95 kg/m3 x 0.1 m = 9.5 kg/m2, as declared, so 9.5 is rejected by rule.
 echo "  product 6: density 95.0 -> 9.5"
 ID1="$(submit '{
   "product_id": 6, "field_path": "density", "new_value": 9.5,
@@ -62,7 +56,7 @@ echo "    request_id $ID1"
 wait_for "$ID1"
 
 say "2. A change that always needs a person"
-# gwp_total is a published figure. However confident the model is, this parks.
+# gwp_total is a published figure, so this goes to review.
 echo "  product 6: impacts.gwp_total 11.0 -> 11.2"
 ID2="$(submit '{
   "product_id": 6, "field_path": "impacts.gwp_total", "new_value": 11.2,
@@ -73,7 +67,7 @@ echo "    request_id $ID2"
 wait_for "$ID2"
 
 say "3. A change nothing in the record can settle"
-# Service life is not cross-checked by anything. This is the model's territory.
+# Service life has no cross-check, so the model decides.
 echo "  product 6: lifespan 50 -> 45"
 ID3="$(submit '{
   "product_id": 6, "field_path": "lifespan", "new_value": 45.0,

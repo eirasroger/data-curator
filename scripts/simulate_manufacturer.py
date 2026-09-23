@@ -1,16 +1,6 @@
-"""Stand in for a manufacturer's publishing system.
+"""Send a signed republication to the deployed webhook, as a manufacturer would.
 
-Sends a genuine signed HTTP request to the deployed webhook endpoint. The only
-invented part is that you wrote the sender; the wire format, the signature and
-the receiver's verification are all real.
-
-    python scripts/simulate_manufacturer.py 6
-    python scripts/simulate_manufacturer.py 6 --bad-signature
-    python scripts/simulate_manufacturer.py 6 --stale
-    python scripts/simulate_manufacturer.py 6 --tamper
-
-The secret is read from Secret Manager using your gcloud login, so it is not
-stored locally.
+Usage: python scripts/simulate_manufacturer.py 6 [--bad-signature|--stale|--tamper]
 """
 
 from __future__ import annotations
@@ -43,11 +33,7 @@ def gcloud(*args: str) -> str:
 
 
 def build_new_version(record: dict) -> dict:
-    """What a republished EPD would plausibly look like.
-
-    A new validity date and slightly revised impacts, which is what a
-    recalculation with updated background data produces.
-    """
+    """A plausible new version: later expiry date and slightly lower impacts."""
     updated = deepcopy(record)
     updated["date"] = "2031-06-30"
     impacts = updated.get("impacts") or {}
@@ -100,8 +86,7 @@ def main() -> int:
     signature = webhooks.sign(secret, timestamp, body)
 
     if args.tamper:
-        # Sign the original, transmit something else. This is what an attacker
-        # who intercepted a valid request and edited it would produce.
+        # Sign one body and send another, like an intercepted and edited request.
         payload["record"]["impacts"]["gwp_total"] = 0.001
         body = json.dumps(payload).encode()
 

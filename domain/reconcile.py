@@ -1,21 +1,6 @@
-"""The nightly check.
+"""The nightly job: raise expiry requests, flag drift and overdue reviews.
 
-It asks two different questions, and they fail in different ways.
-
-  Did anything BREAK?   Requests stuck pending, reviews nobody has touched,
-                        EPDs that expired while we were not looking. These are
-                        visible if you go and look, and nobody goes and looks.
-
-  Did anything DRIFT?   The pipeline still returns 204 on every message, and is
-                        quietly behaving differently than it did last week -
-                        rejecting more, less sure of itself, costing more per
-                        decision. Drift raises no errors. That is precisely why
-                        something has to go looking on a schedule.
-
-Expiry is the interesting part. When this job finds an EPD whose validity has
-lapsed it does not edit the record. It submits a change request, exactly like a
-person would, and lets the same pipeline handle it. That is what makes the three
-sources - a person, a manufacturer, the calendar - one system instead of three.
+Expired EPDs are submitted as change requests, so they follow the normal pipeline.
 """
 
 from __future__ import annotations
@@ -27,12 +12,10 @@ from datetime import UTC, date, datetime, timedelta
 from .changes import ChangeKind, ChangeRequest, Source
 from .store import Store
 
-# A change request pending longer than this is not "in progress", it is forgotten.
 REVIEW_SLA_DAYS = 7
 
-# Thresholds for calling something drift. Deliberately blunt: a nightly job that
-# cries wolf gets ignored, which is worse than not having one.
-MIN_SAMPLE = 5              # below this, any rate is noise
+# Drift thresholds, kept blunt to avoid false alarms.
+MIN_SAMPLE = 5              # minimum decisions before a rate counts
 HIGH_REJECTION_RATE = 0.60
 LOW_MEAN_CONFIDENCE = 0.60
 
@@ -44,11 +27,7 @@ def run(
     now: datetime | None = None,
     today: date | None = None,
 ) -> dict:
-    """Do the checks and return the row describing this run.
-
-    `publish` and the clock are passed in rather than reached for, so this can
-    be tested end to end without a scheduler, a topic, or waiting until midnight.
-    """
+    """Run the checks and return the summary row. Publish and clock are injectable."""
     now = now or datetime.now(UTC)
     today = today or now.date()
     window_start = now - timedelta(hours=window_hours)
@@ -61,8 +40,7 @@ def run(
     expired = [r for r in expiry_rows if r["expiry_state"] == "expired"]
     expiring_soon = [r for r in expiry_rows if r["expiry_state"] != "expired"]
 
-    # Only for records not already marked expired, so this cannot loop: applying
-    # the request sets status='expired', and the next run skips it.
+    # Skip records already marked expired, so each expiry is raised once.
     already = store.expired_product_ids()
     raised = 0
     for row in expired:

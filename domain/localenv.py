@@ -1,9 +1,4 @@
-"""Where the local API key file lives. Local runs only.
-
-Nothing deployed calls this - Cloud Run mounts the key from Secret Manager.
-It is kept outside the working tree because .gitignore does nothing about
-folder sync or an archive of the project directory.
-"""
+"""Loads the local API key, kept outside the repo. Cloud Run uses Secret Manager."""
 
 from __future__ import annotations
 
@@ -28,11 +23,7 @@ def env_path() -> Path | None:
 
 
 def load() -> Path | None:
-    """Load the key into the environment. Returns what it read, if anything.
-
-    Never raises: no file and no python-dotenv both mean "no key", and the
-    caller falls back to the stub provider.
-    """
+    """Load the key into the environment. Returns the file read, or None."""
     path = env_path()
     if path is None:
         return None

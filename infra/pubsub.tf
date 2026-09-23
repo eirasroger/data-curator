@@ -1,9 +1,4 @@
-# Two topics, not one.
-#
-# epd-changes carries change requests. epd-changes-dlq is where a message lands
-# after the worker has failed it several times. Without a dead-letter topic a
-# message the worker can NEVER process redelivers forever: it burns a model call
-# on every attempt and hides a real failure inside traffic that looks normal.
+# The change requests topic, and a dead-letter topic for messages that keep failing.
 
 resource "google_pubsub_topic" "changes" {
   name = var.topic
@@ -13,16 +8,14 @@ resource "google_pubsub_topic" "dlq" {
   name = "${var.topic}-dlq"
 }
 
-# A topic with no subscription silently discards everything published to it.
-# Without this the DLQ would be decorative and dead messages would vanish.
+# Holds dead-lettered messages; a topic with no subscription discards them.
 resource "google_pubsub_subscription" "dlq" {
   name                       = "${var.topic}-dlq-sub"
   topic                      = google_pubsub_topic.dlq.id
   message_retention_duration = "604800s" # 7 days
 }
 
-# Dead-lettering is performed by Google's own Pub/Sub service agent rather than
-# by our code, so that agent is what needs publish rights on the DLQ.
+# Google's Pub/Sub service agent does the dead-lettering.
 data "google_project" "this" {}
 
 locals {

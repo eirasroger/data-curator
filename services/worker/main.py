@@ -1,20 +1,6 @@
-"""The worker: decides change requests and writes the result.
+"""Worker: decides queued change requests and writes the results.
 
-Woken by Pub/Sub push. Everything slow or failure-prone happens here, off the
-caller's request path - the model call, the BigQuery writes, the retries.
-
-HTTP status is how this service talks to Pub/Sub, so the codes are load-bearing:
-
-    204  done, do not send this again
-    400  this message is broken and always will be. Retrying wastes calls and
-         hides the failure inside normal-looking traffic; after the configured
-         number of attempts it lands in the dead-letter topic, which is what
-         the DLQ is for.
-    500  something transient went wrong - BigQuery hiccup, model outage.
-         Pub/Sub will back off and try again, which is what we want.
-
-Returning 204 on a failure would silently drop the change. Returning 500 on a
-permanently broken message would retry it forever.
+Replies to Pub/Sub: 204 done, 400 permanently broken (goes to the DLQ), 500 retry.
 """
 
 from __future__ import annotations
@@ -69,13 +55,7 @@ def log(severity: str, message: str, **fields: Any) -> None:
 
 
 def publish_change(req: ChangeRequest) -> None:
-    """Put an expiry request onto the same topic everything else arrives on.
-
-    The nightly job could edit the record directly - it has the permission and
-    expiry needs no judgement. It goes through the queue anyway, so that a
-    change raised by the calendar is screened, logged and versioned by exactly
-    the same code as a change raised by a person. One path, three sources.
-    """
+    """Queue an expiry request, so it follows the same path as any other change."""
     body = json.dumps({
         "type": MessageType.CHANGE_REQUEST.value,
         "payload": json.loads(req.model_dump_json()),
@@ -89,13 +69,7 @@ def publish_change(req: ChangeRequest) -> None:
 
 @app.get("/health")
 def health() -> dict:
-    """Liveness check.
-
-    NOT /healthz. Google's front end intercepts that exact path on Cloud Run
-    and answers it itself with an HTML 404, so the request never reaches the
-    container - even though FastAPI has the route registered and lists it in
-    openapi.json. The app was fine the whole time.
-    """
+    """Liveness check. Cloud Run intercepts /healthz, hence /health."""
     return {"status": "ok", "provider": TRIAGE_PROVIDER, "model": TRIAGE_MODEL}
 
 
@@ -111,7 +85,7 @@ async def handle(request: Request) -> Response:
         payload = body["payload"]
     except (KeyError, ValueError, TypeError, binascii.Error) as exc:
         log("ERROR", "unusable message", error=str(exc))
-        return Response(status_code=400)  # permanently broken -> DLQ
+        return Response(status_code=400)
 
     delivery = message.get("deliveryAttempt", 1)
 
@@ -120,8 +94,7 @@ async def handle(request: Request) -> Response:
             return handle_change(ChangeRequest.model_validate(payload), delivery, started)
         return handle_review(ReviewDecision.model_validate(payload), delivery, started)
     except ValueError as exc:
-        # The message parsed as JSON but is not a shape we understand. No amount
-        # of retrying changes that.
+        # Valid JSON in an unknown shape, so the failure is permanent.
         log("ERROR", "message failed validation", error=str(exc))
         return Response(status_code=400)
     except (InsertError, Exception) as exc:  # noqa: BLE001
@@ -131,9 +104,7 @@ async def handle(request: Request) -> Response:
 
 
 def handle_change(req: ChangeRequest, delivery: int, started: float) -> Response:
-    # Pub/Sub delivers at least once, so the same request can arrive twice.
-    # Without this check a duplicate would write a second decision and apply the
-    # change a second time, producing a version nobody asked for.
+    # Pub/Sub can deliver twice; skip requests already decided.
     if _store.already_decided(req.request_id):
         log("INFO", "already decided, skipping duplicate",
             request_id=req.request_id, delivery_attempt=delivery)
@@ -142,7 +113,7 @@ def handle_change(req: ChangeRequest, delivery: int, started: float) -> Response
     record = _store.current_record(req.product_id)
     if record is None:
         log("ERROR", "no such EPD", request_id=req.request_id, product_id=req.product_id)
-        return Response(status_code=400)  # will never exist on a retry
+        return Response(status_code=400)
 
     if delivery == 1:
         _store.save_request(req)
@@ -169,8 +140,6 @@ def handle_change(req: ChangeRequest, delivery: int, started: float) -> Response
         model=outcome.triage.model if outcome.triage else None,
         prompt_tokens=outcome.triage.prompt_tokens if outcome.triage else 0,
         completion_tokens=outcome.triage.completion_tokens if outcome.triage else 0,
-        # Cost and latency per decision, in the log line, so "what is this
-        # costing" is a Logs Explorer query rather than a guess.
         cost_usd=round(outcome.cost_usd, 6),
         model_latency_ms=outcome.latency_ms,
         total_latency_ms=round((time.monotonic() - started) * 1000, 1),
@@ -185,12 +154,10 @@ def handle_review(review: ReviewDecision, delivery: int, started: float) -> Resp
 
     if outcome is ReviewOutcome.UNKNOWN_REQUEST:
         log("ERROR", "review for an unknown request", request_id=review.request_id)
-        return Response(status_code=400)  # permanently broken -> DLQ
+        return Response(status_code=400)
 
     if outcome is ReviewOutcome.NOT_PENDING:
-        # A duplicate delivery, or a verdict on something the rules already
-        # settled. 204, not 400: nothing is wrong with the message and a retry
-        # would reach the same conclusion every time.
+        # Duplicate or stale verdict: acknowledge, since a retry changes nothing.
         log("INFO", "review ignored, request is not awaiting one",
             request_id=review.request_id, delivery_attempt=delivery)
         return Response(status_code=204)
@@ -205,12 +172,7 @@ def handle_review(review: ReviewDecision, delivery: int, started: float) -> Resp
 
 @app.post("/jobs/reconcile")
 def run_reconcile() -> dict:
-    """The nightly check. Invoked by Cloud Scheduler, never by the public.
-
-    Access is controlled by Cloud Run IAM: only identities holding run.invoker
-    on this service can reach it, and the scheduler has its own account. There
-    is no shared secret to leak and no token to rotate.
-    """
+    """The nightly job, called by Cloud Scheduler. Access is set by Cloud Run IAM."""
     started = time.monotonic()
     summary = reconcile.run(_store, publish_change)
     _store.save_reconciliation(summary)

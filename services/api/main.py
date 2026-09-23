@@ -1,12 +1,4 @@
-"""The front door: where change requests arrive.
-
-Its whole job is to decide whether a request is well-formed, get it durably into
-Pub/Sub, and answer. It never enriches, never calls a model, and never writes to
-the store - it has no permission to. If this service were compromised tomorrow,
-the attacker could publish messages the worker would then screen, and nothing
-else.
-
-"""
+"""Public API: validates change requests and reviews, and queues them on Pub/Sub."""
 
 from __future__ import annotations
 
@@ -43,24 +35,17 @@ def publisher() -> Any:
 
 
 def log(severity: str, message: str, **fields: Any) -> None:
-    """One line of JSON on stdout.
-
-    Cloud Logging parses stdout JSON and promotes `severity` and `message`,
-    so everything else lands in jsonPayload and becomes searchable in Logs
-    Explorer with no logging library and no agent.
-    """
+    """One JSON line on stdout, which Cloud Logging parses into structured fields."""
     print(json.dumps({"severity": severity, "message": message, **fields}), flush=True)
 
 
 def publish(message_type: MessageType, payload: dict, **attributes: str) -> str:
-    """Put one message on the topic and wait for the confirmation."""
+    """Publish one message and wait for confirmation."""
     body = json.dumps({"type": message_type.value, "payload": payload}).encode()
     future = publisher().publish(
         publisher().topic_path(PROJECT, TOPIC_ID),
         body,
-        # Attributes are filterable at the subscription level, so a future
-        # consumer can subscribe to only one kind of message without us
-        # republishing and without the worker deserialising everything.
+        # Attributes let subscriptions filter by message type.
         message_type=message_type.value,
         **attributes,
     )
@@ -90,13 +75,7 @@ class SubmitChange(BaseModel):
 
 @app.get("/health")
 def health() -> dict:
-    """Liveness check.
-
-    NOT /healthz. Google's front end intercepts that exact path on Cloud Run
-    and answers it itself with an HTML 404, so the request never reaches the
-    container - even though FastAPI has the route registered and lists it in
-    openapi.json. The app was fine the whole time.
-    """
+    """Liveness check. Cloud Run intercepts /healthz, hence /health."""
     return {"status": "ok"}
 
 
@@ -106,9 +85,7 @@ def submit_change(body: SubmitChange) -> dict:
     started = time.monotonic()
     request = ChangeRequest(request_id=str(uuid.uuid4()), **body.model_dump())
 
-    # Shape checks only. Whether the change is a GOOD idea is the worker's
-    # question, and answering it here would put a model call on the request
-    # path - the exact coupling the queue exists to prevent.
+    # Shape checks only; the worker judges the change itself.
     if request.kind is ChangeKind.FIELD_UPDATE and not request.field_path:
         raise HTTPException(422, "field_update requires field_path")
     if request.kind is ChangeKind.RECORD_REPLACEMENT and not request.replacement:
@@ -123,7 +100,7 @@ def submit_change(body: SubmitChange) -> dict:
         )
     except Exception as exc:  # noqa: BLE001
         log("ERROR", "publish failed", error=str(exc), request_id=request.request_id)
-        # 503, not 202. The caller must know we did not keep this.
+        # 503 tells the caller that nothing was queued.
         raise HTTPException(
             503, "could not queue the request; nothing was stored"
         ) from exc
@@ -139,12 +116,7 @@ def submit_change(body: SubmitChange) -> dict:
 
 @app.post("/changes/{request_id}/review", status_code=202)
 def review(request_id: str, body: ReviewDecision) -> dict:
-    """Record a person's decision on a parked change.
-
-    Goes through the same queue rather than writing directly, so that the worker
-    stays the only thing that writes to BigQuery. One writer means one place
-    where the append-only rule can be broken.
-    """
+    """Queue a person's decision on a parked change. The worker applies it."""
     if body.request_id != request_id:
         raise HTTPException(422, "request_id in the path and body must match")
 

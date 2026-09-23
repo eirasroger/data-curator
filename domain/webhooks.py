@@ -1,16 +1,6 @@
-"""Signature verification for inbound webhooks.
+"""HMAC-SHA256 webhook signatures over `timestamp + "." + body`.
 
-A webhook endpoint is reachable by anyone who learns the URL, so the signature
-is the only thing separating a real sender from a stranger. Sender and receiver
-hold a shared secret; the sender hashes the request with it and sends the digest
-in a header; the receiver recomputes and compares.
-
-The signed payload is `timestamp + "." + raw body`, which is the scheme Stripe
-and GitHub use. Including the timestamp inside the hash is what makes a captured
-request expire: without it, a valid request stays valid forever and can be
-replayed indefinitely.
-
-No network, no framework, no I/O. Everything here is testable offline.
+The signed timestamp limits how long a captured request can be replayed.
 """
 
 from __future__ import annotations
@@ -19,9 +9,7 @@ import hashlib
 import hmac
 import time
 
-# How far out of date a request may be. Long enough to survive clock skew and a
-# slow network, short enough that a captured request is useless by the time
-# anyone gets round to replaying it.
+# Maximum request age; allows for clock skew.
 MAX_AGE_SECONDS = 300
 
 SIGNATURE_HEADER = "x-curator-signature"
@@ -29,13 +17,7 @@ TIMESTAMP_HEADER = "x-curator-timestamp"
 
 
 def signing_payload(timestamp: str, body: bytes) -> bytes:
-    """What both sides hash.
-
-    `body` must be the exact bytes as received. The most common webhook bug is
-    parsing the JSON and re-serialising it before hashing: json.dumps reorders
-    keys and changes whitespace, so the digest never matches and every request
-    is rejected while the code looks correct.
-    """
+    """What both sides hash. `body` must be the raw bytes as received."""
     return timestamp.encode() + b"." + body
 
 
@@ -54,12 +36,7 @@ def verify(
     now: float | None = None,
     max_age: int = MAX_AGE_SECONDS,
 ) -> tuple[bool, str]:
-    """Check a request. Returns (accepted, reason).
-
-    The reason is for logging only. It is never returned to the caller: telling
-    an unauthenticated stranger whether their signature or their timestamp was
-    the problem helps them fix it.
-    """
+    """Check a request. Returns (accepted, reason); the reason is for logs only."""
     if not secret:
         return False, "no shared secret configured for this source"
     if not signature:
@@ -76,16 +53,12 @@ def verify(
     if age > max_age:
         return False, f"timestamp is {age:.0f}s old, limit is {max_age}s"
     if age < -max_age:
-        # A timestamp far in the future means a broken clock or a forgery
-        # attempt to buy an unlimited replay window.
+        # A future timestamp would extend the replay window.
         return False, f"timestamp is {-age:.0f}s in the future"
 
     expected = sign(secret, timestamp, body)
 
-    # compare_digest, never ==. A normal comparison returns as soon as two
-    # characters differ, so the time it takes reveals how many leading
-    # characters were correct, and an attacker can recover the digest one
-    # character at a time. compare_digest always takes the same time.
+    # Constant-time comparison, so timing reveals nothing about the digest.
     if not hmac.compare_digest(expected, signature):
         return False, "signature mismatch"
 

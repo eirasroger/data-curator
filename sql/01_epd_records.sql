@@ -1,19 +1,5 @@
--- The EPD store.
---
--- APPEND-ONLY, and versioned. Applying a change writes a NEW row with
--- version+1; it never updates the old one. Three reasons that matters here:
---
---   1. Compliance. If someone cited a GWP figure in a report last March, you
---      have to be able to show what the record said in March. An UPDATE
---      destroys that answer forever.
---   2. BigQuery has no primary keys and no unique constraints. Enforcing "one
---      row per EPD" on write means a MERGE per change, which is a whole query
---      per row, or a read-then-write that races itself.
---   3. Replaying a dead-lettered message becomes safe by construction: it just
---      writes another version.
---
--- The cost of append-only is that "the current record" is a query, not a table.
--- That is what the view below is for.
+-- EPD records, append-only: each applied change adds a row with version + 1.
+-- The epd_current view below returns the latest version of each product.
 
 CREATE TABLE IF NOT EXISTS `curator.epd_records`
 (
@@ -32,9 +18,7 @@ CREATE TABLE IF NOT EXISTS `curator.epd_records`
   expiry_date       DATE   OPTIONS(description="the EPD's 'valid until' date, NOT its publication date"),
   status            STRING NOT NULL OPTIONS(description="active | expired | superseded"),
 
-  -- the handful of fields worth querying directly. Everything else lives in
-  -- `record`: promoting all ~40 schema fields to columns would mean a schema
-  -- migration every time the extractor learns a new field.
+  -- Frequently queried fields; the full record is in `record`.
   reference_unit    STRING,
   density           FLOAT64,
   thickness         FLOAT64,
@@ -48,9 +32,7 @@ CREATE TABLE IF NOT EXISTS `curator.epd_records`
 )
 CLUSTER BY product_id
 OPTIONS(description="Versioned EPD records. Query epd_current for the latest of each.");
--- No PARTITION BY: partitioning pays off when a table is large enough that
--- pruning whole days of data saves real money. At 63 products it would only add
--- metadata. change_events, which grows without limit, is partitioned.
+-- Unpartitioned: the table is small.
 
 
 -- What "the EPD record" means today: the highest version of each product.
@@ -63,9 +45,7 @@ FROM (
 WHERE _rn = 1;
 
 
--- Expiry, as a question you can ask rather than a flag someone has to remember
--- to set. Derived from the date, so it is right even if the nightly job has not
--- run yet.
+-- Expiry state derived from the date, independent of the nightly job.
 CREATE OR REPLACE VIEW `curator.epd_expiry_status` AS
 SELECT
   product_id,

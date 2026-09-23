@@ -1,16 +1,6 @@
-"""Load the extracted EPDs into BigQuery as version 1 of each record.
+"""Load the EPDs into BigQuery as version 1 of each record, using `bq load`.
 
-Writes newline-delimited JSON to a temp file, then hands it to `bq load`. That
-is the plain way to get a file into BigQuery, and it means this script needs no
-Python client library - the whole thing is the CLI plus a shape conversion.
-
-Every record lands as version 1 with change_request_id NULL, which is what
-"nobody has changed this yet" looks like. Later versions are written by the
-worker when a change is applied.
-
-Run:
-    python scripts/seed_bigquery.py            # refuses if rows already exist
-    python scripts/seed_bigquery.py --replace  # wipe and reload
+Usage: python scripts/seed_bigquery.py [--replace]
 """
 
 from __future__ import annotations
@@ -33,12 +23,7 @@ TABLE = f"{PROJECT}:{DATASET}.epd_records"
 
 
 def _bq_executable() -> str:
-    """Find the bq CLI.
-
-    On Windows it is bq.cmd, and subprocess will not find that from a bare "bq"
-    the way a shell would - PATHEXT resolution is the shell's job, not
-    CreateProcess's. shutil.which does apply PATHEXT, so it finds the .cmd.
-    """
+    """Find the bq CLI, including bq.cmd on Windows."""
     import shutil
 
     for name in ("bq", "bq.cmd"):
@@ -62,7 +47,7 @@ def bq(*args: str, capture: bool = False) -> subprocess.CompletedProcess:
 
 
 def to_row(rec: dict, now: str) -> dict:
-    """One EPD record, flattened into the columns worth querying directly."""
+    """One EPD record as an epd_records row."""
     impacts = rec.get("impacts") or {}
 
     expiry = rec.get("date")
@@ -81,15 +66,7 @@ def to_row(rec: dict, now: str) -> dict:
         "prod_man": rec.get("prod_man"),
         "prod_site": rec.get("prod_site"),
         "expiry_date": expiry,
-        # Always 'active', even for a record whose date has already passed.
-        #
-        # Stamping 'expired' here looked tidier and was wrong: it produced a
-        # record marked expired with no change request behind it, no decision,
-        # and no event saying when anyone noticed. On compliance data the fact
-        # that something expired IS an event, and it has to be in the log.
-        #
-        # Loading everything active lets the nightly job discover the lapse and
-        # raise it through the normal pipeline, which leaves the audit trail.
+        # Always 'active': the nightly job records expiries through the pipeline.
         "status": "active",
         "reference_unit": rec.get("reference_unit"),
         "density": rec.get("density"),
@@ -146,8 +123,7 @@ def main() -> int:
 
     check = bq("query", f"--project_id={PROJECT}", "--use_legacy_sql=false",
                "--format=pretty",
-               # One line on purpose: bq is unreliable about a query argument
-               # that carries embedded newlines and indentation.
+               # Single line: bq mishandles multi-line query arguments.
                f"SELECT status, COUNT(*) AS records, MIN(expiry_date) AS earliest, "
                f"MAX(expiry_date) AS latest FROM `{DATASET}.epd_current` "
                f"GROUP BY status ORDER BY status")

@@ -1,4 +1,4 @@
-# See docker/api.Dockerfile for why this builds from the repository root.
+# Built from the repository root; see docker/api.Dockerfile.
 FROM python:3.12-slim
 
 ENV PYTHONUNBUFFERED=1 \

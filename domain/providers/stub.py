@@ -1,14 +1,6 @@
-"""A triager that costs nothing and needs no network.
+"""Offline triager for free local runs. Recognises a few numeric patterns only.
 
-This exists so the whole pipeline can be run, tested and demonstrated without
-spending anything or depending on a provider being up. It is NOT a substitute
-for the model - it only knows the arithmetic relationships that happen to be
-easy to express as code, and it will be wrong on anything subtler.
-
-It is deliberately built to mirror the reasoning the real instructions ask for,
-so that a run against the stub and a run against the model are comparable, and
-so the eval set has a baseline to beat. If the model cannot beat this, the model
-is not earning its cost.
+Also the baseline the LLM has to beat in the eval.
 """
 
 from __future__ import annotations
@@ -69,8 +61,7 @@ class StubTriager:
                 rationale="Non-numeric change; the stub only reasons about numbers.",
             )
 
-        # Cross-check density against thickness and the stated kg-per-unit ratio.
-        # density (kg/m3) * thickness (m) should equal kg per m2.
+        # density (kg/m3) * thickness (m) should equal the declared kg per m2.
         if request.field_path == "density":
             thickness = record.get("thickness")
             kg_per_unit = _kg_per_declared_unit(record)

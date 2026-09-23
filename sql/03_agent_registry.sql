@@ -1,8 +1,4 @@
--- Which agents run over this data, what they do, and who answers for them.
---
--- An agent nobody owns and nobody has re-checked is a liability, not an asset.
--- last_reviewed and eval_pass_rate are the two columns that make that visible
--- instead of leaving it as something people vaguely remember.
+-- The agents that act on this data, with owner, eval scores and last review date.
 
 CREATE TABLE IF NOT EXISTS `curator.agent_registry`
 (
@@ -18,8 +14,7 @@ CREATE TABLE IF NOT EXISTS `curator.agent_registry`
   input_contract  STRING,
   output_contract STRING,
 
-  -- Scores from the last eval run. Recorded here so "is this agent still any
-  -- good" is answerable from the registry rather than from someone's terminal.
+  -- Scores from the latest eval run.
   eval_pass_rate  FLOAT64,
   eval_unsafe     INT64  OPTIONS(description="unsafe auto-applies in the last run; must be 0"),
   eval_size       INT64,

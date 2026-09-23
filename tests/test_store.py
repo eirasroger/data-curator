@@ -1,5 +1,4 @@
-"""The DuckDB store, exercised through the same calls the worker makes.
-"""
+"""Tests for the DuckDB store, using the same calls the worker makes."""
 
 from __future__ import annotations
 
@@ -83,7 +82,7 @@ def test_a_decision_is_recorded_once_and_seen_as_decided(store):
 
 
 def test_model_columns_stay_null_when_the_rules_settled_it(store):
-    """A rules-only decision must not look like a model call in the data."""
+    """A rules-only decision leaves the model columns empty."""
     request = request_for(6, field_path="density", new_value=123.0)
     record = store.current_record(6)
     outcome = pipeline.decide(record, request, StubTriager())
@@ -114,9 +113,7 @@ def test_applying_a_change_writes_a_new_version_and_keeps_the_old(store):
 
 
 def test_a_parked_change_appears_in_the_review_queue(store):
-    # epd_code is a published figure, so it is reviewed however confident the
-    # model is. A number like gwp_total would be rejected earlier by the
-    # arithmetic check and never reach that rule.
+    # epd_code is a published figure, so it goes to review.
     request = request_for(6, field_path="epd_code", new_value="EPD-NEW-0001")
     record = store.current_record(6)
     outcome = pipeline.decide(record, request, StubTriager())
@@ -145,7 +142,7 @@ def test_change_status_shows_the_latest_event(store):
 
 
 def test_blocking_issues_survive_as_a_list(store):
-    """A rejected change carries its validation errors; they are an array column."""
+    """Validation errors are stored as an array."""
     request = request_for(6, field_path="impacts.gwp_fossil", new_value=1210.0)
     record = store.current_record(6)
     outcome = pipeline.decide(record, request, StubTriager())
@@ -167,11 +164,10 @@ def test_decision_stats_counts_the_window(store):
 
     stats = store.decision_stats(datetime.now(UTC) - timedelta(hours=24))
     assert stats["total"] == 3
-    # A gwp_total change is parked on one record and rejected on the others by
-    # the arithmetic check, so the split is not the point - the accounting is.
+    # Outcomes vary by record; only the totals are checked.
     assert stats["applied"] + stats["rejected"] + stats["pending"] == 3
 
-    # A window that ended before any of this happened sees nothing.
+    # A window starting later sees none of these decisions.
     empty = store.decision_stats(datetime.now(UTC) + timedelta(hours=1))
     assert empty["total"] == 0
 
@@ -188,13 +184,12 @@ def test_overdue_reviews_needs_time_to_pass(store):
 
 
 def test_the_nightly_job_runs_against_the_real_store(store):
-    """reconcile.run end to end, with no fake anywhere."""
+    """reconcile.run end to end on a real store."""
     published: list = []
     summary = reconcile.run(store, published.append)
 
     assert summary["epds_total"] == store.epd_count()
-    # The corpus contains records past their date, and none is marked expired
-    # yet, so the job should raise a request for each.
+    # Every record past its date should get an expiry request.
     assert summary["epds_expired"] == len(published)
     assert all(r.kind is ChangeKind.EXPIRY for r in published)
 

@@ -1,17 +1,5 @@
--- The audit trail: every proposal ever made, and everything that happened to it.
---
--- Two tables, both append-only, and the split is deliberate.
---
---   change_requests  what somebody asked for. Immutable - a request never
---                    changes after it is submitted.
---   change_events    what the system and its reviewers DID about it. A request
---                    can collect several: decided by the pipeline, then
---                    approved or rejected by a person days later.
---
--- Keeping them apart means a review is a new fact appended to history, not an
--- edit that overwrites what the system originally concluded. On compliance data
--- you need both answers: what the machine decided, and what the human decided
--- afterwards.
+-- Audit trail. change_requests holds each proposal as submitted; change_events
+-- holds every decision and review on it. Both are append-only.
 
 CREATE TABLE IF NOT EXISTS `curator.change_requests`
 (
@@ -46,8 +34,7 @@ CREATE TABLE IF NOT EXISTS `curator.change_events`
   blocking_issues ARRAY<STRING> OPTIONS(description="validation errors the change would introduce"),
   old_value     JSON,
 
-  -- Present only when the model was actually consulted. NULL here is meaningful:
-  -- it says the rules settled the request without spending anything.
+  -- NULL when the rules decided without the model.
   triage        STRING,
   confidence    FLOAT64,
   rationale     STRING,

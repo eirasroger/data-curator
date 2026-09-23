@@ -1,31 +1,17 @@
-# The dataset, its tables and its views.
-#
-# Schemas live in schemas/*.json and view bodies in views/*.sql, both extracted
-# from the running dataset rather than retyped, so what terraform creates is
-# what the bash scripts built. sql/*.sql stays as the readable reference with
-# its rationale comments; these are the machine's copy.
+# The dataset, tables and views. Schemas are in schemas/, view SQL in views/.
 
 resource "google_bigquery_dataset" "curator" {
   dataset_id  = var.dataset
   location    = var.bq_location
   description = "EPD golden record, change log and agent registry"
 
-  # Dataset-level access goes here rather than through IAM bindings.
-  # `bq add-iam-policy-binding` on a dataset returns "This feature requires
-  # allowlisting" on an ordinary project, and because the old setup script
-  # tolerated that failure the grants silently did not happen - discovered from
-  # a 403 in the logs much later. The access list is the portable route, and
-  # expressing it here means it cannot be skipped.
-
-  # The worker is the ONLY writer. One writer means one place where the
-  # append-only rule can be broken, and one place to look when it is.
+  # Access is set here, since dataset IAM bindings need allowlisting.
+  # The worker is the only writer.
   access {
     role          = "WRITER"
     user_by_email = google_service_account.sa["worker"].email
   }
 
-  # Everything else reads. The API serves records and the review queue; the
-  # dashboard shows them. Neither can write.
   access {
     role          = "READER"
     user_by_email = google_service_account.sa["api"].email
@@ -36,10 +22,7 @@ resource "google_bigquery_dataset" "curator" {
     user_by_email = google_service_account.sa["dashboard"].email
   }
 
-  # BigQuery's own defaults, restated because this list is AUTHORITATIVE:
-  # anything not declared here is removed on apply. The first plan after
-  # importing the live dataset wanted to delete all three of these, which would
-  # have quietly changed who can read and write the data.
+  # BigQuery's defaults, restated because this list replaces all access on apply.
   access {
     role          = "OWNER"
     special_group = "projectOwners"
@@ -55,8 +38,7 @@ resource "google_bigquery_dataset" "curator" {
     special_group = "projectReaders"
   }
 
-  # Named people, for the same reason. A project owner already has OWNER
-  # through projectOwners above, so this is usually empty.
+  # Extra named owners, usually none.
   dynamic "access" {
     for_each = toset(var.dataset_owners)
     content {
@@ -67,9 +49,7 @@ resource "google_bigquery_dataset" "curator" {
 }
 
 locals {
-  # Dataset-qualified, which is the form BigQuery stores for a view reading a
-  # table in its own dataset. Project-qualifying works too but differs from
-  # every deployed view, so every apply would rewrite all five for nothing.
+  # Dataset-qualified names match what BigQuery stores, so applies stay clean.
   view_vars = {
     dataset = var.dataset
   }
@@ -120,17 +100,12 @@ resource "google_bigquery_table" "tables" {
     }
   }
 
-  # These hold the audit trail. Refusing to destroy them means a stray
-  # `terraform destroy` cannot take the history with it; removing data is a
-  # deliberate act, not a side effect of tearing down compute.
+  # Protects the audit trail from `terraform destroy`.
   deletion_protection = true
 }
 
-# Views come in two waves because two of them read other views:
-# epd_expiry_status reads epd_current, review_queue reads change_status.
-# BigQuery rejects a view whose source does not exist yet, and terraform cannot
-# see that dependency inside a SQL string - with everything in one for_each it
-# creates all five in parallel and two fail on a cold apply.
+# Two groups, because epd_expiry_status and review_queue read other views,
+# which must exist first.
 
 locals {
   base_views      = ["epd_current", "change_status", "agent_registry_attention"]
@@ -148,7 +123,6 @@ resource "google_bigquery_table" "views" {
     use_legacy_sql = false
   }
 
-  # A view holds no data, so dropping one costs nothing but a re-apply.
   deletion_protection = false
 
   depends_on = [google_bigquery_table.tables]

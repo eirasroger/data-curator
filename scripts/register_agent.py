@@ -1,11 +1,6 @@
-"""Record the triage agent in the registry, with its latest eval scores.
+"""Record the triage agent and its latest eval scores in the BigQuery registry.
 
-An agent nobody owns and nobody has re-checked is a liability. This is what
-keeps that visible: the registry row carries an owner, a pass rate, the number
-of unsafe auto-applies, and when a human last looked.
-
-    python eval/run_eval.py --provider openai --out /tmp/eval.json
-    python scripts/register_agent.py --eval /tmp/eval.json
+Usage: python scripts/register_agent.py --eval <file from run_eval.py --out>
 """
 from __future__ import annotations
 
@@ -56,8 +51,7 @@ row = {
     "created_at": datetime.now(UTC).isoformat(),
 }
 
-# Replace rather than append: unlike the event log, the registry describes what
-# is true NOW. History of an agent's scores lives in the eval runs, not here.
+# The registry holds current state only, so the old row is replaced.
 subprocess.run([BQ, f"--location={BQ_LOCATION}", "query", f"--project_id={PROJECT}",
                 "--use_legacy_sql=false", "--quiet",
                 f"DELETE FROM `{DATASET}.agent_registry` "

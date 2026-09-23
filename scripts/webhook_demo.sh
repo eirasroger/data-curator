@@ -1,13 +1,6 @@
 #!/usr/bin/env bash
-# Stand up the public webhook receiver, exercise it, tear it back down.
-#
-# The receiver has to be reachable without a Google identity, so it is the only
-# component a stranger can call. Google Cloud has no hard spending cap, so the
-# only real control over an endpoint like this is for it not to exist when
-# nobody is using it. This script keeps its lifetime to a couple of minutes.
-#
-#   bash scripts/webhook_demo.sh        deploy, demo, delete
-#   bash scripts/webhook_demo.sh --keep deploy and demo, leave it running
+# Deploy the public webhook, send four test requests, then delete it.
+# Usage: bash scripts/webhook_demo.sh [--keep]
 set -euo pipefail
 
 cd "$(dirname "$0")/.."
@@ -34,8 +27,7 @@ cleanup() {
 trap cleanup EXIT
 
 say "Deploying the receiver"
-# --max-instances=1: one instance is ample for a demonstration and caps what a
-# flood could cost while the endpoint is up.
+# One instance caps cost while the endpoint is public.
 gcloud run deploy curator-webhook --image="$REGISTRY/webhook:latest" --region="$REGION" --service-account="curator-webhook@$PROJECT.iam.gserviceaccount.com" --set-env-vars="GCP_PROJECT=$PROJECT,PUBSUB_TOPIC=$TOPIC" --set-secrets="WEBHOOK_SECRET_MANUFACTURER=webhook-secret-manufacturer:latest" --allow-unauthenticated --max-instances=1 --memory=512Mi --timeout=30s --quiet >/dev/null
 URL="$(gcloud run services describe curator-webhook --region="$REGION" --format='value(status.url)')"
 echo "  $URL"

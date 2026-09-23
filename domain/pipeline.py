@@ -1,16 +1,4 @@
-"""Deciding a single change request, start to finish.
-
-This is the whole decision in one place. The worker calls it, and so does the
-eval - which matters, because an eval that exercises a re-implementation of the
-pipeline measures the re-implementation.
-
-The order is fixed and it is the point of the design:
-
-    1. screen()    rules only. Free, instant, and settles most requests.
-    2. triage()    the model, but ONLY on what survived step 1.
-    3. finalise()  rules again. The model's answer is an input to the decision,
-                   never the decision itself.
-"""
+"""Decide one change request: screen() by rule, then triage() by LLM, then finalise()."""
 
 from __future__ import annotations
 
@@ -55,10 +43,7 @@ def decide(record: dict, request: ChangeRequest, triager: Triager) -> Outcome:
     try:
         outcome = triager.triage(record, request)
     except Exception as exc:  # noqa: BLE001
-        # The model being unavailable must never turn into a guess, and it must
-        # never turn into an automatic rejection either - a provider outage
-        # would then quietly discard everyone's corrections. It parks the
-        # request for a person, which is the honest answer to "we do not know".
+        # An LLM outage sends the request to a person.
         log.warning("triage unavailable for %s: %s", request.request_id, exc)
         return Outcome(
             decision=Decision(
@@ -90,11 +75,7 @@ def _old_value(record: dict, request: ChangeRequest):
 
 
 def apply_decision(record: dict, request: ChangeRequest, decision: Decision) -> dict:
-    """Produce the new record, if the decision was to apply the change.
-
-    Returns the record unchanged for any other action, so a caller can write the
-    result unconditionally without first re-deriving whether anything happened.
-    """
+    """The updated record if the change was applied, otherwise the record unchanged."""
     if decision.action is not Action.APPLIED:
         return record
 
@@ -110,13 +91,7 @@ def apply_decision(record: dict, request: ChangeRequest, decision: Decision) -> 
 
 
 class ReviewOutcome(str, Enum):
-    """What happened to a review, in enough detail for the caller to answer.
-
-    A bool cannot carry this. "Unknown request" is a broken message and belongs
-    in the dead-letter queue; "not pending" is a duplicate or a stale verdict and
-    must be acknowledged, because redelivering it will produce the same answer
-    forever. The worker maps these to HTTP status codes.
-    """
+    """Result of applying a review. The worker maps these to HTTP status codes."""
 
     APPLIED = "applied"
     REJECTED = "rejected"
@@ -125,28 +100,10 @@ class ReviewOutcome(str, Enum):
 
 
 def apply_review(review: ReviewDecision, *, store: Any) -> ReviewOutcome:
-    """Record a person's verdict on a parked change, and act on it.
+    """Record a person's verdict and act on it. Used by the worker and the dashboard.
 
-    Lives here rather than in the worker because two things now take reviews -
-    the Pub/Sub handler and the operator page running without a queue - and a
-    second implementation is a second set of rules about what a review means.
-
-    A verdict is only accepted on a request that is actually waiting for one.
-    That single condition closes two holes:
-
-      - Pub/Sub delivers at least once, so the same review arrives twice. The
-        second one used to write a second version of the record. handle_change
-        has guarded against this since the beginning; this path never did.
-      - screen() rejects a change that would break the record's internal
-        consistency, but the rejected request stays in change_requests. An
-        approval arriving afterwards used to apply it anyway, without
-        re-validating - so the deterministic rules had a door around them.
-
-    Both are the same question: what does this request's history already say?
+    Accepts only requests awaiting review, so duplicates and rejected ones are ignored.
     """
-    # The latest event for this request. A LEFT JOIN from change_requests, so a
-    # row comes back if the request exists at all and `action` is null when it
-    # exists but nothing has decided it yet.
     status = store.change_status(review.request_id)
     if status is None:
         return ReviewOutcome.UNKNOWN_REQUEST
@@ -179,8 +136,7 @@ def apply_review(review: ReviewDecision, *, store: Any) -> ReviewOutcome:
             request.request_id, status=status_value,
         )
 
-    # event_type "reviewed", not "decided": the pipeline's original conclusion
-    # stays in the log untouched. Both answers are on the record.
+    # A separate "reviewed" event keeps the pipeline's original decision in the log.
     store.save_event(decision, request.product_id,
                      event_type="reviewed", actor=review.reviewer)
     return ReviewOutcome.APPLIED if review.approve else ReviewOutcome.REJECTED

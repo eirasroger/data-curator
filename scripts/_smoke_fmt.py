@@ -1,9 +1,4 @@
-"""Formats JSON from stdin for smoke_test.sh.
-
-A separate file rather than `python -c '...'` inside the shell script: nesting
-quotes three deep (bash single quotes, Python string, JSON key) produces code
-that looks fine and is a syntax error.
-"""
+"""Formats JSON from stdin for smoke_test.sh."""
 
 import json
 import sys
@@ -19,7 +14,7 @@ if mode == "request_id":
     print(data.get("request_id", ""))
 
 elif mode == "action":
-    # Empty means the worker has not decided yet, so the caller keeps polling.
+    # Empty output tells the caller to keep polling.
     print(data.get("action") or "")
 
 elif mode == "decision":

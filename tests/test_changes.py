@@ -1,7 +1,4 @@
-"""Tests for the change rules, run against the real extracted EPDs.
-
-Every number in here is a value that actually appears in seed/epds.json.
-"""
+"""Tests for the change rules. All values come from seed/epds.json."""
 
 from __future__ import annotations
 
@@ -87,19 +84,14 @@ def test_no_op_change_is_rejected(record):
 
 
 def test_type_change_is_rejected(record):
-    """A comma-decimal arriving from a form as text must not become the value."""
+    """A comma decimal sent as text is rejected."""
     d = changes.screen(record, request_for(record, "density", "9,5"))
     assert d.action is Action.REJECTED
     assert "Type mismatch" in d.reason
 
 
 def test_change_that_breaks_gwp_arithmetic_is_rejected(record):
-    """gwp_total 11.0 = fossil 12.1 + luluc 0.008 + bio -1.06.
-
-    Moving fossil to 121 makes the parts sum to ~120, which no longer matches
-    the declared total. check_gwp in validation.py catches it - the same code
-    that guards the extractor.
-    """
+    """gwp_total 11.0 = 12.1 + 0.008 - 1.06; fossil 121 breaks the sum."""
     d = changes.screen(record, request_for(record, "impacts.gwp_fossil", 121.0))
     assert d.action is Action.REJECTED
     assert d.blocking_issues, "the failing check should be recorded"
@@ -140,11 +132,7 @@ def test_valid_replacement_goes_to_a_person(record):
 
 
 def test_replacement_that_is_not_a_valid_epd_is_rejected(record):
-    """A replacement is a whole document, so it has to be a whole document.
-
-    EPDProduct requires product_id and flag. Accepting a partial one would put
-    a record in the store that later code reads fields off and finds missing.
-    """
+    """A replacement must be a complete EPDProduct."""
     d = changes.screen(
         record,
         request_for(record, kind=ChangeKind.RECORD_REPLACEMENT,
@@ -157,17 +145,11 @@ def test_replacement_that_is_not_a_valid_epd_is_rejected(record):
 
 
 def test_change_that_repairs_an_inconsistency_is_applied(records_by_id):
-    """A record whose materials sum above 100% is internally contradictory.
-
-    Lowering the offending percentage removes a real validation error and
-    introduces none, on a field nobody quotes. Nothing here needs judgement, so
-    no model is consulted.
-    """
+    """Fixing a composition that sums over 100% is applied without the model."""
     import copy
 
     broken = copy.deepcopy(records_by_id[6])
-    # Push Basalt up so the composition sums past 100%: 57.5 -> 87.5 makes the
-    # five materials total 119%, which check_composition reports as an error.
+    # Basalt 57.5 -> 87.5 makes the composition total 119%.
     broken["product_integrity"]["comp"][0]["percentage"] = 87.5
     assert changes.new_validation_errors(records_by_id[6], broken), "setup check"
 
@@ -184,17 +166,7 @@ def test_change_that_repairs_an_inconsistency_is_applied(records_by_id):
 # ---------------------------------------------------------------------------
 
 def test_plausible_looking_change_needs_judgement(record):
-    """lifespan 50 -> 45 breaks no arithmetic and fixes nothing.
-
-    Nothing else in the record refers to service life, so no check can confirm
-    or refute it. This is the shape of question the model exists for.
-
-    This test used to use density. It no longer can: check_density_thickness
-    now settles density against the declared conversion ratio, so it stopped
-    being a judgement call. The set of things the model is asked shrinks every
-    time a relationship turns out to be expressible as arithmetic, and that is
-    the direction it should move.
-    """
+    """Service life has no cross-check, so lifespan 50 -> 45 goes to the model."""
     assert changes.screen(record, request_for(record, "lifespan", 45.0)) is None
 
 
@@ -207,7 +179,7 @@ def test_headline_impact_change_needs_judgement(record):
 # ---------------------------------------------------------------------------
 
 def test_material_field_is_never_auto_applied_however_confident(record):
-    """The confidence floor is not the only gate. Some fields always need a person."""
+    """Published fields go to a person even at high confidence."""
     d = changes.finalise(
         request_for(record, "impacts.gwp_total", 11.05),
         old_value=11.0,
@@ -268,7 +240,7 @@ def test_valid_record_is_not_expired(records_by_id):
 
 
 def test_every_seed_record_has_a_usable_expiry_date(all_records):
-    """If this ever fails, the expiry job is silently skipping records."""
+    """Every seed record has a parseable expiry date."""
     undated = [r["product_id"] for r in all_records if not r.get("date")]
     assert undated == []
     unparseable = []
@@ -281,13 +253,7 @@ def test_every_seed_record_has_a_usable_expiry_date(all_records):
 
 
 def test_implausible_on_a_material_field_still_goes_to_a_person(record):
-    """Regression: the eval caught this ordering the wrong way round.
-
-    If the implausible check runs before the material-field check, the model
-    gets to reject a published figure by itself - the same authority the
-    material rule exists to deny it. The correction the submitter reported is
-    then discarded and the underlying error stays in the data.
-    """
+    """Regression: "implausible" on a published figure goes to a person."""
     d = changes.finalise(
         request_for(record, "impacts.gwp_total", 11.22),
         old_value=11.0,
@@ -300,12 +266,7 @@ def test_implausible_on_a_material_field_still_goes_to_a_person(record):
 
 
 def test_density_cross_check_rejects_a_bad_density(records_by_id):
-    """Product 86: 2287.5 kg/m3 x 0.08 m = 183 kg/m2, exactly as declared.
-
-    Regression for the one unsafe apply the eval found. The model called this
-    same proposal a decimal_slip at 0.90 confidence; arithmetic does not need a
-    model's opinion, so this must now never reach one.
-    """
+    """Product 86: 2287.5 kg/m3 x 0.08 m = 183 kg/m2, so a tenth is rejected by rule."""
     r = records_by_id[86]
     d = changes.screen(r, request_for(r, "density", r["density"] / 10))
     assert d is not None, "must be settled by the rules, not sent to the model"
@@ -314,7 +275,7 @@ def test_density_cross_check_rejects_a_bad_density(records_by_id):
 
 
 def test_density_cross_check_is_silent_without_all_three_values(all_records):
-    """A missing thickness is not a contradiction. No false positives."""
+    """A missing thickness raises no error."""
     from domain import validation
 
     flagged = [
@@ -325,12 +286,7 @@ def test_density_cross_check_is_silent_without_all_three_values(all_records):
 
 
 def test_the_confidence_floor_is_where_the_measurement_put_it(record):
-    """0.90, and a test so it cannot drift back without someone deciding to.
-
-    Measured over 948 real model calls: 0.85 auto-applied five wrong changes,
-    0.90 auto-applied none. Lowering this is a safety decision, not a tuning
-    knob - the README's analysis section has the table.
-    """
+    """Pinned at 0.90; 0.85 auto-applied five wrong changes in the 2000-proposal run."""
     assert changes.CONFIDENCE_FLOOR == 0.90
 
     just_under = changes.finalise(

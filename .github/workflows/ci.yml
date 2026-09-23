@@ -6,14 +6,11 @@ on:
   pull_request:
     branches: [main]
 
-# Read-only, explicitly. Without this the job gets whatever the repository
-# default is, which on a public repo can be a token that may write to it - far
-# more than checkout, pip and pytest need.
+# Read-only token.
 permissions:
   contents: read
 
-# A new push supersedes the run it interrupted; there is no reason to pay for
-# both.
+# A new push cancels the previous run.
 concurrency:
   group: ci-${{ github.ref }}
   cancel-in-progress: true
@@ -24,8 +21,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        # 3.12 is what the containers run. 3.14 is what development happens on.
-        # Anything that only breaks on one of them is worth knowing about.
+        # 3.12 matches the containers; 3.14 matches local development.
         python-version: ["3.12", "3.14"]
 
     steps:
@@ -51,17 +47,7 @@ jobs:
       - name: Tests
         run: pytest
 
-      # The committed figures are generated from a decision history that is not
-      # in the repo (it is gigabytes-adjacent and regenerable), so CI cannot
-      # rebuild them. It can prove the analysis still runs end to end, which is
-      # what breaks silently when a column is renamed.
-      # Credential-free and network-free once the provider is cached: fmt and
-      # validate check syntax and provider schemas without touching GCP, so CI
-      # never authenticates and never spends anything.
-      # The stub provider, so this costs nothing and needs no key. Two gates:
-      # any unsafe apply fails the build whatever the accuracy, and accuracy
-      # below the committed baseline fails it as a regression. Baseline is
-      # eval/results.json; raise it when a change earns it.
+      # Offline scorer: fails on any unsafe apply or accuracy below 0.90.
       - name: Eval gate
         run: python eval/run_eval.py --min-accuracy 0.90
 
@@ -70,12 +56,14 @@ jobs:
           terraform_version: 1.16.2
           terraform_wrapper: false
 
+      # Syntax and schema checks only; no GCP credentials needed.
       - name: Terraform
         run: |
           terraform -chdir=infra fmt -check -recursive
           terraform -chdir=infra init -backend=false -input=false
           terraform -chdir=infra validate
 
+      # Checks the analysis runs end to end on a small simulated history.
       - name: Analysis pipeline
         run: |
           python scripts/seed_local.py --db ci.duckdb --replace

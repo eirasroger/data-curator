@@ -1,8 +1,5 @@
--- One row per decision, with the things the analysis groups by.
---
--- Written against the same tables as sql/local/schema.sql, so this ports to
--- BigQuery by re-quoting the table names. Kept as SQL rather than pandas on
--- purpose: the aggregation belongs where the data is.
+-- Views for analysis/report.py, one row per decision. Uses the tables in
+-- sql/local/schema.sql.
 
 CREATE OR REPLACE VIEW decisions AS
 SELECT
@@ -23,13 +20,9 @@ SELECT
   r.source,
   r.field_path,
   r.submitted_at,
-  -- The shape that produced this proposal is encoded in the request id the
-  -- simulator assigns: sim-<tag>-<n>. It is the only way to recover intent
-  -- from the stored row, and the analysis needs it to say WHICH proposals the
-  -- rules absorb.
+  -- Proposal shape, from the simulator's request id: sim-<tag>-<n>.
   split_part(r.request_id, '-', 2)    AS shape_tag,
-  -- Did the model get consulted at all? A null confidence means the rules
-  -- settled it before any model was asked.
+  -- A null confidence means the rules decided alone.
   e.confidence IS NOT NULL            AS reached_model,
   CASE
     WHEN e.confidence IS NOT NULL THEN 'model'
@@ -56,13 +49,11 @@ GROUP BY 1
 ORDER BY decisions DESC;
 
 
--- Which validation checks actually fire, and how often. blocking_issues is an
--- array of "field: detail" strings, so unnest first and keep the field.
+-- How often each validation check fires. Each blocking issue is "field: detail".
 CREATE OR REPLACE VIEW rejection_reasons AS
 SELECT
   CASE
-    -- A malformed replacement carries a pydantic message, not a "field: detail"
-    -- pair, so splitting on the colon would put its prose in the field column.
+    -- Schema failures on replacements carry free text, so label them separately.
     WHEN issue LIKE '%validation error%' THEN '(replacement fails schema)'
     ELSE split_part(issue, ':', 1)
   END      AS failing_field,
@@ -72,8 +63,7 @@ GROUP BY 1
 ORDER BY times DESC;
 
 
--- Throughput per day, for the drift charts. Rates, not counts, so a quiet day
--- and a busy day are comparable.
+-- Daily rates for the drift chart.
 CREATE OR REPLACE VIEW daily AS
 SELECT
   day,

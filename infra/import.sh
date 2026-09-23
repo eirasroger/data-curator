@@ -1,20 +1,9 @@
 #!/usr/bin/env bash
-# Adopt infrastructure the bash scripts already created.
-#
-# Everything here predates the terraform config. Without this, the first
-# `terraform apply` fails on every resource with "already exists" - terraform
-# only refuses to create what it knows about, and an empty state knows nothing.
-#
-# Safe to re-run: an already-imported address is skipped.
-#
-# Afterwards `terraform plan` should report no changes. Anything it does report
-# is a real difference between the config and what is deployed, which is the
-# point of doing this rather than tearing down and rebuilding.
+# Import resources created before the Terraform config into state. Safe to re-run.
 set -euo pipefail
 
 cd "$(dirname "$0")"
 
-# terraform resolves paths relative to the config directory, so run from here.
 PROJECT="${PROJECT:-data-curator-507614}"
 REGION="${REGION:-europe-west1}"
 DATASET="${DATASET:-curator}"
@@ -22,9 +11,7 @@ TOPIC="${TOPIC:-epd-changes}"
 
 TF="${TF:-terraform}"
 
-# Options go BEFORE the positional arguments; terraform rejects them after, and
-# `state show` takes no -var at all. Getting this wrong makes every import fail
-# silently and report the resource as absent.
+# Terraform options must precede positional arguments.
 adopt() {
   local address="$1" id="$2" out
   if "$TF" state show "$address" >/dev/null 2>&1; then

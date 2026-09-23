@@ -1,14 +1,6 @@
-"""Regenerate every figure and number in the README's analysis section.
+"""Regenerate the README's charts and numbers. Aggregation lives in models/decisions.sql.
 
-One command, no manual steps, no hand-edited numbers. If a figure and the text
-disagree, the text is stale and this is what fixes it.
-
-The aggregation is SQL (analysis/models/decisions.sql) against the same tables
-the worker writes, so it ports to BigQuery by re-quoting table names. This file
-only draws.
-
-Run:
-    python analysis/report.py --db sim_openai.duckdb --drift-db sim_drift.duckdb
+Usage: python analysis/report.py --db sim_openai.duckdb --drift-db sim_drift.duckdb
 """
 
 from __future__ import annotations
@@ -29,15 +21,13 @@ ROOT = Path(__file__).resolve().parents[1]
 MODELS = ROOT / "analysis" / "models" / "decisions.sql"
 FIGURES = ROOT / "analysis" / "figures"
 
-# Slots 1 and 2 of the validated categorical palette, in fixed order, plus the
-# status pair. Status is used only where the colour MEANS safe/unsafe.
+# Status colours are used only where colour means safe or unsafe.
 BLUE, ORANGE = "#2a78d6", "#eb6834"
 GOOD, CRITICAL = "#0ca30c", "#d03b3b"
 INK, INK_2, MUTED = "#0b0b0b", "#52514e", "#8a8983"
 SURFACE, GRID = "#fcfcfb", "#e6e5e1"
 
-# The request-id tag the simulator stamps, mapped to what the proposal actually
-# is. SHAPE_TRUTH is keyed by generator name; the stored rows carry the tag.
+# Ground truth per simulator request-id tag.
 TAG_TRUTH = {
     "uncdec": "correct", "lifefix": "correct", "decfix": "correct",
     "comprep": "correct",
@@ -50,7 +40,7 @@ TAG_TRUTH = {
 
 
 def style(ax, title: str, xlabel: str = "", ylabel: str = "") -> None:
-    """Recessive chrome: the data is the only thing with weight."""
+    """Minimal axes styling."""
     ax.set_title(title, color=INK, fontsize=12, pad=12, loc="left")
     ax.set_xlabel(xlabel, color=INK_2, fontsize=9)
     ax.set_ylabel(ylabel, color=INK_2, fontsize=9)
@@ -104,8 +94,7 @@ def calibration(store, bins=(0.0, 0.5, 0.7, 0.8, 0.85, 0.9, 0.95, 1.01)) -> dict
         band = [x for x in labelled if lo <= x[0] < hi]
         if len(band) < 5:
             continue
-        # Among proposals the triager is willing to accept (not implausible),
-        # how many are actually correct? That is what the floor is betting on.
+        # Share correct among proposals the triager did not call implausible.
         offered = [x for x in band if x[2] != "implausible"]
         if not offered:
             continue
@@ -122,8 +111,7 @@ def calibration(store, bins=(0.0, 0.5, 0.7, 0.8, 0.85, 0.9, 0.95, 1.01)) -> dict
     for x, y, n in zip(centres, rates, counts, strict=True):
         ax.annotate(f"n={n}", (x, y), textcoords="offset points", xytext=(0, 11),
                     ha="center", fontsize=8, color=INK_2)
-    # Both floors, because the point of the chart is that they differ: 0.85 is
-    # what ships, 0.90 is where this data says the last wrong apply disappears.
+    # The original 0.85 floor and the current 0.90.
     ax.axvline(0.85, color=CRITICAL, linewidth=1, linestyle=(0, (2, 2)), zorder=2)
     ax.annotate("0.85 shipped", (0.85, 0.44), textcoords="offset points",
                 xytext=(-6, 0), fontsize=9, color=CRITICAL, ha="right")
@@ -263,9 +251,7 @@ def drift(store, drift_store) -> dict:
     days_a, rate_a = series(store)
     days_b, rate_b = series(drift_store)
 
-    # Both runs use the same seed, so they are identical until the mix shifts.
-    # Plotted as two full series one hides the other and the chart reads as
-    # missing data. Draw the shared prefix once, then the two tails.
+    # Same seed, so the runs match until the mix shifts; draw the shared part once.
     split = 0
     for i, (da, db, ra, rb) in enumerate(zip(days_a, days_b, rate_a, rate_b,
                                              strict=False)):
@@ -318,8 +304,7 @@ def floors(store, candidates=(0.95, 0.90, 0.85, 0.80, 0.75, 0.70, 0.60)) -> dict
     for floor in candidates:
         ok = bad = 0
         for confidence, triage, truth, field in cases:
-            # Material fields never auto-apply whatever the score, so they are
-            # not what a floor decides.
+            # Published fields always go to a person, so the floor has no effect.
             if is_material(field or "") or triage == "implausible":
                 continue
             if confidence < floor:

@@ -1,10 +1,4 @@
-"""Triage backed by an OpenAI model.
-
-The shape of the answer is enforced by a JSON schema derived from TriageResult,
-not by asking the model to "reply in JSON". That is the same technique already
-used in the extractor's schema.py, and for the same reason: a schema the API
-enforces cannot be ignored, whereas an instruction can.
-"""
+"""Triage with an OpenAI model, using structured output bound to TriageResult."""
 
 from __future__ import annotations
 
@@ -14,17 +8,12 @@ import time
 from ..changes import ChangeRequest
 from ..triage import INSTRUCTIONS, TriageOutcome, TriageResult, build_context
 
-# gpt-5 and o-series models think before answering, and that thinking is billed
-# as output. Everything else rejects the parameter outright.
+# Models that accept the `reasoning` parameter.
 _REASONING_MODELS = ("gpt-5", "o1", "o3", "o4")
 
 
 class TriageUnavailable(RuntimeError):
-    """The model did not return a usable answer.
-
-    Raised rather than guessed at. A change request that cannot be triaged goes
-    to a person; it does not get a made-up classification.
-    """
+    """The model returned no usable answer. The request goes to a person."""
 
 
 class OpenAITriager:
@@ -59,9 +48,7 @@ class OpenAITriager:
             "text_format": TriageResult,
             "max_output_tokens": self.max_output_tokens,
         }
-        # Keep reasoning shallow. This is a bounded comparison of a handful of
-        # numbers, not a problem that rewards a long chain of thought, and the
-        # thinking tokens are the expensive part of the call.
+        # Low effort: a short numeric comparison, and reasoning tokens are billed.
         if self.model.startswith(_REASONING_MODELS):
             kwargs["reasoning"] = {"effort": self.effort}
 

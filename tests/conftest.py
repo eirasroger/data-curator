@@ -1,9 +1,4 @@
-"""Shared test setup.
-
-The seed fixtures load the real 63 extracted EPDs rather than hand-written
-stand-ins. Rules that only ever meet invented data tend to be rules that only
-work on invented data.
-"""
+"""Shared fixtures, built from the 63 real EPD records."""
 
 import json
 from pathlib import Path
@@ -27,12 +22,7 @@ def records_by_id(all_records) -> dict[int, dict]:
 
 @pytest.fixture
 def record(records_by_id) -> dict:
-    """Product 6, SmartRoof Base (Knauf Insulation).
-
-    Chosen because it exercises most of the schema: a full GWP breakdown with a
-    negative biogenic value, five materials, a conversion ratio, and an expiry
-    date inside the next year.
-    """
+    """Product 6, SmartRoof Base: full GWP breakdown, five materials, a ratio."""
     import copy
 
     return copy.deepcopy(records_by_id[6])

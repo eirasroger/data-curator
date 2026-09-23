@@ -1,18 +1,6 @@
-"""Public webhook receiver.
+"""Public webhook for manufacturer updates. Checks the signature before reading the body.
 
-This is the only component reachable from the open internet. Everything else in
-the system requires a Google identity, which an external sender cannot have, so
-this service exists to hold that exposure by itself and to hold as little
-authority as possible while doing it.
-
-What it can do: verify a signature and publish a message.
-What it cannot do: read or write BigQuery, read any secret but its own webhook
-keys, or reach any other service.
-
-The order of operations matters. Nothing is parsed, logged in full, or acted on
-until the signature has been checked. An unverified request gets a bare 401 and
-no explanation, because telling a stranger whether their signature or their
-timestamp was wrong helps them fix it.
+The only public service; it can publish to the queue and read its own signing keys.
 """
 
 from __future__ import annotations
@@ -51,12 +39,7 @@ def log(severity: str, message: str, **fields: Any) -> None:
 
 
 def secret_for(source: str) -> str:
-    """One secret per source.
-
-    Sources are separated so that a leaked key compromises one sender instead of
-    all of them, and so a sender can be revoked by deleting one secret version.
-    Cloud Run mounts each as WEBHOOK_SECRET_<SOURCE>.
-    """
+    """The signing secret for a source, mounted as WEBHOOK_SECRET_<SOURCE>."""
     if not source.replace("-", "").replace("_", "").isalnum():
         return ""
     key = f"WEBHOOK_SECRET_{source.upper().replace('-', '_')}"
@@ -77,9 +60,7 @@ def _configured_sources() -> list[str]:
 async def receive(source: str, request: Request) -> Response:
     started = time.monotonic()
 
-    # The raw bytes, before anything touches them. Parsing and re-serialising
-    # before hashing reorders keys and changes whitespace, and the digest stops
-    # matching for reasons that are invisible in the code.
+    # Hash the raw bytes; re-serialised JSON would change the digest.
     body = await request.body()
 
     accepted, reason = webhooks.verify(
@@ -98,8 +79,7 @@ async def receive(source: str, request: Request) -> Response:
         record = payload["record"]
         EPDProduct.model_validate(record)
     except Exception as exc:  # noqa: BLE001
-        # Authenticated, so we can afford to say what was wrong. The sender is
-        # known and needs to be able to fix their integration.
+        # The sender is authenticated, so it gets a useful error.
         log("ERROR", "webhook payload invalid", source=source, error=str(exc)[:300])
         return Response(
             content=json.dumps({"error": "payload must be {\"record\": <EPDProduct>}"}),
@@ -125,9 +105,7 @@ async def receive(source: str, request: Request) -> Response:
     }).encode()
 
     try:
-        # Confirmed before answering. A sender that receives 202 will not send
-        # this event again, so acknowledging before the message is durable
-        # loses it permanently.
+        # Wait for the publish to succeed before replying 202.
         publisher().publish(
             publisher().topic_path(PROJECT, TOPIC_ID), message,
             message_type=MessageType.CHANGE_REQUEST.value,
@@ -136,8 +114,7 @@ async def receive(source: str, request: Request) -> Response:
         ).result(timeout=10)
     except Exception as exc:  # noqa: BLE001
         log("ERROR", "publish failed", source=source, error=str(exc))
-        # 5xx tells the sender to retry. Most webhook senders back off and
-        # redeliver, which is exactly what should happen here.
+        # 5xx asks the sender to retry.
         return Response(status_code=503)
 
     log("INFO", "webhook accepted",
