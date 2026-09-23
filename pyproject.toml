@@ -12,11 +12,11 @@ requires-python = ">=3.12"
 # Keep in sync with services/*/requirements.txt, which the Dockerfiles use.
 dependencies = [
     "fastapi==0.141.1",
-    "uvicorn[standard]==0.52.4",
-    "google-cloud-pubsub==2.40.0",
-    "google-cloud-bigquery==3.45.0",
+    "uvicorn[standard]==0.53.0",
+    "google-cloud-pubsub==2.41.0",
+    "google-cloud-bigquery==3.45.2",
     "jinja2==3.1.6",
-    "openai==3.8.0",
+    "openai==3.16.2",
     "pydantic==2.13.5",
 ]
 
@@ -25,12 +25,12 @@ dev = [
     "pytest==9.1.1",
     "httpx==0.28.1",
     "python-dotenv==1.2.3",
-    "duckdb==1.4.4",
+    "duckdb==1.5.5",
     # duckdb needs it to hand a TIMESTAMPTZ back to Python.
-    "pytz==2025.2",
-    "matplotlib==3.11.0",
-    "ruff==0.15.4",
-    "mypy==1.19.1",
+    "pytz==2026.3.post1",
+    "matplotlib==3.11.2",
+    "ruff==0.16.8",
+    "mypy==2.3.1",
 ]
 
 [tool.setuptools]
